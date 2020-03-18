@@ -94,7 +94,7 @@ addpath([strrep(mfilename('fullpath'),mfilename,'') '/utils']);
 if ~isempty(configError)
     fprintf('%s\n',configError);
     return;
-end;
+end
 
 % Basic parameters
 overwrite = 0;              % Whether to overwrite output
@@ -138,25 +138,25 @@ if exist('rng','file')
     rng(sum(100*clock),'twister');
 else
     rand('twister',sum(100*clock));
-end;
+end
 
 % Convert list of subjects from "dir" inputs to actual names
 subjectsNew = {};
-if ~iscell(subjects), subjects = {subjects}; end;
+if ~iscell(subjects), subjects = {subjects}; end
 for s=1:length(subjects)
     if ~ischar(subjects{s})
         fprintf('%s\n','ERROR: subject argument must be a string or cell array of strings.');
         return;
-    end;
+    end
     if strfind(subjects{s},'*')
         subjectsTmp = dir([studyDir '/' subjects{s}]);
         for j=1:length(subjectsTmp)
             subjectsNew{end+1} = subjectsTmp(j).name;
-        end;
+        end
     else
         subjectsNew{end+1} = subjects{s};
-    end;
-end;
+    end
+end
 subjects = subjectsNew;
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
@@ -169,19 +169,19 @@ for i=1:length(varArgList)
     argVal = optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
         eval([varArgList{i} ' = argVal;']);
-    end;
-end;
+    end
+end
 
 if ~(isnumeric(conMat) && ~isscalar(conMat) && numel(size(conMat))==2)
     fprintf('%s\n','ERROR: conMat must be a numeric matrix.');
     return;
-end;
+end
 numCons = size(conMat,1);
 
 if tempFilt && (useNuisLinear || useNuisWMPCA || useNuisCSFPCA)
     fprintf('%s\n',['WARNING: temporal filtering is not recommended when linear '...
         'or PCA-based nuisance regressors are in use.']);
-end;
+end
 
 for s = 1:length(subjects)
     
@@ -214,15 +214,15 @@ for s = 1:length(subjects)
     elseif ~exist(csfMask,'file') && useNuisCSFPCA==1
         fprintf('%s\n\n',['CSF ROI does not exist for ' subject '. Skipping this subject.']);
         continue;
-    end;
+    end
     
     if ~isempty(maskName)
         funcMaskInit = [roiTargDir '/' maskName '.nii.gz'];
         if ~exist(funcMaskInit,'file')
             fprintf('%s\n',['Requested mask file does not exist for ' subject ...
                 '. Using default brain mask instead.']);
-        end;
-    end;
+        end
+    end
     
     for scan = 1:length(scanlogFiles)
         
@@ -233,7 +233,7 @@ for s = 1:length(subjects)
         if length(unique(dataLengths))>1 || sum(dataLengths==0)>1
             fprintf('%s\n',['Scanlog is invalid for ' subject ', scan ' int2str(scan) '. Skipping this scan.']);
             continue;
-        end;
+        end
         [acqs, expts, runs] = deal(fileData{1},fileData{2},fileData{3});
         
         for i = 1:length(acqs)
@@ -241,7 +241,7 @@ for s = 1:length(subjects)
             % Skip run if it's not the specified experiment/run number.
             if ~strcmpi(expts{i},expt) || (~isempty(runList) && ~ismember(runs(i),runList))
                 continue;
-            end;
+            end
             
             runSuffix = ['-' int2str(runs(i))];
             
@@ -249,8 +249,8 @@ for s = 1:length(subjects)
             outputDirOrig = outputDir;
             if exist(outputDir,'dir')
                 if overwrite, system(['rm -rf ' outputDir]);
-                else continue; end;
-            end;
+                else continue; end
+            end
             mkdir(outputDir);
             outputMat = [outputDirOrig '/regressiondata.mat'];
             
@@ -261,11 +261,11 @@ for s = 1:length(subjects)
                 fprintf('%s\n',['No regressor files found for ' subject ', expt ' ...
                     expts{i} runSuffix '. Skipping this run.']);
                 continue;
-            end;
+            end
             for r=1:length(regrFiles)
                 [~,~,fileExt] = fileparts(regrFiles(r).name);
                 regrNums(r) = str2num(strrep(fileExt,'.',''));
-            end;
+            end
             [~,indSort] = sort(regrNums);
             regrFiles = regrFiles(indSort);
             cont = 0;
@@ -277,27 +277,27 @@ for s = 1:length(subjects)
                 if length(unique(dataLengths))>1 || sum(dataLengths==0)>1
                     cont=1;
                     break;
-                end;
-                for col=1:3, regressors3Col{r}(:,col) = fileData{col}; end;
-            end;
+                end
+                for col=1:3, regressors3Col{r}(:,col) = fileData{col}; end
+            end
             if cont==1
                 fprintf('%s\n',['Invalid regressor files for ' subject ', expt ' ...
                     expts{i} runSuffix '. Skipping this run.']);
                 continue;
-            end;
+            end
             numTaskRegr = length(regressors3Col);   % Number of task regressors
             regressors3ColOrig = regressors3Col;
             regrNames = {};
             for r=1:numTaskRegr
                 regrNames{r} = ['Task' int2str(r)];
-            end;
+            end
             
             % Check that size of conMat corresponds to # of regressors
             if size(conMat,2)~=numTaskRegr
                 fprintf('%s\n',['Invalid conMat for ' subject ', expt ' expts{i} ...
                     runSuffix '. Skipping this run.']);
                 continue;
-            end;
+            end
             
             prepDir = [analDir '/' expts{i} runSuffix inputSuffix '.prep'];
             prepRegDir = [prepDir '/reg'];
@@ -307,18 +307,18 @@ for s = 1:length(subjects)
                 fprintf('%s\n',['Preproc dir does not exist for ' subject ', ' ...
                     expts{i} runSuffix inputSuffix '. Skipping this run.']);
                 continue;
-            end;
+            end
             
             if isempty(maskName) || ~exist(funcMaskInit,'file')
                 funcMaskInit = [prepRegTargDir '/mask.nii.gz'];
-            end;
+            end
             funcMask = [outputDir '/mask.nii.gz'];
             if isempty(maskName) || ~exist(funcMaskInit,'file')
                 system(['cp ' funcMaskInit ' ' funcMask]);
             else
                 system([fslPrefix 'fslmaths ' funcMaskInit ' -mul ' ...
                     prepRegTargDir '/mask.nii.gz ' funcMask]);
-            end;
+            end
             
             rfd = [prepDir '/raw_func.nii.gz'];
             badVols = load([prepDir '/art/badvols']);
@@ -333,7 +333,7 @@ for s = 1:length(subjects)
                 fprintf('%s\n',['TR/2 is not a multiple of upsampledTR for '...
                     subject ', expt ' expts{i} runSuffix '.  Skipping this run.']);
                 continue;
-            end;
+            end
             
             exptDuration = tr*numVols;
             
@@ -358,22 +358,22 @@ for s = 1:length(subjects)
                 if iter>0
                     outputDir = [outputDirOrig '/perms/iter' int2str(iter)];
                     mkdir(outputDir);
-                end;
+                end
                 
                 % Add rest blocks to regressors3Col if we want to permute them
                 if permuteRest && iter>0
                     allRegr3Col = [];
                     for r=1:numTaskRegr
                         allRegr3Col = [allRegr3Col; regressors3Col{r}];
-                    end;
+                    end
                     regressors3Col{numTaskRegr+1} = defineRestBlocks(allRegr3Col,exptDuration,1);
-                end;
+                end
                 
                 % Permute block order
                 allRegr3Col = [];
                 for r=1:length(regressors3Col)
                     allRegr3Col = [allRegr3Col; regressors3Col{r}];
-                end;
+                end
                 if iter>0
                     blockPerm{iter} = randperm(size(allRegr3Col,1));
                     allRegr3Col = allRegr3Col(blockPerm{iter},:);
@@ -382,19 +382,19 @@ for s = 1:length(subjects)
                         regressors3Col{r} = allRegr3Col(blockCount+1:...
                             blockCount+size(regressors3Col{r},1),:);
                         blockCount = blockCount+size(regressors3Col{r},1);
-                    end;
-                end;
+                    end
+                end
                 
                 if permuteRest && iter>0
                     regressors3Col = regressors3Col(1:end-1);
-                end;
+                end
                 
                 % Define task regressors by convolving boxcar with double-gamma HRF.
                 taskRegrMat = [];
                 for r=1:numTaskRegr
                     taskRegrMat(:,r)= constructRegressor(regressors3Col{r},...
                         hrfType,numVols,tr,upsampledTR,subtractHalfTR);
-                end;
+                end
                 
                 % Remove artifact time points and demean
                 taskRegrMat = taskRegrMat(goodVols,:);
@@ -408,8 +408,8 @@ for s = 1:length(subjects)
                         Xtmp(goodVols) = taskRegrMat(:,r);
                         Xtmp = conv(Xtmp,kernel,'same');
                         taskRegrMat(:,r) = Xtmp(goodVols);
-                    end;
-                end;
+                    end
+                end
                 
                 % On first iteration, define nuisance regressors and plot
                 % regressor information.
@@ -424,7 +424,7 @@ for s = 1:length(subjects)
                         linRegr = linRegr - mean(linRegr);
                         nuisRegrMat = [nuisRegrMat linRegr'];
                         regrNames{end+1} = 'NuisLinear';
-                    end;
+                    end
                     
                     if useNuisMotion
                         mcfFile = dir([prepDir '/mc/prefiltered_func_data*_mcf.par']);
@@ -432,8 +432,8 @@ for s = 1:length(subjects)
                         nuisRegrMat = [nuisRegrMat moRegr];
                         for r=1:size(moRegr,2)
                             regrNames{end+1} = ['NuisMotion' int2str(r)];
-                        end;
-                    end;
+                        end
+                    end
                     
                     % Add custom nuisance regressors
                     if ~isempty(customNuisRegr)
@@ -442,14 +442,14 @@ for s = 1:length(subjects)
                                 'have first dimension equal to # of volumes in raw '...
                                 'dataset.  Not using these regressors for ' subject ...
                                 ', expt ' expts{i} runSuffix inputSuffix outputSuffix '.']);
-                        end;
+                        end
                         
                         nuisRegrMat(:,end+1:end+size(customNuisRegr,2)) = customNuisRegr(goodVols,:);
                         
                         for r=1:size(customNuisRegr,2)
                             regrNames{end+1} = ['NuisCustom' int2str(r)];
-                        end;
-                    end;
+                        end
+                    end
                     
                     % Extract WM/CSF PCA regressors.
                     if useNuisWMPCA || useNuisCSFPCA
@@ -466,14 +466,14 @@ for s = 1:length(subjects)
                             wmInd = find(wmData.vol==1);
                             wmMat = funcMatTmp(:,wmInd);
                             noiseMat = [noiseMat wmMat];
-                        end;
+                        end
                         
                         if useNuisCSFPCA
                             csfData = MRIread(csfMask);
                             csfInd = find(csfData.vol==1);
                             csfMat = funcMatTmp(:,csfInd);
                             noiseMat = [noiseMat csfMat];
-                        end;
+                        end
                         
                         noiseMat = bsxfun(@minus,noiseMat,mean(noiseMat));  % Remove mean at each voxel
                         
@@ -485,9 +485,9 @@ for s = 1:length(subjects)
                         
                         for r=1:pcaOrder
                             regrNames{end+1} = ['NuisPCA' int2str(r)];
-                        end;
+                        end
                         
-                    end;
+                    end
                     
                     % Demean nuisance regressors
                     nuisRegrMat = bsxfun(@minus,nuisRegrMat,mean(nuisRegrMat));
@@ -500,8 +500,8 @@ for s = 1:length(subjects)
                             Xtmp(goodVols) = nuisRegrMat(:,r);
                             Xtmp = conv(Xtmp,kernel,'same');
                             nuisRegrMat(:,r) = Xtmp(goodVols);
-                        end;
-                    end;
+                        end
+                    end
                     
                     % Define design matrix
                     X = [taskRegrMat nuisRegrMat];
@@ -510,13 +510,13 @@ for s = 1:length(subjects)
                     
                     % 1) Plot all regressors
                     regrFig = figure('units','normalized','position',[.1 .1 .8 .8]);
-                    if ~plotResults, set(regrFig,'visible','off'); end;
+                    if ~plotResults, set(regrFig,'visible','off'); end
                     numRegrs = length(regrNames);
                     if numRegrs>15
                         maxRows = 10;
                     else
                         maxRows = 5;
-                    end;
+                    end
                     figRows = min(numRegrs,maxRows);
                     figCols = ceil(numRegrs/maxRows);
                     for r=1:numRegrs
@@ -528,13 +528,13 @@ for s = 1:length(subjects)
                                 outputSuffix ': ' regrNames{r}],'interpreter','none');
                         else
                             title(regrNames{r},'interpreter','none');
-                        end;
-                    end;
+                        end
+                    end
                     saveas(regrFig,[outputDir '/regr_plots.png']);
                     
                     % 2) Plot regressor correlation matrix, scale [-1 1]
                     corrFig = figure;
-                    if ~plotResults, set(corrFig,'visible','off'); end;
+                    if ~plotResults, set(corrFig,'visible','off'); end
                     imagesc(corr(X),[-1 1]); colorbar;
                     set(gca,'XTick',1:numRegrs,'YTick',1:numRegrs,'XTickLabel',...
                         [],'YTickLabel',regrNames);
@@ -544,7 +544,7 @@ for s = 1:length(subjects)
                     
                     % 3) Plot proportion of task regressor variance removed by nuisance regressors
                     varianceFig = figure;
-                    if ~plotResults, set(varianceFig,'visible','off'); end;
+                    if ~plotResults, set(varianceFig,'visible','off'); end
                     taskRegrMatProj = taskRegrMat-nuisRegrMat*inv(nuisRegrMat'*nuisRegrMat)*nuisRegrMat'*taskRegrMat;
                     varRemoved = ones(1,numTaskRegr)-sum(taskRegrMatProj.^2)./sum(taskRegrMat.^2);
                     bar(varRemoved);
@@ -554,9 +554,9 @@ for s = 1:length(subjects)
                         ': Variance Explained by Nuisance Regrs'],'interpreter','none');
                     saveas(varianceFig,[outputDir '/regr_variance_removed.png']);
                     
-                    if ~plotResults, close(regrFig,corrFig,varianceFig); end;
+                    if ~plotResults, close(regrFig,corrFig,varianceFig); end
                     
-                end;
+                end
                 
                 % Design matrix X
                 X = [taskRegrMat nuisRegrMat];
@@ -567,7 +567,7 @@ for s = 1:length(subjects)
                             ', expt ' expts{i} runSuffix inputSuffix outputSuffix '. '...
                             'Skipping this run.'];
                     break;
-                end;
+                end
                 
                 % Compute beta values and residuals
                 V = inv(X'*X);
@@ -577,7 +577,7 @@ for s = 1:length(subjects)
                     errorDOF = size(X,1)-size(X,2)-1;
                     errorVar = sum(resids.^2)/errorDOF;
                     rSquareds = ones(1,length(maskInd))-sum(resids.^2)./sum(funcMat.^2);
-                end;
+                end
                 
                 % Compute contrasts and statistics
                 contrasts = conMat*betas(1:numTaskRegr,:);
@@ -588,7 +588,7 @@ for s = 1:length(subjects)
                     zStats = zeros(size(tStats));
                     zStats(tStats>0) = -icdf('norm',tcdf(-tStats(tStats>0),errorDOF),0,1);
                     zStats(tStats<=0) = icdf('norm',tcdf(tStats(tStats<=0),errorDOF),0,1); % Prevents p-values near 1 from rounding to 1
-                end;
+                end
                 
                 % Save regression information
                 if iter==0
@@ -597,14 +597,14 @@ for s = 1:length(subjects)
                         'conVars','tStats','zStats','rSquareds','regrNames','tr');
                 else
                     conVarBasePerm{iter} = conVarBase;
-                end;
+                end
                 
                 % Write contrast maps
                 for c=1:numCons
                     outputPath = [outputDir '/cope' int2str(c) '.nii.gz'];
                     newData.vol(maskInd) = contrasts(c,:)';
                     MRIwrite(newData,outputPath);
-                end;
+                end
                 
                 % For unpermuted analysis, write pe/var/zstat/etc images
                 if iter==0
@@ -612,7 +612,7 @@ for s = 1:length(subjects)
                         outputPath = [outputDir '/pe' int2str(r) '.nii.gz'];
                         newData.vol(maskInd) = betas(r,:)';
                         MRIwrite(newData,outputPath);
-                    end;
+                    end
                     for c=1:numCons
                         outputPath = [outputDir '/zstat' int2str(c) '_ols.nii.gz'];
                         newData.vol(maskInd) = zStats(c,:)';
@@ -620,7 +620,7 @@ for s = 1:length(subjects)
                         outputPath = [outputDir '/varcope' int2str(c) '_ols.nii.gz'];
                         newData.vol(maskInd) = conVars(c,:)';
                         MRIwrite(newData,outputPath);
-                    end;
+                    end
                     
                     outputPath = [outputDir '/sigmasquareds_ols.nii.gz'];
                     newData.vol(maskInd) = errorVar';
@@ -636,30 +636,30 @@ for s = 1:length(subjects)
                             tmp = zeros(dims(1:3));
                             tmp(maskInd) = resids(t,:);
                             newData.vol(:,:,:,t) = tmp;
-                        end;
+                        end
                         outputPath = [outputDir '/res4d.nii.gz'];
                         MRIwrite(newData,outputPath);
-                    end;
+                    end
                     
                     system(['cp ' prepRegDir '/target_func.nii.gz ' outputDir '/target_func.nii.gz']);
-                end;
+                end
                 
                 if mod(iter,10)==0
                     fprintf('%s\n',[subject ', ' expts{i} runSuffix...
                         inputSuffix outputSuffix ', iter ' int2str(iter)]);
-                end;
+                end
                 
-            end;
+            end
             if cont
                 fprintf('%s\n\n',errorMsg);
                 continue;
-            end;
+            end
             save(outputMat,'-append','blockPerm','conVarBasePerm');
             
             fprintf('%s\n\n',['Finished 1st-level analysis for subject ' subject ...
                 ', expt ' expts{i} runSuffix inputSuffix outputSuffix '.']);
-        end;
-    end;
-end;
+        end
+    end
+end
 
 end

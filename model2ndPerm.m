@@ -65,7 +65,7 @@ addpath([strrep(mfilename('fullpath'),mfilename,'') '/utils']);
 if ~isempty(configError)
     fprintf('%s\n',configError);
     return;
-end;
+end
 
 overwrite = 0;              % Whether to overwrite output
 expt = [];                  % Experiment to analyze.
@@ -82,21 +82,21 @@ charLimit = 100000;         % Character limit for bash commands
 
 % Convert list of subjects from "dir" inputs to actual names
 subjectsNew = {};
-if ~iscell(subjects), subjects = {subjects}; end;
+if ~iscell(subjects), subjects = {subjects}; end
 for s=1:length(subjects)
     if ~ischar(subjects{s})
         fprintf('%s\n','ERROR: subject argument must be a string or cell array of strings.');
         return;
-    end;
+    end
     if strfind(subjects{s},'*')
         subjectsTmp = dir([studyDir '/' subjects{s}]);
         for j=1:length(subjectsTmp)
             subjectsNew{end+1} = subjectsTmp(j).name;
-        end;
+        end
     else
         subjectsNew{end+1} = subjects{s};
-    end;
-end;
+    end
+end
 subjects = subjectsNew;
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
@@ -106,13 +106,13 @@ for i=1:length(varArgList)
     argVal = optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
         eval([varArgList{i} ' = argVal;']);
-    end;
-end;
+    end
+end
 
 if ~isempty(runList) && looRun>0 && ~ismember(looRun,runList)
     fprintf('%s\n','ERROR: looRun must be in runList when both are specified.');
     return;
-end;
+end
 
 for s = 1:length(subjects)
     
@@ -139,7 +139,7 @@ for s = 1:length(subjects)
     elseif exist(analDir,'dir')==0
         fprintf('%s\n',['Target registration directory does not exist for ' subject '.']);
         continue;
-    end;
+    end
     
     exptTypes = {};    % Cell array of experiments run
     exptNums = [];     % For each acquisition, which expt # (indexed from exptTypes)
@@ -158,19 +158,19 @@ for s = 1:length(subjects)
             fprintf('%s\n',['Scanlog is invalid for ' subject ', scan ' int2str(scan)...
                 '. Skipping this subject.']);
             break;
-        end;
+        end
         [acqs, expts, runs] = deal(fileData{1},fileData{2},fileData{3});
         for i = 1:length(acqs)
             if ~ismember(expts{i},exptTypes)
                 exptTypes{end+1} = expts{i};
-            end;
+            end
             exptNums(end+1) = find(ismember(exptTypes,expts{i}));
             runNums(end+1) = runs(i);
             runSuffix = ['-' int2str(runs(i))];
             permDirsAll{end+1} = [analDir '/' expts{i} runSuffix inputSuffix '.perm'];
-        end;
-    end;
-    if cont, continue; end;
+        end
+    end
+    if cont, continue; end
     
     for e = 1:length(exptTypes)
         
@@ -180,12 +180,12 @@ for s = 1:length(subjects)
         if sum(regexpi(exptType,'anat'))>0 || sum(regexpi(exptType,'dti'))>0 ...
                 || sum(regexpi(exptType,'rest'))>0
             continue;
-        end;
+        end
         
         % Skip run if it's not the specified experiment/run number.
         if ~isempty(expt) && ~strcmpi(exptType,expt)
             continue;
-        end;
+        end
         
         extantRuns = runNums(exptNums==e);
         if ~isempty(runList) && sum(ismember(extantRuns,runList))~=length(runList)
@@ -200,7 +200,7 @@ for s = 1:length(subjects)
             fprintf('%s\n',['Subject ' subject ' has redundant scanlog run numbers for expt '...
                 exptType '. Skipping this experiment.']);
             continue;
-        end;
+        end
         
         permDirs = permDirsAll(exptNums==e);   % List of extant .perm dirs for this expt
         
@@ -208,11 +208,11 @@ for s = 1:length(subjects)
         
         if isempty(runList)
             runList = extantRuns;
-        end;
+        end
         if looRun>0
             runList = setdiff(runList,looRun);
             runSuffix = [runSuffix '-LOO' int2str(looRun)];
-        end;
+        end
         permDirs = permDirs(ismember(extantRuns,runList));
         
         numRuns = length(permDirs);
@@ -225,19 +225,19 @@ for s = 1:length(subjects)
                     ' for expt ' exptType '. Skipping this experiment.']);
                 cont=1;
                 break;
-            end;
-        end;
-        if cont, continue; end;
+            end
+        end
+        if cont, continue; end
         
         for r=1:numRuns
         	rData{r} = load([permDirs{r} '/regressiondata.mat']);
             permItersVec(r) = length(rData{r}.conVarBasePerm);
-        end;
+        end
         if length(unique(permItersVec))>1
             fprintf('%s\n',['Input perm directories have inconsistent # of iterations '...
                 'for ' subject ', ' exptType '. Skipping this experiment.']);
             continue;
-        end;
+        end
         permIters = permItersVec(1);
         
         numCons = length(dir([permDirs{1} '/cope*.nii.gz']));
@@ -250,17 +250,17 @@ for s = 1:length(subjects)
                 fprintf('%s\n',['Issue with conList for ' subject ', ' ...
                     exptType '. Skipping this experiment..']);
                 continue;
-            end;
-        end;
+            end
+        end
         
         gpermDir = [analDir '/' exptType runSuffix inputSuffix outputSuffix '.gperm'];
-        if exist(gpermDir,'dir') && overwrite, system(['rm -rf ' gpermDir]); end;
-        if ~exist(gpermDir,'dir'), mkdir(gpermDir); end;
+        if exist(gpermDir,'dir') && overwrite, system(['rm -rf ' gpermDir]); end
+        if ~exist(gpermDir,'dir'), mkdir(gpermDir); end
         
         targetNew = [gpermDir '/target_func.nii.gz'];
         if ~exist(targetNew,'file')
             system(['cp ' permDirs{1} '/target_func.nii.gz ' targetNew]);
-        end;
+        end
         
         for c=conList
             
@@ -268,12 +268,12 @@ for s = 1:length(subjects)
             permsDir = [outputDir '/perms'];
             if ~exist(permsDir,'dir')
                 mkdir(permsDir);
-            end;
+            end
             
             outputZStat = [outputDir '/zstat' int2str(c) '.nii.gz'];
             outputThreshZStat = [outputDir '/thresh_zstat' int2str(c)  '_P' ...
                 num2str(voxThresh) 'P' num2str(clustThresh) '.nii.gz'];
-            if exist(outputThreshZStat,'file'), continue; end;
+            if exist(outputThreshZStat,'file'), continue; end
             
             % Check for existence of input images
             cont = 0;
@@ -287,11 +287,11 @@ for s = 1:length(subjects)
                             ', cope ' int2str(c) '. Skipping this experiment.']);
                         cont = 1;
                         break;
-                    end;
-                end;
-                if cont, break; end;
-            end;
-            if cont, continue; end;
+                    end
+                end
+                if cont, break; end
+            end
+            if cont, continue; end
             
             fprintf('%s\n\n',['Running 2nd-level analysis for subject ' subject ', expt ' ...
                 exptType runSuffix inputSuffix outputSuffix ', contrast ' int2str(c) '...']);
@@ -315,14 +315,14 @@ for s = 1:length(subjects)
                             cmd = [cmd tmpPath{r} ' '];
                         else
                             cmd = [cmd '-add ' tmpPath{r} ' '];
-                        end;
-                    end;
+                        end
+                    end
                     cmd = [cmd '-div ' num2str(sumWeights) ' ' outputCope];
                     system(cmd);
                     for r=1:numRuns
                         system(['rm -rf ' tmpPath{r}]);
-                    end;
-                end;
+                    end
+                end
                 
                 % Register cope image to standard space
                 target2Highres = [regTargDir '/target_func2highres.mat'];
@@ -348,20 +348,20 @@ for s = 1:length(subjects)
                                 cmd = [cmd tmpPath{r} ' '];
                             else
                                 cmd = [cmd '-add ' tmpPath{r} ' '];
-                            end;
-                        end;
+                            end
+                        end
                         cmd = [cmd '-div ' num2str(sumWeights) ' ' outputCopePerm];
                         system(cmd);
                         for r=1:numRuns
                             system(['rm -rf ' tmpPath{r}]);
-                        end;
-                    end;
+                        end
+                    end
                     
                     if mod(iter,10)==0
                         fprintf('%s\n',['Voxelwise, ' subject ', ' exptType runSuffix...
                             inputSuffix outputSuffix ', con ' int2str(c) ', iter ' int2str(iter)]);
-                    end;
-                end;
+                    end
+                end
                 
                 % Merge permstat files
                 copeConcat = [permsDir '/cope' int2str(c) '_concat.nii.gz'];
@@ -382,9 +382,9 @@ for s = 1:length(subjects)
                     for j=(1+(c2-1)*copesPerMerge):min(permIters,c2*copesPerMerge)
                         outputCopePerm = [permsDir '/cope' int2str(c) '_iter' int2str(j) '.nii.gz'];
                         mergeCmd2 = [mergeCmd2 ' ' outputCopePerm];
-                    end;
+                    end
                     system(mergeCmd2);
-                end;
+                end
                 mergeCmd = [mergeCmd '; rm -rf ' permsDir '/cope' ...
                     int2str(c) '_concat_miter*'];
                 system(mergeCmd);
@@ -397,13 +397,13 @@ for s = 1:length(subjects)
                 system([fslPrefix 'fslmaths ' outputCope ' -sub ' copeMean ...
                     ' -div ' copeStd ' ' outputZStat]);
                 
-            end;
+            end
             
             if ~clustCorrect
                 fprintf('%s\n\n',['Finished 2nd-level analysis for subject ' subject ', expt ' ...
                     exptType runSuffix inputSuffix outputSuffix ', contrast ' int2str(c) '.']);
                 continue;
-            end;
+            end
             
             zCutoff = icdf('norm',1-voxThresh,0,1);
             cDataPath = [outputDir '/cluster_permutation_data_P' num2str(voxThresh) '.mat'];
@@ -429,13 +429,13 @@ for s = 1:length(subjects)
                         clustSizes = [clustSizes 0];
                     else
                         clustSizes = [clustSizes clustInfo{2}(2)];
-                    end;
+                    end
                     
                     if mod(iter,10)==0
                         fprintf('%s\n',['Clusterwise, ' subject ', ' exptType runSuffix...
                             inputSuffix outputSuffix ', con ' int2str(c) ', iter ' int2str(iter)]);
-                    end;
-                end;
+                    end
+                end
                 
                 % Determine maximum cluster size to consider, based on mean cope
                 [~,maxClustSize] = system([fslPrefix 'fslstats ' copeMean ' -V']);
@@ -451,7 +451,7 @@ for s = 1:length(subjects)
                 
             else
                 load(cDataPath);
-            end;
+            end
             
             % Keep clusters with size (voxel count) >=clustCutoff
             clustCutoff = find(clustCDF > 1-clustThresh,1,'first')+1;
@@ -468,8 +468,8 @@ for s = 1:length(subjects)
             fprintf('%s\n\n',['Finished 2nd-level analysis for subject ' subject ', expt ' ...
                 exptType runSuffix inputSuffix outputSuffix ', contrast ' int2str(c) '.']);
             
-        end;
-    end;
-end;
+        end
+    end
+end
 
 end

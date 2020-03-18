@@ -12,19 +12,19 @@ if isempty(baseDir)
 elseif ~exist(baseDir,'dir')
     configError = 'ERROR: fMRI base directory does not exist.';
     return;
-end;
+end
 
 studyDir = [baseDir '/' study];
 if ~exist(studyDir,'dir')
     configError = ['ERROR: Study directory ' studyDir ' does not exist.'];
     return;
-end;
+end
 
 fslDir = getenv('FSL_DIR');
 if isempty(fslDir)
     configError = 'ERROR: FSL_DIR is not defined in bash environment.';
     return;
-end;
+end
 
 % On some systems, it may be necessary to source FSL before running FSL
 % commands via matlab, by uncommenting the below code.  Note that this will
@@ -43,14 +43,14 @@ for c=1:length(fslCommands)
     if status==127
         cmdError=1;
         break;
-    end;
-end;
+    end
+end
 if cmdError==1
     configError = ['ERROR: FSL scripts not functioning properly from within '...
         'MATLAB. Check that FSL is properly installed and sourced.  If it is, '...
         'try uncommenting the fslPrefix code in checkConfig.'];
     return;
-end;
+end
 
 fsCommands = {'mri_convert','bbregister','tkregister2'};
 cmdError = 0;
@@ -59,13 +59,13 @@ for c=1:length(fsCommands)
     if status==127
         cmdError=1;
         break;
-    end;
-end;
+    end
+end
 if cmdError==1 || ~exist('MRIread','file') || ~exist('MRIwrite','file')
     configError = ['ERROR: Freesurfer scripts not functioning properly from '...
         'within MATLAB. Check that Freesurfer is properly installed and sourced.'];
     return;
-end;
+end
 
 bxhCommands = {'analyze2bxh','bxh2analyze','bxhreorient'};
 cmdError = 0;
@@ -74,11 +74,11 @@ for c=1:length(bxhCommands)
     if status
         cmdError=1;
         break;
-    end;
-end;
+    end
+end
 if cmdError==1
     configError = 'ERROR: BXH/XCEDE scripts are not properly installed or sourced.';
     return;
-end;
+end
 
 end

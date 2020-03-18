@@ -55,7 +55,7 @@ addpath([strrep(mfilename('fullpath'),mfilename,'') '/utils']);
 if ~isempty(configError)
     fprintf('%s\n',configError);
     return;
-end;
+end
 
 overwrite = 0;
 targetName = 'target_func';     % Functional-resolution image in func directory to register to
@@ -77,21 +77,21 @@ standardMask = [fslDir '/data/standard/MNI152_T1_2mm_brain_mask_dil.nii.gz'];
 
 % Convert list of subjects from "dir" inputs to actual names
 subjectsNew = {};
-if ~iscell(subjects), subjects = {subjects}; end;
+if ~iscell(subjects), subjects = {subjects}; end
 for s=1:length(subjects)
     if ~ischar(subjects{s})
         fprintf('%s\n','ERROR: subject argument must be a string or cell array of strings.');
         return;
-    end;
+    end
     if strfind(subjects{s},'*')
         subjectsTmp = dir([studyDir '/' subjects{s}]);
         for j=1:length(subjectsTmp)
             subjectsNew{end+1} = subjectsTmp(j).name;
-        end;
+        end
     else
         subjectsNew{end+1} = subjects{s};
-    end;
-end;
+    end
+end
 subjects = subjectsNew;
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
@@ -100,8 +100,8 @@ for i=1:length(varArgList)
     argVal = optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
         eval([varArgList{i} ' = argVal;']);
-    end;
-end;
+    end
+end
 
 for s = 1:length(subjects)
     
@@ -132,17 +132,17 @@ for s = 1:length(subjects)
     elseif isempty(scanlogFiles)
         fprintf('%s\n\n',['Missing scanlog file for subject ' subject '. Skipping this subject.']);
         continue;
-    end;
+    end
     
-    if ~exist(regDir,'dir'), mkdir(regDir); end;
-    if ~exist(roiTargDir,'dir'), mkdir(roiTargDir); end;
+    if ~exist(regDir,'dir'), mkdir(regDir); end
+    if ~exist(roiTargDir,'dir'), mkdir(roiTargDir); end
     
     % Find anatomical image to be used for registration
     if ~isempty(highresName)
         if ~exist([anatDir '/' highresName '.nii.gz'])
             fprintf('%s\n\n',['Requested anatomical image does not exist for ' subject '. Skipping this subject.']);
             continue;
-        end;
+        end
     else
         br = 0;
         for scan = 1:length(scanlogFiles)
@@ -150,18 +150,18 @@ for s = 1:length(subjects)
             for i = 1:length(acqs)
                 runSuffix = ['-' int2str(runs(i))];
                 if sum(regexpi(expts{i},'anat'))>0
-                    if isempty(highresName), highresName = [expts{i} runSuffix]; end;
+                    if isempty(highresName), highresName = [expts{i} runSuffix]; end
                     br = 1;
-                end;
-                if br, break; end;
-            end;
-            if br, break; end;
-        end;
+                end
+                if br, break; end
+            end
+            if br, break; end
+        end
         if isempty(highresName)
             fprintf('%s\n\n',['No anatomical file found in scanlogs for ' subject '. Skipping this subject.']);
             continue;
-        end;
-    end;
+        end
+    end
     
     highres = [anatDir '/' highresName '_brain.nii.gz'];
     highresHead = [anatDir '/' highresName '.nii.gz'];
@@ -175,7 +175,7 @@ for s = 1:length(subjects)
     elseif ~exist(target,'file')
         fprintf('%s\n\n',['Missing target functional image for subject ' subject '. Skipping this subject.']);
         continue;
-    end;
+    end
     
     % FS mri files
     fsSubjDir = [fsDir '/' subject];
@@ -193,7 +193,7 @@ for s = 1:length(subjects)
         parcsMGZ{p} = strrep(parcs{p},'.nii.gz','.mgz');
         parcsHR{p} = [anatDir '/' parcNames{p} '.nii.gz'];
         parcsTarg{p} = [roiTargDir '/' parcNames{p} '.nii.gz'];
-    end;
+    end
     % GM, WM, CSF masks
     maskNames = {'gmmask','wmmask','csfmask'};
     for m=1:3
@@ -201,7 +201,7 @@ for s = 1:length(subjects)
         masksTarg{m} = [roiTargDir '/' maskNames{m} '.nii.gz'];
         masksHR{m} = [anatDir '/' maskNames{m} '.nii.gz'];
         masksTargErode{m} = [roiTargDir '/' maskNames{m} '_erode1.nii.gz'];
-    end;
+    end
     
     % Orig <> highres registrations
     orig2Highres = [regDir '/orig2highres.mat'];
@@ -233,21 +233,21 @@ for s = 1:length(subjects)
     if ~exist(parcsMGZ{1},'file')
         fprintf('%s\n\n',['Freesurfer recon has not completed for subject ' subject '. Skipping this subject.']);
         continue;
-    end;
+    end
     
     fprintf('%s\n',['Running registration for ' subject '.']);
     
     % Convert MGZ to NII
-    if ~exist(norm,'file'), system(['mri_convert ' normMGZ ' ' norm]); end;
-    if ~exist(orig,'file'), system(['mri_convert ' origMGZ ' ' orig]); end;
-    if ~exist(fsMask,'file'), system(['mri_convert ' fsMaskMGZ ' ' fsMask]); end;
+    if ~exist(norm,'file'), system(['mri_convert ' normMGZ ' ' norm]); end
+    if ~exist(orig,'file'), system(['mri_convert ' origMGZ ' ' orig]); end
+    if ~exist(fsMask,'file'), system(['mri_convert ' fsMaskMGZ ' ' fsMask]); end
     
     % Generate GM/WM/CSF masks in Freesurfer space.
     if ~exist(masks{end},'file') || overwrite
         
         for p = 1:length(parcNames)
             system(['mri_convert ' parcsMGZ{p} ' ' parcs{p}]);
-        end;
+        end
         
         % GM mask
         system([fslPrefix 'fslmaths ' parcs{2} ' -thr 10000 -bin ' masks{1}]);
@@ -262,8 +262,8 @@ for s = 1:length(subjects)
                 cmd = [cmd ' ' tmpPath '-' int2str(n) '.nii.gz'];
             else
                 cmd = [cmd ' -add ' tmpPath '-' int2str(n) '.nii.gz'];
-            end;
-        end;
+            end
+        end
         cmd = [cmd ' -bin ' masks{2} '; rm -rf ' tmpPath '*'];
         system(cmd);
         % CSF mask
@@ -275,12 +275,12 @@ for s = 1:length(subjects)
                 cmd = [cmd ' ' tmpPath '-' int2str(n) '.nii.gz'];
             else
                 cmd = [cmd ' -add ' tmpPath '-' int2str(n) '.nii.gz'];
-            end;
-        end;
+            end
+        end
         cmd = [cmd ' -bin ' masks{3} '; rm -rf ' tmpPath '*'];
         system(cmd);
         
-    end;
+    end
     
     % Highres/orig registrations (FLIRT)
     if ~(exist(highres2Orig,'file') && exist(fsMaskHR,'file')) || overwrite
@@ -297,7 +297,7 @@ for s = 1:length(subjects)
             orig2Highres ' -out ' fsMaskHR ' -interp nearestneighbour']);
         system([fslPrefix 'fslmaths ' fsMaskHR ' -bin ' fsMaskHR]);
         system([fslPrefix 'fslmaths ' highresHead ' -mul ' fsMaskHR ' ' highres]);
-    end;
+    end
     
     % Highres/standard registrations (FNIRT)
     if ~(exist(highres2StdWarp,'file') && exist(std2HighresWarp,'file')) || overwrite
@@ -315,13 +315,13 @@ for s = 1:length(subjects)
         system([fslPrefix 'fslmaths ' highres ' -subsamp2 ' highres2mm]);
         system([fslPrefix 'invwarp --ref=' highres2mm ' --warp=' highres2StdWarp ' --out=' std2HighresWarp]);
         
-    end;
+    end
     
     % Target/highres registrations (bbregister)
     if ~exist(target2Highres,'file') || overwrite
         % Find initializing FLIRT registration, and convert to Freesurfer .dat format.
         fprintf('%s\n','Running FLIRT for target2Highres reg...');
-        if ~exist(regTargDir,'dir'), mkdir(regTargDir); end;
+        if ~exist(regTargDir,'dir'), mkdir(regTargDir); end
         system([fslPrefix 'flirt -in ' target ' -ref ' highres ' -out ' target2Highres_flirtImg ...
             ' -omat ' target2Highres_flirt ' -dof 6 -searchrx -10 10 -searchry -50 50 -searchrz -10 10']);
         system([fslPrefix 'convert_xfm -omat ' target2OrigInit ' -concat ' highres2Orig ' ' target2Highres_flirt]);
@@ -346,7 +346,7 @@ for s = 1:length(subjects)
         system([fslPrefix 'flirt -in ' fsMask ' -ref ' target ' -applyxfm -init ' ...
             orig2Target ' -out ' fsMaskTarg ' -interp nearestneighbour']);
         system([fslPrefix 'fslmaths ' fsMaskTarg ' -bin ' fsMaskTarg]);
-    end;
+    end
     
     % Register parcellations and masks to target space.
     if ~exist(masksTarg{end},'file') || overwrite
@@ -355,20 +355,20 @@ for s = 1:length(subjects)
             fprintf('%s\n',['Transforming ' parcNames{p} ' to target space.']);
             system([fslPrefix 'flirt -in ' parcs{p} ' -ref ' target ' -applyxfm -init ' ...
             	orig2Target ' -out ' parcsTarg{p} ' -interp nearestneighbour']);
-        end;
+        end
         
         for m = 1:length(masks)
             fprintf('%s\n',['Transforming ' maskNames{m} ' to target space.']);
             system([fslPrefix 'flirt -in ' masks{m} ' -ref ' target ' -applyxfm -init ' ...
             	orig2Target ' -out ' masksTarg{m} ' -interp nearestneighbour']);
-        end;
+        end
         
         % Erode WM/CSF masks by one voxel
         for m=2:3
             system([fslPrefix 'fslmaths ' masksTarg{m} ' -ero ' masksTargErode{m}]);
-        end;
+        end
         
-    end;
+    end
     
     % Register parcellations and masks to highres space.
     if ~exist(masksHR{end},'file') || overwrite
@@ -377,18 +377,18 @@ for s = 1:length(subjects)
             fprintf('%s\n',['Transforming ' parcNames{p} ' to highres space.']);
             system([fslPrefix 'flirt -in ' parcs{p} ' -ref ' highres ' -applyxfm -init ' ...
             	orig2Highres ' -out ' parcsHR{p} ' -interp nearestneighbour']);
-        end;
+        end
         
         for m = 1:length(masks)
             fprintf('%s\n',['Transforming ' maskNames{m} ' to highres space.']);
             system([fslPrefix 'flirt -in ' masks{m} ' -ref ' highres ' -applyxfm -init ' ...
             	orig2Highres ' -out ' masksHR{m} ' -interp nearestneighbour']);
-        end;
+        end
         
-    end;
+    end
     
     fprintf('%s\n\n',['Finished registration for ' subject '.']);
     
-end;
+end
 
 end

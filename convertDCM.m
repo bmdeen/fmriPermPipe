@@ -29,27 +29,27 @@ addpath([strrep(mfilename('fullpath'),mfilename,'') '/utils']);
 if ~isempty(configError)
     fprintf('%s\n',configError);
     return;
-end;
+end
 
 overwrite = false;
 
 % Convert list of subjects from "dir" inputs to actual names
 subjectsNew = {};
-if ~iscell(subjects), subjects = {subjects}; end;
+if ~iscell(subjects), subjects = {subjects}; end
 for s=1:length(subjects)
     if ~ischar(subjects{s})
         fprintf('%s\n','ERROR: subject argument must be a string or cell array of strings.');
         return;
-    end;
+    end
     if strfind(subjects{s},'*')
         subjectsTmp = dir([studyDir '/' subjects{s}]);
         for j=1:length(subjectsTmp)
             subjectsNew{end+1} = subjectsTmp(j).name;
-        end;
+        end
     else
         subjectsNew{end+1} = subjects{s};
-    end;
-end;
+    end
+end
 subjects = subjectsNew;
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
@@ -58,8 +58,8 @@ for i=1:length(varArgList)
     argVal = optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
         eval([varArgList{i} ' = argVal;']);
-    end;
-end;
+    end
+end
 
 for s = 1:length(subjects)
     
@@ -84,12 +84,12 @@ for s = 1:length(subjects)
         fprintf('%s\n',['Missing scanlog file or dicom directory for subject ' ...
             subject '. Skipping this subject.']);
         continue;
-    end;
+    end
     
     anatDir = [subjDir '/anat'];
     funcDir = [subjDir '/func'];
-    if exist(anatDir,'dir')==0, mkdir(anatDir); end;
-    if exist(funcDir,'dir')==0, mkdir(funcDir); end;
+    if exist(anatDir,'dir')==0, mkdir(anatDir); end
+    if exist(funcDir,'dir')==0, mkdir(funcDir); end
     
     for scan = 1:length(scanlogFiles)
         
@@ -104,13 +104,13 @@ for s = 1:length(subjects)
             
             if sum(regexpi(expts{i},'dti'))>0
                 outputDir = [subjDir '/dti' runSuffix];
-                if ~exist(outputDir,'dir'), mkdir(outputDir); end;
+                if ~exist(outputDir,'dir'), mkdir(outputDir); end
                 outputPath = [outputDir '/' expts{i} runSuffix '.nii.gz'];
             elseif sum(regexpi(expts{i},'anat'))>0
                 outputPath = [anatDir '/' expts{i} runSuffix '.nii.gz'];
             else
                 outputPath = [funcDir '/' expts{i} runSuffix '.nii.gz'];
-            end;
+            end
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %%% NOTE: the below line must be changed to fit your system's
@@ -121,11 +121,11 @@ for s = 1:length(subjects)
             %%% returns a string consisting of the integer input, padded
             %%% with zeros on the left up to length len.
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            dcm = dir([dcmDir '/*_S*' numPad(acq,3) 'I*001.DCM']);
+            dcm = dir([dcmDir '/*_S*' numPad(acq,3) 'I00001.DCM']);
             
             if length(dcm)>1
                 fprintf('%s\n\n',['Multiple DCMs fit string template for subject ' ...
-                    subject ', acquisition #' int2str(acq) '. Skipping this run. Check '
+                    subject ', acquisition #' int2str(acq) '. Skipping this run. Check ' ...
                     '"dcm = dir..." code in convertDCM.']);
                 continue;
             elseif isempty(dcm)
@@ -133,7 +133,7 @@ for s = 1:length(subjects)
                     'acquisition #' int2str(acq) '. Skipping this run. Check '...
                     '"dcm = dir..." code in convertDCM.']);
                 continue;
-            end;
+            end
             
             dcmPath = [dcmDir '/' dcm.name];
             
@@ -151,9 +151,9 @@ for s = 1:length(subjects)
                 
                 fprintf('%s\n',['Converted data for subject ' subject ', expt: ' expts{i} runSuffix '.']);
         
-            end;
+            end
             
-        end;
+        end
     
-    end;
-end;
+    end
+end

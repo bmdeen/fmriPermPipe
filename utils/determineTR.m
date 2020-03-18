@@ -17,14 +17,14 @@ else
         tr = str2num(tr);
     else
         goodTU = 0;
-    end;
+    end
     if goodTU && tr>0
         fprintf('%s\n',['Setting TR to ' num2str(tr) 's.']);
     else
         fprintf('%s\n',['Functional data has no TR value or unknown time_units '...
             'field in header. Using default TR of ' num2str(defaultTR) '.']);
         tr = defaultTR;
-    end;
-end;
+    end
+end
 
 end

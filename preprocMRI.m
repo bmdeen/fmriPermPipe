@@ -87,7 +87,7 @@ addpath([strrep(mfilename('fullpath'),mfilename,'') '/utils']);
 if ~isempty(configError)
     fprintf('%s\n',configError);
     return;
-end;
+end
 
 % Basic parameters
 overwrite = 0;                  % Whether to overwrite output
@@ -130,21 +130,21 @@ plotResults = 1;                % Whether to display result plots
 
 % Convert list of subjects from "dir" inputs to actual names
 subjectsNew = {};
-if ~iscell(subjects), subjects = {subjects}; end;
+if ~iscell(subjects), subjects = {subjects}; end
 for s=1:length(subjects)
     if ~ischar(subjects{s})
         fprintf('%s\n','ERROR: subject argument must be a string or cell array of strings.');
         return;
-    end;
+    end
     if strfind(subjects{s},'*')
         subjectsTmp = dir([studyDir '/' subjects{s}]);
         for j=1:length(subjectsTmp)
             subjectsNew{end+1} = subjectsTmp(j).name;
-        end;
+        end
     else
         subjectsNew{end+1} = subjects{s};
-    end;
-end;
+    end
+end
 subjects = subjectsNew;
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
@@ -157,26 +157,26 @@ for i=1:length(varArgList)
     argVal = optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
         eval([varArgList{i} ' = argVal;']);
-    end;
-end;
+    end
+end
 
 if multiEcho
     if isempty(teVals)
         fprintf('%s\n','ERROR: For multi-echo mode, must specify TE values.');
         return;
-    end;
+    end
     
     TEs=length(teVals);
     for i=1:TEs
         TEsuffices{i} = ['_TE' int2str(i)];
-    end;
+    end
     
-    if size(teVals,1)<size(teVals,2), teVals = teVals'; end;
-    if echoesToUse>TEs, echoesToUse = TEs; end;
+    if size(teVals,1)<size(teVals,2), teVals = teVals'; end
+    if echoesToUse>TEs, echoesToUse = TEs; end
 else
     TEs = 1;
     TEsuffices{1} = '';
-end;
+end
 
 for s = 1:length(subjects)
     
@@ -200,9 +200,9 @@ for s = 1:length(subjects)
     elseif ~genTarget && exist(targetInit,'file')==0
         fprintf('%s\n\n',['Registration target does not exist for ' subject '. Skipping this subject.']);
         continue;
-    end;
+    end
     
-    if exist(analDir,'dir')==0, mkdir(analDir); end;
+    if exist(analDir,'dir')==0, mkdir(analDir); end
     
     for scan = 1:length(scanlogFiles)
         
@@ -213,7 +213,7 @@ for s = 1:length(subjects)
         if length(unique(dataLengths))>1 || sum(dataLengths==0)>1
             fprintf('%s\n',['Scanlog is invalid for ' subject ', scan ' int2str(scan) '. Skipping this scan.']);
             continue;
-        end;
+        end
         [acqs, expts, runs] = deal(fileData{1},fileData{2},fileData{3});
         
         for i = 1:length(acqs)
@@ -221,29 +221,29 @@ for s = 1:length(subjects)
             % Skip run if it's anatomical or DTI.
             if sum(regexpi(expts{i},'anat'))>0 || sum(regexpi(expts{i},'dti'))>0
                 continue;
-            end;
+            end
             
             % Skip run if it's not the specified experiment/run number.
             if ~isempty(expt) && ~strcmpi(expts{i},expt)
                 continue;
-            end;
+            end
             if ~isempty(runList) && ~ismember(runs(i),runList)
                 continue;
-            end;
+            end
             
             runSuffix = ['-' int2str(runs(i))];
             rfdInit = [funcDir '/' expts{i} runSuffix '.nii.gz'];
             if ~exist(rfdInit,'file')
                 fprintf('%s\n',['Raw func data does not exist for ' subject ', expt ' expts{i} '-' int2str(runs(i)) '.']);
                 continue;
-            end;
+            end
             
             outputDir = [analDir '/' expts{i} runSuffix outputSuffix '.prep'];
             
             if exist(outputDir,'dir')
                 if overwrite, system(['rm -rf ' outputDir]);
-                else continue; end;
-            end;
+                else continue; end
+            end
             mkdir(outputDir);
             outputMat = [outputDir '/preproc_options.mat'];
             
@@ -271,14 +271,14 @@ for s = 1:length(subjects)
                 for t=1:vols
                     if mod(t,TEs)==echoForAD
                         mergeCmd{1} = [mergeCmd{1} ' ' outputDir '/split' numPad(t-1,4) '.nii.gz'];
-                    end;
-                end;
+                    end
+                end
                 mergeCmd{1} = [mergeCmd{1} ' ' num2str(tr)];
                 system(mergeCmd{1});
                 system(['rm -rf ' outputDir '/split*']);
             else
                 system(['cp ' rfd ' ' rfdForAD]);
-            end;
+            end
             
             % Initial motion correction, for artifact time point identification
             mcBase = 'raw_func_mcf';
@@ -316,7 +316,7 @@ for s = 1:length(subjects)
             % Remove time points after motion volumes, if desired
             for j = 1:tptsAfter
                 badVols = setdiff(sort(union(badVols,badVols+1)),size(motion,1)+1);
-            end;
+            end
             badVols = sort(union(badVols,1:disdaqs));
             % Remove high-stddev time points
             [~,ts] = system([fslPrefix 'fslmeants -i ' rfdForAD]);
@@ -335,23 +335,23 @@ for s = 1:length(subjects)
             for e=1:TEs
                 pfdOrig{e} = [outputDir '/prefiltered_func_data' TEsuffices{e} '_orig.nii.gz'];
                 mergeCmd{e} = [fslPrefix 'fslmerge -tr ' pfdOrig{e}];
-            end;
+            end
             for t=1:vols
                 tReal = ceil(t/TEs);
                 if ~ismember(tReal,badVols)
-                    echoNum = mod(t,TEs); if echoNum==0, echoNum=TEs; end;
+                    echoNum = mod(t,TEs); if echoNum==0, echoNum=TEs; end
                     mergeCmd{echoNum} = [mergeCmd{echoNum} ' ' outputDir '/split' numPad(t-1,4) '.nii.gz'];
-                end;
-            end;
+                end
+            end
             for e=1:TEs
                 mergeCmd{e} = [mergeCmd{e} ' ' num2str(tr)];
                 system(mergeCmd{e});
-            end;
+            end
             system(['rm -rf ' outputDir '/split*']);
             system(['rm -rf ' rfdForAD]);
             
             % Plot/save artifact detection results
-            if multiEcho, vols = vols/TEs; end;
+            if multiEcho, vols = vols/TEs; end
             
             % Compute total translation/rotation relative to reference
             transRef = sqrt(sum(motion(disdaqs+1:end,4:6).^2,2));
@@ -359,7 +359,7 @@ for s = 1:length(subjects)
                 cos(motion(disdaqs+1:end,2)).*cos(motion(disdaqs+1:end,3)) + sin(motion(disdaqs+1:end,1)).*sin(motion(disdaqs+1:end,2)).*sin(motion(disdaqs+1:end,3)) - 1)/2)*180/pi;
             
             artifactFig = figure;
-            if ~plotResults, set(artifactFig,'visible','off'); end;
+            if ~plotResults, set(artifactFig,'visible','off'); end
             
             subplot(3,1,1);
             plot(disdaqs+1:vols,ts);
@@ -367,8 +367,8 @@ for s = 1:length(subjects)
             if ~isempty(badVols(disdaqs+1:end))
                 for t=badVols(disdaqs+1:end)'
                     line([t t],[ylimVal(1) ylimVal(2)],'Color','r');
-                end;
-            end;
+                end
+            end
             set(gca,'YLim',ylimVal);
             title([subject ', ' expts{i} runSuffix outputSuffix ': Mean time series (z-score)'],...
                 'interpreter','none');
@@ -379,8 +379,8 @@ for s = 1:length(subjects)
             if ~isempty(badVols(disdaqs+1:end))
                 for t=badVols(disdaqs+1:end)'
                     line([t t],[ylimVal(1) ylimVal(2)],'Color','r');
-                end;
-            end;
+                end
+            end
             set(gca,'YLim',ylimVal);
             title('Total translation (mm)','interpreter','none');
             
@@ -390,13 +390,13 @@ for s = 1:length(subjects)
             if ~isempty(badVols(disdaqs+1:end))
                 for t=badVols(disdaqs+1:end)'
                     line([t t],[ylimVal(1) ylimVal(2)],'Color','r');
-                end;
-            end;
+                end
+            end
             set(gca,'YLim',ylimVal);
             title('Total rotation (deg)','interpreter','none');
             
             saveas(artifactFig,[mcDir '/art_results.png']);
-            if ~plotResults, close(artifactFig); end;
+            if ~plotResults, close(artifactFig); end
             
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -419,7 +419,7 @@ for s = 1:length(subjects)
                     mcDir = [outputDir '/mc'];
                 else
                     mcDir = [outputDir '/mc' int2str(e)];
-                end;
+                end
                 mkdir(mcDir);
                 system(['mv -f ' outputDir '/' mcBase '.mat ' outputDir '/' mcBase '.par '...
                     outputDir '/' mcBase '_abs.rms ' outputDir '/' mcBase '_abs_mean.rms '...
@@ -432,7 +432,7 @@ for s = 1:length(subjects)
                 system([fslPrefix 'fsl_tsplot -i ' mcDir '/' mcBase '.par '...
                     '-t ''MCFLIRT estimated translations (mm)'' -u 1 --start=4 --finish=6 '...
                     '-a x,y,z -w 640 -h 144 -o ' mcDir '/trans.png']);
-            end;
+            end
             
             % NOTE: Slice timing correction would go here in FSL, or before
             % motion correction in SPM or AFNI.  Having already removed
@@ -449,7 +449,7 @@ for s = 1:length(subjects)
                 for e=1:TEs
                     meanFuncSep{e} = [outputDir '/mean_func' TEsuffices{e} '.nii.gz'];
                     system([fslPrefix 'fslmaths ' pfdMCF{e} ' -Tmean ' meanFuncSep{e}]);
-                end;
+                end
                 brainMask = [outputDir '/mask.nii.gz'];     % Temporary mask
                 system([fslPrefix 'bet2 ' meanFuncSep{1} ' ' outputDir '/mask -f ' num2str(faValue) ' -m -n']);
                 system(['mv ' outputDir '/mask_mask.nii.gz ' brainMask]);
@@ -457,12 +457,12 @@ for s = 1:length(subjects)
                 mergeCmd{1} = [fslPrefix 'fslmerge -tr ' meanFuncCombined];
                 for e=1:TEs
                     mergeCmd{1} = [mergeCmd{1} ' ' meanFuncSep{e}];
-                end;
+                end
                 mergeCmd{1} = [mergeCmd{1} ' ' num2str(tr)];
                 system(mergeCmd{1});
                 for e=1:TEs
                     system(['rm -rf ' meanFuncSep{e}]);
-                end;
+                end
                 
                 r2StarPath = [outputDir '/EstR2Star.nii.gz'];
                 t2StarPath = [outputDir '/EstT2Star.nii.gz'];
@@ -493,22 +493,22 @@ for s = 1:length(subjects)
                 % For cases where estimated T2*<=0, use equal weighting of all three TEs.
                 for e=1:TEs
                     funcSepData{e} = MRIread(pfdMCF{e});
-                end;
+                end
                 weightVol = zeros([dims(1:3) TEs]);
                 for e=1:TEs
                     weightVol(:,:,:,e) = teVals(e)*(t2Vol>0).*exp(-teVals(e)./t2Vol) + (t2Vol<=0);
-                end;
+                end
                 weightVol = weightVol./repmat(sum(weightVol,4),[1 1 1 TEs]);
                 weightedFuncVol = zeros([dims(1:3) volsNew]);
                 for e=1:TEs
                     weightedFuncVol = weightedFuncVol + funcSepData{e}.vol.*repmat(weightVol(:,:,:,e),[1 1 1 volsNew]);
-                end;
+                end
                 
                 newData.vol = weightedFuncVol;
                 MRIwrite(newData,pfdWeighted);
             else
                 pfdWeighted = pfdMCF{1};
-            end;
+            end
             
             % Extract example_func image
             exfunc = [outputDir '/example_func.nii.gz'];
@@ -559,7 +559,7 @@ for s = 1:length(subjects)
             pfdSmooth = [outputDir '/prefiltered_func_data_smooth.nii.gz'];
             if isempty(smThresh)
                 smThresh = .75*(funcMedian-threshVals(1)); % SUSAN brightness threshold
-            end;
+            end
             smSigma = fwhm/2.355;
             if fwhm>0
                 system([fslPrefix 'susan ' pfdBET ' ' num2str(smThresh) ' ' ...
@@ -567,7 +567,7 @@ for s = 1:length(subjects)
                     strrep(pfdSmooth,'.nii.gz','')]);
             else
                 system(['cp ' pfdBET ' ' pfdSmooth]);
-            end;
+            end
             
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -607,7 +607,7 @@ for s = 1:length(subjects)
                 % Filter each voxel's time series
                 for v=1:size(funcMat,2)
                     funcMatPadded(:,v) = conv(funcMatPadded(:,v),kernel,'same');
-                end;
+                end
                 
                 funcMat = funcMatPadded(goodVols,:);
                 funcMat = bsxfun(@plus,funcMat,funcMatMean);
@@ -619,9 +619,9 @@ for s = 1:length(subjects)
                     tmp = zeros(dims(1:3));
                     tmp(brainMaskInd) = funcMat(t,:);
                     outData.vol(:,:,:,t) = tmp;
-                end;
+                end
                 MRIwrite(outData,ffd);
-            end;
+            end
             
             % Compute mean of filtered func data
             ffdMean = [outputDir '/mean_func_filtered.nii.gz'];
@@ -638,7 +638,7 @@ for s = 1:length(subjects)
                 if multiEcho
                     inputPaths = inputPaths(2:3);
                     outputPaths = outputPaths(2:3);
-                end;
+                end
                 
                 for i2 = 1:length(inputPaths)
                     system([fslPrefix 'fslmaths ' inputPaths{i2} ' -Tmean ' outputDir '/tmp_tsnr_calc-1']);
@@ -646,9 +646,9 @@ for s = 1:length(subjects)
                     system([fslPrefix 'fslmaths ' outputDir '/tmp_tsnr_calc-1 -div ' outputDir ...
                         '/tmp_tsnr_calc-2 ' outputPaths{i2}]);
                     system(['rm -rf ' outputDir '/tmp_tsnr_calc-*']);
-                end;
+                end
                 
-            end;
+            end
             
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -666,7 +666,7 @@ for s = 1:length(subjects)
             
             if genTarget && ~exist(targetInit,'file')
                 system(['cp ' exfunc ' ' targetInit]);
-            end;
+            end
             
             mkdir(prepRegDir); mkdir(prepRegTargDir);
             system(['cp ' exfunc ' ' exfuncRegCopy]);
@@ -687,7 +687,7 @@ for s = 1:length(subjects)
                     ' -ref ' target ' -applyxfm -init ' exfunc2Target]);
                 system([fslPrefix 'fslmaths ' outputPaths{p} ' -mul ' ...
                     brainMask2TargetImg ' ' outputPaths{p}]);
-            end;
+            end
             
             save(outputMat,'fwhm','smThresh','faValue','tr','disdaqs',...
                 'transCutoff','rotCutoff','transSingleAxisCutoff',...
@@ -696,8 +696,8 @@ for s = 1:length(subjects)
             
             fprintf('%s\n\n',['Finished preproc for subject ' subject ', expt ' expts{i} runSuffix outputSuffix '.']);
             
-        end;
-    end;
-end;
+        end
+    end
+end
 
 end
