@@ -1,17 +1,16 @@
 
-% convertDCM(study,subjects,varargin)
+% convertDCM(studyDir,subjects,varargin)
 % 
 % Converts DCM files to NIFTI images, labeled by experiment and run number,
-% and realign to LAS orientation.  Loops through subjects.
+% and realigned to LAS orientation.  Loops through subjects.
 % 
-% Example usage: convertDCM('studyName','SUB*','overwrite',true)
+% Example usage: convertDCM('/pathto/studyDirectory','SUB*','overwrite',true)
 % 
 % SETUP: Prior to using this function with a given scanning system, the 
 %        line beginning "dcm = dir" must be edited. See inline comments.
 % 
 % Required arguments:
-% - study (string): name of the study to analyze, used to define the study 
-%       directory as [getenv('FMRI_BASE_DIR') '/' study].
+% - studyDir (string): path to study directory
 % - subjects (string or cell array of strings): list of subjects to
 %       analyze. Can use asterisk-based regular expression. Examples:
 %       {'SUB01','SUB02'} or 'SUB*'.
@@ -20,14 +19,18 @@
 % - overwrite (boolean; default=0): whether to overwrite files that have
 %       already been written by this function.
 
-function convertDCM(study,subjects,varargin)
+function convertDCM(studyDir,subjects,varargin)
 
 addpath([strrep(mfilename('fullpath'),mfilename,'') '/utils']);
 
 % Load/check config variables.
-[configError, studyDir, fslPrefix] = checkConfig(study);
+[configError, fslPrefix] = checkConfig;
 if ~isempty(configError)
     fprintf('%s\n',configError);
+    return;
+end
+if ~exist(studyDir,'dir')
+    fprintf('%s\n',['ERROR: Study directory ' studyDir ' does not exist.']);
     return;
 end
 

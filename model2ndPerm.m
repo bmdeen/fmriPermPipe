@@ -1,5 +1,5 @@
 
-% model2ndPerm(study,subjects,varargin)
+% model2ndPerm(studyDir,subjects,varargin)
 % 
 % Step 2 of a two-step process (modelPerm, model2ndPerm) to perform a
 % General Linear Model based analysis of fMRI data, computing statistics
@@ -12,7 +12,7 @@
 % cluster-level thresholds, or different conList arguments.  Should be run
 % after modelPerm.  Loops across subjects and runs by default.
 %
-% Example usage: model2ndPerm('studyName','SUB*','expt','FaceLoc')
+% Example usage: model2ndPerm('/pathto/studyDirectory','SUB*','expt','FaceLoc')
 %
 % Critical output files (in *.gperm/cope* directory):
 % - cope*.nii.gz: cross-run contrast image
@@ -27,8 +27,7 @@
 % - perms: cross-run contrast and z-statistic maps for each permutation
 %
 % Required arguments:
-% - study (string): name of the study to analyze, used to define the study 
-%       directory as [getenv('FMRI_BASE_DIR') '/' study].
+% - studyDir (string): path to study directory
 % - subjects (string or cell array of strings): list of subjects to
 %       analyze. Can use asterisk-based regular expression.  Examples:
 %       {'SUB01','SUB02'} or 'SUB*'.
@@ -56,14 +55,18 @@
 %       file extension. If a custom image was specified for preprocMRI,
 %       the same image should be used here.
 
-function model2ndPerm(study,subjects,varargin)
+function model2ndPerm(studyDir,subjects,varargin)
 
 addpath([strrep(mfilename('fullpath'),mfilename,'') '/utils']);
 
 % Load/check config variables.
-[configError, studyDir, fslPrefix] = checkConfig(study);
+[configError, fslPrefix] = checkConfig;
 if ~isempty(configError)
     fprintf('%s\n',configError);
+    return;
+end
+if ~exist(studyDir,'dir')
+    fprintf('%s\n',['ERROR: Study directory ' studyDir ' does not exist.']);
     return;
 end
 

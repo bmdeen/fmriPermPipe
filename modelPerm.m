@@ -1,5 +1,5 @@
 
-% modelPerm(study,subjects,expt,conMat,varargin)
+% modelPerm(studyDir,subjects,expt,conMat,varargin)
 % 
 % Step 1 of a two-step process (modelPerm, model2ndPerm) to perform a
 % General Linear Model based analysis of fMRI data, computing statistics
@@ -11,7 +11,7 @@
 % run after registerMRI.  Loops through subjects and runs of a given 
 % experiment by default.
 % 
-% Example usage: modelPerm('studyName','SUB*','FaceLoc',[1 0 -1; -1 0 1])
+% Example usage: modelPerm('/pathto/studyDirectory','SUB*','FaceLoc',[1 0 -1; -1 0 1])
 % 
 % Critical output files (in *.perm directory):
 % - cope*.nii.gz: contrast ("contrast of parameter estimate") images
@@ -27,8 +27,7 @@
 % - perms: directory containing contrast images for each permutation
 %
 % Required arguments:
-% - study (string): name of the study to analyze, used to define the study 
-%       directory as [getenv('FMRI_BASE_DIR') '/' study].
+% - studyDir (string): path to study directory
 % - subjects (string or cell array of strings): list of subjects to
 %       analyze. Can use asterisk-based regular expression.  Examples:
 %       {'SUB01','SUB02'} or 'SUB*'.
@@ -85,14 +84,18 @@
 % - plotResults (boolean; default=1): whether to display result plots
 % - writeResiduals (boolean; default=0): whether to write 4-D residual image
 
-function modelPerm(study,subjects,expt,conMat,varargin)
+function modelPerm(studyDir,subjects,expt,conMat,varargin)
 
 addpath([strrep(mfilename('fullpath'),mfilename,'') '/utils']);
 
 % Load/check config variables.
-[configError, studyDir, fslPrefix] = checkConfig(study);
+[configError, fslPrefix] = checkConfig;
 if ~isempty(configError)
     fprintf('%s\n',configError);
+    return;
+end
+if ~exist(studyDir,'dir')
+    fprintf('%s\n',['ERROR: Study directory ' studyDir ' does not exist.']);
     return;
 end
 
@@ -113,7 +116,9 @@ customNuisRegr = [];        % Custom nuisance regressors
 
 % Modeling parameters
 permuteRest = 1;            % Whether to permute baseline blocks as well as task blocks
-hrfType = 1;                % 1 = double-gamma (FSL/SPM default parameters); 2 = gamma (FS-FAST default parameters)
+hrfType = 1;                % 1 = double-gamma (FSL/SPM default parameters)
+                            % 2 = gamma (FS-FAST default parameters)
+                            % 3 = gamma (MION imaging)
 upsampledTR = .01;          % Regressor sampling rate (s) used for convolution. Code requires mod(tr/2,upsampledTR)==0
 forceTR = 0;                % Whether to force TR to default value, instead of reading from header
 defaultTR = 2;              % Default TR (s), assumed if no TR info in header, or if forcetr==1
@@ -442,13 +447,14 @@ for s = 1:length(subjects)
                                 'have first dimension equal to # of volumes in raw '...
                                 'dataset.  Not using these regressors for ' subject ...
                                 ', expt ' expts{i} runSuffix inputSuffix outputSuffix '.']);
+                        else
+                            nuisRegrMat(:,end+1:end+size(customNuisRegr,2)) = customNuisRegr(goodVols,:);
+                            for r=1:size(customNuisRegr,2)
+                                regrNames{end+1} = ['NuisCustom' int2str(r)];
+                            end
                         end
                         
-                        nuisRegrMat(:,end+1:end+size(customNuisRegr,2)) = customNuisRegr(goodVols,:);
                         
-                        for r=1:size(customNuisRegr,2)
-                            regrNames{end+1} = ['NuisCustom' int2str(r)];
-                        end
                     end
                     
                     % Extract WM/CSF PCA regressors.
