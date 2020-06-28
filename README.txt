@@ -1,5 +1,5 @@
 
-[[fMRIPermPipe]]
+[[ fMRIPermPipe ]]
 
 fMRIPermPipe is a MATLAB-based pipeline for fMRI data analysis, optimized for individual subject analyses.  Within-subject statistics are computed using a permutation test, addressing concerns about the validity of statistics based on parametric approaches to autocorrelation correction (Eklund et al., 2012) and cluster correction (Eklund et al., 2016).
 
