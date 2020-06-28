@@ -18,7 +18,10 @@ argGood = 0;
 
 % String
 if ismember(argName,{'expt','inputSuffix','outputSuffix','targetName',...
-        'highresName','maskName','t2StarPath','r2StarPath','outputPath'})
+        'highresName','maskName','t2StarPath','r2StarPath','outputPath',...
+        'roiPathWM','roiPathCSF','motionParPath','badVolPath','disdaqPath',...
+        'unsmoothedDataPath','outputMat','maskPath','anatRegDir','funcRegDir',...
+        'fsDir','roiDir','funcRoiDir','anatRoiDir'})
     if ischar(argVal)
         argGood = 1;
     end
@@ -26,8 +29,9 @@ if ismember(argName,{'expt','inputSuffix','outputSuffix','targetName',...
 % 0 or 1 (integer or logical)
 elseif ismember(argName,{'overwrite','clustCorrect','permuteRest',...
         'subtractHalfTR','useNuisLinear','useNuisMotion','useNuisWMPCA',...
-        'useNuisCSFPCA','tempFilt','forceTR','genTarget','genTSNR',...
-        'multiEcho','plotResults','writeResiduals'})
+        'useNuisCSFPCA','useNuisGMR','tempFilt','forceTR','genTarget',...
+        'genTSNR','multiEcho','plotResults','writeResiduals','erodeROI',...
+        'pcaUnsmoothed','removeBadVols','useSTC','useTedana'})
     if (isnumeric(argVal) || islogical(argVal)) && isscalar(argVal) && ismember(argVal,[0 1])
         argGood = 1;
     end
@@ -35,6 +39,12 @@ elseif ismember(argName,{'overwrite','clustCorrect','permuteRest',...
 % Scalar integer in [1,2]
 elseif ismember(argName,{'hrfType'})
     if isnumeric(argVal) && isscalar(argVal) && ismember(argVal,[1 2])
+        argGood = 1;
+    end
+    
+% Scalar integer in [0,1,2]
+elseif ismember(argName,{'nuisanceType'})
+    if isnumeric(argVal) && isscalar(argVal) && ismember(argVal,0:2)
         argGood = 1;
     end
     
@@ -69,7 +79,7 @@ elseif ismember(argName,{'voxThresh','clustThresh','faValue'})
     end
     
 % Scalar in (0,Inf)
-elseif ismember(argName,{'defaultTR','filtCutoff','upsampledTR','smThresh'})
+elseif ismember(argName,{'defaultTR','upsampledTR','smThresh'})
     if isnumeric(argVal) && isscalar(argVal) && argVal>0 && argVal~=inf
         argGood = 1;
     end
@@ -90,6 +100,13 @@ elseif ismember(argName,{'fwhm'})
 % Vector of values in (0,Inf)
 elseif ismember(argName,{'teVals'})
     if isnumeric(argVal) && isvector(argVal) && sum(argVal>0)==length(argVal) && sum(argVal==inf)==0
+        argGood = 1;
+    end
+    
+% 1- or 2- element vector of values in (0,Inf)
+elseif ismember(argName,{'filtCutoff'})
+    if isnumeric(argVal) && isvector(argVal) && sum(argVal>0)==length(argVal) && ...
+            sum(argVal==inf)==0 && ismember(length(argVal),[1 2])
         argGood = 1;
     end
 

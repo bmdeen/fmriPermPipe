@@ -1,24 +1,8 @@
 
-function [configError, studyDir, fslPrefix] = checkConfig(study)
+function [configError, fslPrefix] = checkConfig
 
 configError = '';
-studyDir = '';
 fslPrefix = '';
-
-baseDir = getenv('FMRI_BASE_DIR');
-if isempty(baseDir)
-    configError = 'ERROR: FMRI_BASE_DIR not defined in bash environment.';
-    return;
-elseif ~exist(baseDir,'dir')
-    configError = 'ERROR: fMRI base directory does not exist.';
-    return;
-end
-
-studyDir = [baseDir '/' study];
-if ~exist(studyDir,'dir')
-    configError = ['ERROR: Study directory ' studyDir ' does not exist.'];
-    return;
-end
 
 fslDir = getenv('FSL_DIR');
 if isempty(fslDir)
@@ -67,18 +51,18 @@ if cmdError==1 || ~exist('MRIread','file') || ~exist('MRIwrite','file')
     return;
 end
 
-bxhCommands = {'analyze2bxh','bxh2analyze','bxhreorient'};
-cmdError = 0;
-for c=1:length(bxhCommands)
-    [status,~] = system(['which ' bxhCommands{c}]);
-    if status
-        cmdError=1;
-        break;
-    end
-end
-if cmdError==1
-    configError = 'ERROR: BXH/XCEDE scripts are not properly installed or sourced.';
-    return;
-end
+% bxhCommands = {'analyze2bxh','bxh2analyze','bxhreorient'};
+% cmdError = 0;
+% for c=1:length(bxhCommands)
+%     [status,~] = system(['which ' bxhCommands{c}]);
+%     if status
+%         cmdError=1;
+%         break;
+%     end
+% end
+% if cmdError==1
+%     configError = 'ERROR: BXH/XCEDE scripts are not properly installed or sourced.';
+%     return;
+% end
 
 end

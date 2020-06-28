@@ -16,7 +16,7 @@ seq = allRegr(:,3);
 
 if subtractHalfTR
     onsets = onsets-tr/2;   % Note: this code makes first onset -tr/2
-end;
+end
 
 hrf = constructHRF(upsampledTR,hrfType);
 
@@ -27,15 +27,16 @@ sr = 1/upsampledTR; % Sampling rate
 nSmps = round(totalTime*sr + onsetBuffer + 1);
 seqUpsampled = zeros(nSmps,1);
 for j = 1:length(seq)
-    if seq(j)~=0;
+    if seq(j)~=0
         inds = round(onsets(j)*sr + (1:(durs(j)*sr)) + onsetBuffer);
         seqUpsampled(inds) = seq(j);
-    end;
-end;
+    end
+end
 
 seqUpsampled = seqUpsampled(onsetBuffer+1:end);
 trRatio = tr/upsampledTR;
 x = conv(seqUpsampled,hrf);
 regressor = x(1:trRatio:numVols*trRatio)/sum(hrf);
-                    
+if hrfType==3, regressor = -regressor; end  % Invert sign for MION imaging
+
 end

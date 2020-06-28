@@ -7,6 +7,7 @@
 % hrfType: 1 or 2
 % 1) Double gamma, with parameters matched to FSL/SPM defaults
 % 2) Single gamma, with parameters matched to FsFast defaults
+% 3) Single gamma, with parameters set for MION imaging
 
 function [y,t] = constructHRF(tr,hrfType)
 
@@ -42,6 +43,17 @@ switch hrfType
         y(tShift>0) = ((tShift(tShift>0)/tau).^alpha.*exp(-tShift(tShift>0)/tau));
         y = y/max(y);
         
-end;
+    case 3
+        
+        tau = 8;     % Gamma parameters
+        alpha = .3;
+        
+        t = 0:tr:500;
+        y = zeros(length(t),1);
+        tShift = t-d;
+        y(tShift>0) = ((tShift(tShift>0)/tau).^alpha.*exp(-tShift(tShift>0)/tau));
+        y = y/max(y);
+        
+end
 
 end
