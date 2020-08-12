@@ -1,6 +1,8 @@
 
-% Function to separate multi-echo data into individual echo series, using
-% BIDS naming convention: "_echo-N_"
+% Function to separate multi-echo data stored into individual echo series.
+% - Assumes input has echoes concatenated across time:
+%       T1E1, T1E2, ..., T1EN, T2E1, T2E2, ...
+% - Uses BIDS naming convention: "_echo-N_"
 
 function outputPaths = multiEchoSeparate(inputPath,nEchoes,tr)
 

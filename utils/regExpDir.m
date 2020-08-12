@@ -9,8 +9,8 @@ d = dir(dirInput);
 i = 1;
 while i <= length(d)
     if isempty(regexpi(d(i).name,regExp)), d(i)=[];
-    else i = i+1; end;
-end;
+    else i = i+1; end
+end
 
 end
     
