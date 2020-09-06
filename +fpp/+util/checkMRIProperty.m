@@ -23,7 +23,7 @@
 function propertyValue = checkMRIProperty(propertyName,inputPath)
 
 propertyValue = [];
-jsonData = bidsGetMetadata(inputPath);
+jsonData = fpp.bids.getMetadata(inputPath);
 [inputDir,inputName,inputExt] = filepartsGZ(inputPath);
 if isempty(inputDir), inputDir = pwd; end
 
@@ -50,7 +50,7 @@ switch lower(propertyName)
                 inputNames = inputNames(1,:)';
                 for e=1:length(inputNames)
                     inputPaths{e} = [inputDir '/' inputNames{e}];
-                    jsonData = bids.util.jsondecode(strrep(inputPaths{e},inputExt,'.json'));
+                    jsonData = fpp.bids.getMetadata(inputPaths{e});
                     propertyValue(e) = jsonData.EchoTime*1000;
                 end
             else
