@@ -26,10 +26,8 @@
 
 function preprocWrapper(studyDir,subjects,varargin)
 
-addpath([strrep(mfilename('fullpath'),mfilename,'') '/utils']);
-
 % Load/check config variables.
-configError = checkConfig;
+configError = fpp.util.checkConfig;
 if ~isempty(configError)
     fprintf('%s\n',configError);
     return;
@@ -47,7 +45,7 @@ outputSuffix = '';              % New suffix for preproc output
 % Edit variable arguments.  Note: optInputs checks for proper input.
 varArgList = {'expt','runList','outputSuffix'};
 for i=1:length(varArgList)
-    argVal = optInputs(varargin,varArgList{i});
+    argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
         eval([varArgList{i} ' = argVal;']);
     end
@@ -80,7 +78,7 @@ for s = 1:length(subjects)
     analDir = [subjDir '/analysis'];
     targetInit = [funcDir '/' targetName '.nii.gz'];
     
-    scanlogFiles = regExpDir(subjDir,'.*scanlo.*([^~]$)');
+    scanlogFiles = fpp.util.regExpDir(subjDir,'.*scanlo.*([^~]$)');
     
     if exist(subjDir,'dir')==0
         fprintf('%s\n\n',['Subject directory does not exist for ' subject '. Skipping this subject.']);

@@ -4,7 +4,7 @@
 % 
 % By default: use white matter and CSF PCs, linear trend, and motion 
 % regressors. Assume default paths, with option to customize.
-%
+% 
 % Note: optional arguments for defineNuisanceRegressors can also be passed
 % through this function.
 % 
@@ -20,10 +20,8 @@
 
 function removeNuisance(inputPath,varargin)
 
-addpath([strrep(mfilename('fullpath'),mfilename,'') '/utils']);
-
 % Load/check config variables.
-[configError, fslPrefix] = checkConfig;
+configError = fpp.util.checkConfig;
 if ~isempty(configError)
     fprintf('%s\n',configError);
     return;
@@ -61,7 +59,7 @@ removeBadVols = 1;          % Whether to remove artifact time points before comp
 % Edit variable arguments.  Note: optInputs checks for proper input.
 varArgList = {'overwrite','outputPath','badVolPath','disdaqPath','disdaqs','removeBadVols','maskPath'};
 for i=1:length(varArgList)
-    argVal = optInputs(varargin,varArgList{i});
+    argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
         eval([varArgList{i} ' = argVal;']);
     end
@@ -96,7 +94,7 @@ if isempty(disdaqs)
 else
     disdaqVols = (1:disdaqs)';
 end
-[~,numVols] = system([fslPrefix 'fslval ' inputPath ' dim4']);
+[~,numVols] = system(['fslval ' inputPath ' dim4']);
 numVols = str2num(strtrim(numVols));
 goodVols = setdiff(1:numVols,union(disdaqVols,badVols));
 

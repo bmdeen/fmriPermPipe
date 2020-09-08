@@ -37,10 +37,8 @@
 
 function convertDCM2BIDSWrapper(studyDir,subjects,varargin)
 
-addpath([strrep(mfilename('fullpath'),mfilename,'') '/utils']);
-
 % Load/check config variables.
-[configError, fslPrefix] = checkConfig;
+configError = fpp.util.checkConfig;
 if ~isempty(configError)
     error(configError);
 end
@@ -72,7 +70,7 @@ subjects = subjectsNew;
 % Edit variable arguments.  Note: optInputs checks for proper input.
 varArgList = {'overwrite'};
 for i=1:length(varArgList)
-    argVal = optInputs(varargin,varArgList{i});
+    argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
         eval([varArgList{i} ' = argVal;']);
     end
@@ -87,7 +85,7 @@ for s = 1:length(subjects)
     % consistently ordered by "dir" function.  Can be accomplished with a
     % consistent naming convention: scanlog, scanlog2, etc and dicom,
     % dicom2, etc.
-    scanlogFiles = regExpDir(subjDir,'.*scanlo.*([^~]$)');
+    scanlogFiles = fpp.util.regExpDir(subjDir,'.*scanlo.*([^~]$)');
     dcmDirs = dir([subjDir '/dicom*']);
     
     if exist(subjDir,'dir')==0
@@ -138,7 +136,7 @@ for s = 1:length(subjects)
             %%% returns a string consisting of the integer input, padded
             %%% with zeros on the left up to length len.
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            dcm = dir([dcmDir '/*_S*' numPad(acq,3) 'I00001.DCM']);
+            dcm = dir([dcmDir '/*_S*' fpp.util.numPad(acq,3) 'I00001.DCM']);
             
             if length(dcm)>1
                 fprintf('%s\n\n',['Multiple DCMs fit string template for subject ' ...

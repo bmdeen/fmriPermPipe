@@ -70,11 +70,6 @@
 %       parameters); 2 = gamma (FS-FAST default parameters).
 % - upsampledTR (scalar in (0,Inf); default=.01): regressor sampling rate 
 %       (s) used for convolution. Code requires mod(tr/2,upsampledTR)==0.
-% - forceTR (boolean; default=0): whether to force TR to default value, 
-%       instead of reading from header.  Should be used only if TR
-%       information in image header is corrupted.
-% - defaultTR (scalar in (0,Inf); default=2): default TR (s), used if no TR
-%       info is found in functional data header, or if forcetr==1.
 % - tempFilt (boolean; default=0): whether to highpass filter regressors.
 %       Should be used if data were filtered by preprocMRI.
 % - filtCutoff (scalar in (0,Inf); default=.01: highpass filter cutoff (Hz)
@@ -93,10 +88,8 @@
 
 function modelPerm(studyDir,subjects,expt,conMat,varargin)
 
-addpath([strrep(mfilename('fullpath'),mfilename,'') '/utils']);
-
 % Load/check config variables.
-[configError, fslPrefix] = checkConfig;
+configError = fpp.util.checkConfig;
 if ~isempty(configError)
     fprintf('%s\n',configError);
     return;
@@ -127,8 +120,6 @@ hrfType = 1;                % 1 = double-gamma (FSL/SPM default parameters)
                             % 2 = gamma (FS-FAST default parameters)
                             % 3 = gamma (MION imaging)
 upsampledTR = .01;          % Regressor sampling rate (s) used for convolution. Code requires mod(tr/2,upsampledTR)==0
-forceTR = 0;                % Whether to force TR to default value, instead of reading from header
-defaultTR = 2;              % Default TR (s), assumed if no TR info in header, or if forcetr==1
 subtractHalfTR = 1;         % Whether to subtract .5*TR to regressor onsets, to account for slice timing
 
 % Regressor filtering parameters
@@ -175,10 +166,10 @@ subjects = subjectsNew;
 varArgList = {'overwrite','runList','inputSuffix','outputSuffix','maskName',...
     'useNuisLinear','useNuisMotion','useNuisWMPCA','useNuisCSFPCA',...
     'pcaOrder','permuteRest','tempFilt','filtCutoff','filtOrder','hrfType',...
-    'upsampledTR','defaultTR','forceTR','customNuisRegr','writeResiduals',...
+    'upsampledTR','customNuisRegr','writeResiduals',...
     'permIters','plotResults'};
 for i=1:length(varArgList)
-    argVal = optInputs(varargin,varArgList{i});
+    argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
         eval([varArgList{i} ' = argVal;']);
     end
@@ -328,18 +319,18 @@ for s = 1:length(subjects)
             if isempty(maskName) || ~exist(funcMaskInit,'file')
                 system(['cp ' funcMaskInit ' ' funcMask]);
             else
-                system([fslPrefix 'fslmaths ' funcMaskInit ' -mul ' ...
+                system(['fslmaths ' funcMaskInit ' -mul ' ...
                     prepRegTargDir '/mask.nii.gz ' funcMask]);
             end
             
             rfd = [prepDir '/raw_func.nii.gz'];
             badVols = load([prepDir '/art/badvols']);
-            [~,numVols] = system([fslPrefix 'fslval ' rfd ' dim4']);
+            [~,numVols] = system(['fslval ' rfd ' dim4']);
             numVols = str2num(strtrim(numVols));
             goodVols = setdiff(1:numVols,badVols);
             
             % Check TR of data for regressor definition
-            tr = determineTR(rfd,forceTR,defaultTR,fslPrefix);
+            tr = fpp.util.checkMRIProperty('tr',rfd);
             
             if mod(tr/2,upsampledTR)~=0
                 fprintf('%s\n',['TR/2 is not a multiple of upsampledTR for '...

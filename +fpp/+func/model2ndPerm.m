@@ -64,10 +64,8 @@
 
 function model2ndPerm(studyDir,subjects,varargin)
 
-addpath([strrep(mfilename('fullpath'),mfilename,'') '/utils']);
-
 % Load/check config variables.
-[configError, fslPrefix] = checkConfig;
+configError = fpp.util.checkConfig;
 if ~isempty(configError)
     fprintf('%s\n',configError);
     return;
@@ -113,7 +111,7 @@ subjects = subjectsNew;
 varArgList = {'overwrite','looRun','clustCorrect','expt','runList','conList',...
     'inputSuffix','outputSuffix','voxThresh','clustThresh'};
 for i=1:length(varArgList)
-    argVal = optInputs(varargin,varArgList{i});
+    argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
         eval([varArgList{i} ' = argVal;']);
     end
@@ -132,7 +130,7 @@ for s = 1:length(subjects)
     regDir = [subjDir '/reg'];
     regTargDir = [subjDir '/reg/' targetName];
     
-    scanlogFiles = regExpDir(subjDir,'.*scanlo.*([^~]$)');
+    scanlogFiles = fpp.util.regExpDir(subjDir,'.*scanlo.*([^~]$)');
     
     if exist(subjDir,'dir')==0
         fprintf('%s\n',['Subject directory does not exist for ' subject '.']);
@@ -313,12 +311,12 @@ for s = 1:length(subjects)
                 % permutation statistic image
                 outputCope = [outputDir '/cope' int2str(c) '.nii.gz'];
                 if ~exist(outputCope,'file')
-                    cmd = [fslPrefix 'fslmaths '];
+                    cmd = ['fslmaths '];
                     sumWeights = 0;    % Sum of weighting factors for cope images
                     for r=1:numRuns
                         inputCope = [permDirs{r} '/cope' int2str(c) '.nii.gz'];
                         tmpPath{r} = [permDirs{r} '/tmp_weighted_cope.nii.gz'];
-                        system([fslPrefix 'fslmaths ' inputCope ' -mul ' ...
+                        system(['fslmaths ' inputCope ' -mul ' ...
                             num2str(1/rData{r}.conVarBase(c)) ' ' tmpPath{r}]);
                         sumWeights = sumWeights+1/rData{r}.conVarBase(c);
                         if r==1
@@ -339,19 +337,19 @@ for s = 1:length(subjects)
                 copeStd = [outputDir '/cope' int2str(c) '_standard.nii.gz'];
                 standard = [getenv('FSL_DIR') '/data/standard/MNI152_T1_2mm_brain.nii.gz'];
                 highres2StdWarp = [regDir '/highres2standard_warp.nii.gz'];
-                system([fslPrefix 'applywarp --ref=' standard ' --in=' outputCope ' --out=' ...
+                system(['applywarp --ref=' standard ' --in=' outputCope ' --out=' ...
                     copeStd ' --warp=' highres2StdWarp ' --premat=' target2Highres]);
                 
                 % Do this for many iterations of lists of input permutations
                 for iter=1:permIters
                     outputCopePerm = [permsDir '/cope' int2str(c) '_iter' int2str(iter) '.nii.gz'];
                     if ~exist(outputCopePerm,'file')
-                        cmd = [fslPrefix 'fslmaths '];
+                        cmd = ['fslmaths '];
                         sumWeights = 0;    % Sum of weighting factors for cope images
                         for r=1:numRuns
                             inputCope = [permDirs{r} '/perms/iter' int2str(iter) '/cope' int2str(c) '.nii.gz'];
                             tmpPath{r} = [permDirs{r} '/perms/iter' int2str(iter) '/tmp_weighted_cope.nii.gz'];
-                            system([fslPrefix 'fslmaths ' inputCope ' -mul ' ...
+                            system(['fslmaths ' inputCope ' -mul ' ...
                                 num2str(1/rData{r}.conVarBasePerm{iter}(c)) ' ' tmpPath{r}]);
                             sumWeights = sumWeights+1/rData{r}.conVarBasePerm{iter}(c);
                             if r==1
@@ -375,7 +373,7 @@ for s = 1:length(subjects)
                 
                 % Merge permstat files
                 copeConcat = [permsDir '/cope' int2str(c) '_concat.nii.gz'];
-                mergeCmd = [fslPrefix 'fslmerge -t ' copeConcat ' '];
+                mergeCmd = ['fslmerge -t ' copeConcat ' '];
                 
                 % Split up merge command to avoid Linux character limits
                 cLength = length([permsDir '/iter' int2str(permIters) ...
@@ -388,7 +386,7 @@ for s = 1:length(subjects)
                     copeConcats{c2} = [permsDir '/cope' int2str(c) ...
                         '_concat_miter' int2str(c2) '.nii.gz'];
                     mergeCmd = [mergeCmd ' ' copeConcats{c2}];
-                    mergeCmd2 = [fslPrefix 'fslmerge -t ' copeConcats{c2} ' '];
+                    mergeCmd2 = ['fslmerge -t ' copeConcats{c2} ' '];
                     for j=(1+(c2-1)*copesPerMerge):min(permIters,c2*copesPerMerge)
                         outputCopePerm = [permsDir '/cope' int2str(c) '_iter' int2str(j) '.nii.gz'];
                         mergeCmd2 = [mergeCmd2 ' ' outputCopePerm];
@@ -402,9 +400,9 @@ for s = 1:length(subjects)
                 % Compute zstat file from perm stat files, by fitting a Gaussian
                 copeMean = [permsDir '/cope' int2str(c) '_mean.nii.gz'];
                 copeStd = [permsDir '/cope' int2str(c) '_std.nii.gz'];
-                system([fslPrefix 'fslmaths ' copeConcat ' -Tmean ' copeMean]);
-                system([fslPrefix 'fslmaths ' copeConcat ' -Tstd ' copeStd]);
-                system([fslPrefix 'fslmaths ' outputCope ' -sub ' copeMean ...
+                system(['fslmaths ' copeConcat ' -Tmean ' copeMean]);
+                system(['fslmaths ' copeConcat ' -Tstd ' copeStd]);
+                system(['fslmaths ' outputCope ' -sub ' copeMean ...
                     ' -div ' copeStd ' ' outputZStat]);
                 
             end
@@ -429,7 +427,7 @@ for s = 1:length(subjects)
                 for iter=1:permIters
                     outputCopePerm = [permsDir '/cope' int2str(c) '_iter' int2str(iter) '.nii.gz'];
                     zStatPermPath = [permsDir '/zstat' int2str(c) '_iter' int2str(iter) '.nii.gz'];
-                    system([fslPrefix 'fslmaths ' outputCopePerm ' -sub ' copeMean ...
+                    system(['fslmaths ' outputCopePerm ' -sub ' copeMean ...
                         ' -div ' copeStd ' ' zStatPermPath]);
                     [~,clustInfo] = system(['cluster -i ' zStatPermPath ' -t ' num2str(zCutoff)]);
                     clustInfo = regexp(clustInfo, '[\f\n\r]', 'split');
@@ -448,7 +446,7 @@ for s = 1:length(subjects)
                 end
                 
                 % Determine maximum cluster size to consider, based on mean cope
-                [~,maxClustSize] = system([fslPrefix 'fslstats ' copeMean ' -V']);
+                [~,maxClustSize] = system(['fslstats ' copeMean ' -V']);
                 maxClustSize = str2num(strtrim(maxClustSize));
                 maxClustSize = maxClustSize(1);
                 
@@ -471,8 +469,8 @@ for s = 1:length(subjects)
             tmpPath{1} = [outputDir '/tmp_cluster_thresholding.nii.gz'];
             system(['cluster -i ' outputZStat ' -t ' num2str(zCutoff) ' --othresh=' ...
                 outputThreshZStat ' --osize=' tmpPath{1} ' --no_table']);
-            system([fslPrefix 'fslmaths ' tmpPath{1} ' -thr ' int2str(clustCutoff) ' -bin ' tmpPath{1}]);
-            system([fslPrefix 'fslmaths ' outputThreshZStat ' -mul ' tmpPath{1} ' ' outputThreshZStat]);
+            system(['fslmaths ' tmpPath{1} ' -thr ' int2str(clustCutoff) ' -bin ' tmpPath{1}]);
+            system(['fslmaths ' outputThreshZStat ' -mul ' tmpPath{1} ' ' outputThreshZStat]);
             system(['rm -rf ' tmpPath{1}]);
             
             fprintf('%s\n\n',['Finished 2nd-level analysis for subject ' subject ', expt ' ...

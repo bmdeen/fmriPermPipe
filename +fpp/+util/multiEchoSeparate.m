@@ -21,7 +21,7 @@ system(['fslsplit ' inputPath ' ' outputDir '/' randStem ' -t']);
 for t=1:vols
     tReal = ceil(t/nEchoes);
     echoNum = mod(t,nEchoes); if echoNum==0, echoNum=nEchoes; end
-    mergeCmd{echoNum} = [mergeCmd{echoNum} ' ' outputDir '/' randStem numPad(t-1,4) '.nii.gz'];
+    mergeCmd{echoNum} = [mergeCmd{echoNum} ' ' outputDir '/' randStem fpp.util.numPad(t-1,4) '.nii.gz'];
 end
 for e=1:nEchoes
     mergeCmd{e} = [mergeCmd{e} ' ' num2str(tr)];

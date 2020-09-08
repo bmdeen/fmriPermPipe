@@ -74,7 +74,7 @@ for e=1:numTEs
 end
 for t=1:vols
     echoNum = mod(t,numTEs); if echoNum==0, echoNum=numTEs; end
-    mergeCmd{echoNum} = [mergeCmd{echoNum} ' ' tmpDir '/split' numPad(t-1,4) '.nii.gz'];
+    mergeCmd{echoNum} = [mergeCmd{echoNum} ' ' tmpDir '/split' fpp.util.numPad(t-1,4) '.nii.gz'];
 end
 for e=1:numTEs
     mergeCmd{e} = [mergeCmd{e} ' ' num2str(tr)];
