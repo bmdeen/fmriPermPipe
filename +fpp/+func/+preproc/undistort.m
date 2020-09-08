@@ -1,7 +1,7 @@
 
 % Function to undistort a functional volume using blip-up/blip-down spin
 % echo measurements.
-% 
+%
 % Arguments:
 % inputPath (string): path to input distorted functional
 % outputPath (string): path to output undistorted functional
@@ -11,7 +11,7 @@
 %   derivatives
 % fieldMapParamPath: text file with field map parameters for topup
 %
-% 
+%
 % TODO:
 % - Topup: accomodate odd slice number by adding dummy slice in this case
 % - Generate json files for produced images, with Description, Sources,
@@ -23,7 +23,7 @@ function [errorMsg,topupWarpPath,topupJacobianPath,xfmFunc2SpinEcho,xfmSpinEcho2
 errorMsg = [];
 
 % Topup output files
-[~,spinEchoName,~] = filepartsGZ(spinEchoPaths{1});
+[~,spinEchoName,~] = fpp.util.fileParts(spinEchoPaths{1});
 topupOutputStem = [fmapPreprocDir '/' strrep(fpp.bids.changeName(spinEchoName,'dir',''),'_epi','')];
 topupWarpPath = [fpp.bids.changeName(topupOutputStem,'desc','UndistortionWarp') '_warp.nii.gz'];
 topupJacobianPath = [fpp.bids.changeName(topupOutputStem,'desc','UndistortionWarp') '_jacobian.nii.gz'];
@@ -50,7 +50,7 @@ end
 %%% TO ADD: ACCOMODATE ODD-SLICE-NUMBER BY ADDING DUMMY SLICE
 if ~exist(topupWarpPath,'file') || ~exist(topupJacobianPath,'file')
     system(['topup --imain=' spinEchoPaths{end} ' --datain=' fieldMapParamPath ' --config=b02b0.cnf --out=' ...
-        topupOutputStem ' --iout=' fpp.bids.changeName(topupOutputStem,'desc','Undistorted','epi') ' --fout=' ...
+        topupOutputStem ' --iout=' fpp.bids.changeName(topupOutputStem,'desc','Undistorted') '_epi --fout=' ...
         topupOutputStem '_fieldmapHz --dfout=' topupOutputStem '_warp --jacout=' topupOutputStem '_jacobian']);
     system(['mv ' topupOutputStem '_jacobian_01.nii.gz ' topupJacobianPath]);
     system(['rm -rf ' topupOutputStem '_jacobian_02.nii.gz']);

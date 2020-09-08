@@ -1,20 +1,26 @@
 
 % Function to apply motion and distortion correct, and registration to
 % functional template with a single interpolation step.
+%
+% Assumes matched naming between input and mcDir.
 
 function oneShotMotionDistortionCorrect(inputPaths,outputPaths,funcTemplatePath,funcTemplateName,mcDir,topupWarpPath,...
-    topupJacobianPath,xfmNativeFunc2FuncTemplate,xfmSpinEcho2NativeFunc,xfmNativeFunc2SpinEcho)
+    topupJacobianPath,xfmNativeFunc2FuncTemplate,xfmSpinEcho2NativeFunc,xfmNativeFunc2SpinEcho,echoForMoCorr)
 
-keyboard;
-
-xfmSpinEcho2FuncTemplate = fpp.bids.changeName(funcTemplatePath,{'desc','from','to','mode'},...
-    {'','SpinEcho',funcTemplateName,'image'},'xfm','.mat');
+xfmSpinEcho2FuncTemplate = fpp.bids.changeName(topupJacobianPath,{'desc','from','to','mode'},...
+    {'','orig',funcTemplateName,'image'},'xfm','.mat');
 topupJacobian2FuncTemplatePath = fpp.bids.changeName(topupJacobianPath,'space',funcTemplateName,'jacobian');
+[~,mcName,~] = fileparts(mcDir);
 
 % Move warp Jacobian to FuncTemplate space
-system(['convert_xfm -omat ' xfmSpinEcho2FuncTemplate ' -concat ' xfmNativeFunc2FuncTemplate xfmSpinEcho2NativeFunc]);
+system(['convert_xfm -omat ' xfmSpinEcho2FuncTemplate ' -concat ' xfmNativeFunc2FuncTemplate ' ' xfmSpinEcho2NativeFunc]);
 system(['flirt -in ' topupJacobianPath ' -ref ' funcTemplatePath ' -out ' topupJacobian2FuncTemplatePath ...
     ' -applyxfm -init ' xfmSpinEcho2FuncTemplate]);
+
+% Check # of volumes
+[~,vols] = system(['fslval ' inputPaths{1} ' dim4']);
+vols = str2num(strtrim(vols));
+tr = fpp.util.checkMRIProperty('tr',inputPaths{1});
 
 for e=1:length(outputPaths)
     mergeCmd = ['fslmerge -tr ' outputPaths{e}];
@@ -22,19 +28,22 @@ for e=1:length(outputPaths)
     outputSplitStem = [strrep(fpp.bids.changeName(inputPaths{e},'space',funcTemplateName),'.nii.gz','') '_SplitForMoco'];
     system(['fslsplit ' inputPaths{e} ' ' inputSplitStem ' -t']);
     for t=0:vols-1
-        inputVolPath = [inputSplitStem numpad(t,4) '.nii.gz'];
-        outputVolPath = [outputSplitStem numpad(t,4) '.nii.gz'];
+        inputVolPath = [inputSplitStem fpp.util.numPad(t,4) '.nii.gz'];
+        outputVolPath = [outputSplitStem fpp.util.numPad(t,4) '.nii.gz'];
         system(['convert_xfm -omat ' xfmSpinEcho2FuncTemplate ' -concat ' xfmNativeFunc2FuncTemplate ' ' xfmSpinEcho2NativeFunc]);
-        xfmInputVol2NativeFunc = [mcDir '/' fpp.bids.changeName(outputPaths{e},{'desc','from','to','mode'},...
-            {'',['orig' matFiles(f).name(5:end)],'orig','image'},'xfm','.mat')];
-        xfmInputVol2SpinEcho = [mcDir '/' fpp.bids.changeName(outputPaths{e},{'desc','from','to','mode'},...
-            {'',['orig' matFiles(f).name(5:end)],'SpinEcho','image'},'xfm','.mat')];
-        system(['convert_xfm -omat ' xfmInputVol2SpinEcho ' -concat ' xfmNativeFunc2SpinEcho xfmInputVol2NativeFunc]);
+        xfmInputVol2NativeFunc = [mcDir '/' fpp.bids.changeName(mcName,{'echo','desc','from','to','mode'},...
+            {int2str(echoForMoCorr),'',['orig' fpp.util.numPad(t,4)],'orig','image'},'xfm','.mat')];
+        xfmInputVol2SpinEcho = [mcDir '/' fpp.bids.changeName(mcName,{'echo','desc','from','to','mode'},...
+            {int2str(echoForMoCorr),'',['orig' fpp.util.numPad(t,4)],'SpinEcho','image'},'xfm','.mat')];
+        system(['convert_xfm -omat ' xfmInputVol2SpinEcho ' -concat ' xfmNativeFunc2SpinEcho ' ' xfmInputVol2NativeFunc]);
         % Single-shot application of motion correction, undistortion, and registration to FuncTemplate
         system(['applywarp --in=' inputVolPath ' --ref=' funcTemplatePath ' --out=' outputVolPath ...
             ' --warp=' topupWarpPath ' --premat=' xfmInputVol2SpinEcho ' --postmat=' xfmSpinEcho2FuncTemplate]);
         system(['fslmaths ' outputVolPath ' -mul ' topupJacobian2FuncTemplatePath ' ' outputVolPath]);
         mergeCmd = [mergeCmd ' ' outputVolPath];
+        if mod(t+1,10)==0
+           fprintf('\t%s\n',['Finished warping echo ' int2str(e) ', volume ' int2str(t+1)]);
+        end
     end
     
     % Merge output into single time series file, delete individual time points
@@ -43,11 +52,11 @@ for e=1:length(outputPaths)
     system(['rm -rf ' inputSplitStem '*.nii.gz ' outputSplitStem '*.nii.gz']);
     
     % Generate output JSON file
-    [~,~,inputExt] = filepartsGZ(inputPaths{e});
+    [~,~,inputExt] = fpp.util.fileParts(inputPaths{e});
     inputJsonPath = strrep(inputPaths{e},inputExt,'.json');
-    [~,~,outputExt] = filepartsGZ(outputPaths{e});
+    [~,~,outputExt] = fpp.util.fileParts(outputPaths{e});
     outputJsonPath = strrep(outputPaths{e},outputExt,'.json');
-    jsonReconstruct(inputJsonPath,outputJsonPath);
+    fpp.bids.jsonReconstruct(inputJsonPath,outputJsonPath);
     bidsBaseDir = fpp.bids.checkBidsDir(inputPaths{e});
     sources = inputPaths{e};
     if ~isempty(bidsBaseDir)

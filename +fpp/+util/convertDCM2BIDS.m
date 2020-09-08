@@ -50,8 +50,6 @@
 
 function convertDCM2BIDS(subject,dicomDir,outputDir,scanlogPath,overwrite)
 
-addpath([strrep(mfilename('fullpath'),mfilename,'') '/utils']);
-
 if ~exist('overwrite','var'), overwrite = 0; end
 jsonOpts.indent = '\t';     % Use tab indentation for JSON outputs
 
@@ -82,7 +80,7 @@ for f=1:length(scanlogFields)
         if isnumeric(value)
             if mod(value,1)==0  % value is an integer
                 if value<100
-                    value = numPad(value,2);
+                    value = fpp.util.numPad(value,2);
                 else
                     value = int2str(value);
                 end
@@ -176,7 +174,7 @@ for i=1:length(scanlog.series)
     
     % If multiple echoes exist, process each separately
     didNotWrite(i) = 0;
-    meFiles = regExpDir([niixDir '/' int2str(scanlog.series(i)) '_e*.nii.gz'],[int2str(scanlog.series(i)) '_e[1-9].nii.gz']);
+    meFiles = fpp.util.regExpDir([niixDir '/' int2str(scanlog.series(i)) '_e*.nii.gz'],[int2str(scanlog.series(i)) '_e[1-9].nii.gz']);
     if length(meFiles)>1
         keys{end+1} = 'echo';
         values{end+1} = 1;
@@ -184,7 +182,7 @@ for i=1:length(scanlog.series)
             values{end} = int2str(e);
             inputNiftiPath = [niixDir '/' meFiles(e).name];
             inputJsonPath = strrep(inputNiftiPath,'.nii.gz','.json');
-            outputNiftiPath = [outputSubDir '/' bidsChangeEntity('',keys,values,imageType,'.nii.gz')];
+            outputNiftiPath = [outputSubDir '/' fpp.bids.changeName('',keys,values,imageType,'.nii.gz')];
             outputNiftiPathsRelative{i,e} = strrep(outputNiftiPath,[outputDir '/'],'');
             outputJsonPath = strrep(outputNiftiPath,'.nii.gz','.json');
             if ~exist(outputNiftiPath,'file') || overwrite
@@ -207,7 +205,7 @@ for i=1:length(scanlog.series)
     else
         inputNiftiPath = [niixDir '/' int2str(scanlog.series(i)) '.nii.gz'];
         inputJsonPath = strrep(inputNiftiPath,'.nii.gz','.json');
-        outputNiftiPath = [outputSubDir '/' bidsChangeEntity('',keys,values,imageType,'.nii.gz')];
+        outputNiftiPath = [outputSubDir '/' fpp.bids.changeName('',keys,values,imageType,'.nii.gz')];
         outputNiftiPathsRelative{i,1} = strrep(outputNiftiPath,[outputDir '/'],'');
         outputJsonPath = strrep(outputNiftiPath,'.nii.gz','.json');
         if ~exist(outputNiftiPath,'file') || overwrite

@@ -99,7 +99,7 @@ end
 % Copy spin echo images to fmapPreprocDir, and concatenate
 for f=1:length(spinEchoPaths)
     [~,spinEchoName,~] = fpp.util.fileParts(spinEchoPaths{f});
-    spinEchoPathsNew{f} = [fmapPreprocDir '/' bidsChangeEntity(spinEchoName,'dir',spinEchoPhaseEncodeDirectionsStr{f},'epi') '.nii.gz'];
+    spinEchoPathsNew{f} = [fmapPreprocDir '/' fpp.bids.changeName(spinEchoName,'dir',spinEchoPhaseEncodeDirectionsStr{f},'epi') '.nii.gz'];
     fpp.util.copyImageAndJson(spinEchoPaths{f},spinEchoPathsNew{f});
 end
 spinEchoPaths = spinEchoPathsNew;

@@ -28,7 +28,7 @@ else
     pVec(zVec<0) = 2*normcdf(zVec(zVec<0));
 end
 
-[h,critP,~,adjP] = fdrBH(pVec,qThresh,method);
+[h,critP,~,adjP] = fpp.util.fdrBH(pVec,qThresh,method);
 disp(['Critical P-value: ' num2str(critP)]);
 
 zVec(h==0) = 0;

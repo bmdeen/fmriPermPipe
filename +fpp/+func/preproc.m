@@ -1,11 +1,12 @@
-
+%
 % fpp.func.preproc(inputPaths,outputDir,varargin)
 % 
-% Preprocesses a single fMRI dataset, including including artifact 
-% detection/scrubbing, motion correction, skull-stripping, spatial 
-% smoothing, intensity normalization, high-pass temporal filtering 
-% (optional), and registration to a functional template image. Should be
-% run after convertDCM.
+% Preprocesses a single fMRI dataset, including including motion parameter
+% estimation, despiking, slice timing correction, one-shot motion and
+% distoration correction and functional template registration, TEDANA
+% multi-echo ICA denoising and optimal echo combination, intensity
+% normalization, and optional spatial/temporal filtering. Should be run
+% after fpp.util.convertDCM2BIDS.
 % 
 % Example usage:
 % fpp.func.preproc({'/pathToData/sub-01_task-faceloc_run-01_echo-1_bold.nii.gz',...
@@ -66,7 +67,7 @@
 %
 %
 % TODO NEXT:
-% - Add TEDANA
+% - Add tSNR computation!
 % - By default, construct session template by averaging registered SBRef
 %   images across given session (use func if SBRef doesn't exist). Make
 %   sure it's in LAS orientation, and include skull-stripped version.
@@ -74,15 +75,27 @@
 %   constructed using only that seq/task.
 % - Add spatial smoothing
 % - Add temporal filtering (compare matlab/FSL)
-% - Add option to delete midprep images
+% - Add option to delete midprep images. Also to delete internal files,
+%   e.g. topup stuff, motion directory.
 % - Add JSON files for mocotarget, undistorted mocotarget, func template
+% - Add JSON files for additional TEDANA/ts2map outputs
+% - Make description text augment with each step added (w/ details of
+%   processing done), add this as an input to functions. Have displayed
+%   number augment automatically as well.
 %
-% TODO EVENTUALLY:
-% - Save artifact time points in BIDS format
+% TODO NEXT:
+% - Add suffix option for desc
+% - Add additional confounds - global signal, DVARS, trans/rot,
+% FramewiseDisplacement, aCompCorr, NonSteadyStateOutlier00,
+% ArtifactTimePoint00 - to desc-confounds_regressors.tsv file
+% - Potential BIDS confound TSV files:
+% -- desc-confounds_regressors.tsv - all regressors!
+% -- motion.tsv - just motion regressors
+% -- physreg.tsv - physiological regressors
+% -- outliers.tsv
+% -- mixing.tsv / components.tsv
+% - Save artifact time point regressors in BIDS format (time points to remove)
 % - Extract artifact time points from 3dDespike
-% - Ensure that flirt can compute registrations with a reflection between
-%   images, to account for potential orientation changes.
-% - Conversion to LAS based on MRIRead2 and MRIWrite2.
 % - Method to deal with disdaqs, taking into account BIDS info, adding them
 %   as artifact time points. Based on NumberOfVolumesDiscardedByUser
 %   and NumberOfVolumesDiscardedByScanner json fields
@@ -90,18 +103,18 @@
 %   mid-preproc images as sources.
 % - Consider moving topup to copyAndCheckSpinEcho. All of the relevant info
 %   is there!!
-% - For initial brain mask, consider using BET?
-% - Change "funcTemplatePath" variable name?
+%
+% TODO EVENTUALLY
 % - Add functionality for multiple spin echo field maps IntendedFor one
 %   functional dataset (averaging maps together first)?
+% - Add physiological regressors!
+% - Add versions of all software used.
 % 
 
 function preproc(inputPaths,outputDir,varargin)
 
-addpath([strrep(mfilename('fullpath'),mfilename,'') '/utils']);
-
 % Load/check config variables.
-[configError, fslPrefix] = checkConfig;
+configError = fpp.util.checkConfig;
 if ~isempty(configError)
     fprintf('%s\n',configError);
     return;
@@ -155,7 +168,7 @@ varArgList = {'overwrite','funcTemplatePath','funcTemplateName','fwhm',...
     'faValue','smThresh','useSTC','useTedana','echoForMoCorr','undistort',...
     'spinEchoPaths','spinEchoPhaseEncodeDirections','useTaskTemplate'};
 for i=1:length(varArgList)
-    argVal = optInputs(varargin,varArgList{i});
+    argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
         eval([varArgList{i} ' = argVal;']);
     end
@@ -256,7 +269,7 @@ if isempty(tr)
 end
 
 % Check # of volumes
-[~,vols] = system([fslPrefix 'fslval ' outputPaths{1} ' dim4']);
+[~,vols] = system(['fslval ' outputPaths{1} ' dim4']);
 vols = str2num(strtrim(vols));
 
 % Create a wrapper function for converting '.nii.gz' to '.json'
@@ -271,7 +284,7 @@ removeBidsBaseDir = @(x) strrep(x,[bidsBaseDir '/'],'');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fprintf('%s\n',['Step 1, Estimate motion parameters             - ' inputName]);
 inputPaths = outputPaths;
-mcDir = [funcPreprocDir '/' strrep(inputName,'_bold','') '_motion'];
+mcDir = [funcPreprocDir '/' strrep(fpp.bids.changeName(inputName,'echo',int2str(echoForMoCorr)),'_bold','') '_motion'];
 if ~exist(mcDir,'dir'), mkdir(mcDir); end
 moCorrTargetVolNum = ceil(vols/2);   % Example func volume #, indexed by 0
 motionParams = fpp.func.preproc.estimateHeadMotion(inputPaths{echoForMoCorr},mcDir,moCorrTargetVolNum);
@@ -284,6 +297,8 @@ if ismember(moCorrTargetVolNum,artifactTPs)
     artifactTPs = fpp.func.preproc.defineMotionArtifactTimePoints(motionParams,transCutoff,rotCutoff,tptsAfter);
 end
 
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% STEP 2: 3dDespike
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -294,8 +309,8 @@ for e=1:nEchoes
     [~,~] = system(['3dDespike ' inputPaths{e}]);
     [~,~] = system(['3dAFNItoNIFTI ' pwd '/despike+orig.BRIK']);
     [~,~] = system(['mri_convert ' pwd '/despike.nii ' outputPaths{e}]);
-    jsonReconstruct(convertNiiJson(inputPaths{e}),convertNiiJson(outputPaths{e}));
-    jsonChangeValue(convertNiiJson(outputPaths{e}),{'Description','Sources','SkullStripped','SpatialReference'},...
+    fpp.bids.jsonReconstruct(convertNiiJson(inputPaths{e}),convertNiiJson(outputPaths{e}));
+    fpp.bids.jsonChangeValue(convertNiiJson(outputPaths{e}),{'Description','Sources','SkullStripped','SpatialReference'},...
         {'Partially preprocessed data generated by fmriPermPipe, saved after despiking step.',...
         removeBidsBaseDir(inputPaths{e}),false,'orig'});
     system(['rm -rf ' pwd '/despike+orig.BRIK ' pwd '/despike+orig.HEAD '...
@@ -346,9 +361,9 @@ end
 % space.
 if ~exist(funcTemplatePath,'file')
     if undistort
-        copyImageAndJson(mocoTargetUndistortedPath,funcTemplatePath);
+        fpp.util.copyImageAndJson(mocoTargetUndistortedPath,funcTemplatePath);
     else
-        copyImageAndJson(mocoTargetPath,funcTemplatePath);
+        fpp.util.copyImageAndJson(mocoTargetPath,funcTemplatePath);
     end
     genTemplate = 1;
 end
@@ -357,11 +372,12 @@ fpp.bids.jsonChangeValue(convertNiiJson(funcTemplatePath),{'Description','TaskNa
     'NumberOfVolumesDiscardedByScanner','NumberOfVolumesDiscardedByUser','DelayAfterTrigger'},...
     {'Functional template image, to be used as a registration target.',[],[],[],[],[],[],[],[],[],[]});
 
-% HERE: Convert functional template to LAS, if it isn't.
+% HERE: Convert functional template to RAS/LAS, if it isn't.
 
 % Compute initial brain mask for funcTemplate using BET
+initMaskStem = strrep(fpp.bids.changeName(funcTemplatePath,'desc','FuncTemplateInitMask'),'_bold.nii.gz','');
 initMaskPath = fpp.bids.changeName(funcTemplatePath,'desc','FuncTemplateInitMask','mask');
-system(['bet2 ' funcTemplatePath ' ' strrep(initMaskPath,'.nii.gz','') ' -f ' num2str(faValue) ' -m -n']);
+system(['bet2 ' funcTemplatePath ' ' initMaskStem ' -f ' num2str(faValue) ' -m -n']);
 fpp.bids.jsonReconstruct(convertNiiJson(funcTemplatePath),convertNiiJson(initMaskPath),{'SpatialReference'});
 fpp.bids.jsonChangeValue(convertNiiJson(initMaskPath),{'Description','Sources','Type'},...
     {'Initial brain mask for functional template, generated by BET.',removeBidsBaseDir(funcTemplatePath),'Brain'});
@@ -381,10 +397,9 @@ xfmMocoTarget2FuncTemplate = fpp.bids.changeName(mocoTargetPath,{'desc','from','
     {'','orig','session','image'},'xfm','.mat');
 xfmFuncTemplate2MocoTarget = fpp.bids.changeName(mocoTargetPath,{'desc','from','to','mode'},...
     {'','orig','session','image'},'xfm','.mat');
-system([fslPrefix 'flirt -in ' mocoTargetPath ' -ref ' funcTemplatePath ' -omat ' xfmMocoTarget2FuncTemplate ...
+system(['flirt -in ' mocoTargetPath ' -ref ' funcTemplatePath ' -omat ' xfmMocoTarget2FuncTemplate ...
     ' -cost corratio -dof 6 -searchrx -180 180 -searchry -180 180 -searchrz -180 180']);
-system([fslPrefix 'convert_xfm -omat ' xfmFuncTemplate2MocoTarget ' -inverse ' xfmMocoTarget2FuncTemplate]);
-
+system(['convert_xfm -omat ' xfmFuncTemplate2MocoTarget ' -inverse ' xfmMocoTarget2FuncTemplate]);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -393,50 +408,35 @@ system([fslPrefix 'convert_xfm -omat ' xfmFuncTemplate2MocoTarget ' -inverse ' x
 fprintf('%s\n',['Step 6, Motion/distortion-correct and register - ' inputName]);
 inputPaths = outputPaths;
 for e=1:nEchoes
-    outputPaths{e} = fpp.bids.changeName(outputPaths{e},'desc','midprep3moco');
+    outputPaths{e} = fpp.bids.changeName(outputPaths{e},{'desc','space'},{'midprep3moco',funcTemplateName});
 end
-fpp.func.preproc.oneShotMotionDistortionCorrect(inputPaths,outputPaths,mcDir,funcTemplatePath,...
-    funcTemplateName,topupWarpPath,topupJacobianPath,xfmMocoTarget2FuncTemplate,...
-    xfmSpinEcho2MocoTarget,xfmMocoTarget2SpinEcho);
+if ~exist(outputPaths{end},'file')      % TEMPORARY DEBUGGING HACK
+fpp.func.preproc.oneShotMotionDistortionCorrect(inputPaths,outputPaths,funcTemplatePath,...
+    funcTemplateName,mcDir,topupWarpPath,topupJacobianPath,xfmMocoTarget2FuncTemplate,...
+    xfmSpinEcho2MocoTarget,xfmMocoTarget2SpinEcho,echoForMoCorr);
+end
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 7: TEDANA
+%%% STEP 7: TEDANA / Multi-echo Combination
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if useTedana
-    fprintf('%s\n',['Step 7, TEDANA                                 - ' inputName]);
-    
-    
-    
-    
-    % TEDANA
-    % NOTE: remove the global signal removal option!
-    % File: midprep4tedana
-    
-end
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 7.5: Multi-echo combination
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fprintf('%s\n',['Step 7.5, Multi-echo combination               - ' inputName]);
-if multiEcho
+    fprintf('%s\n',['Step 7, TEDANA Multi-echo ICA denoising        - ' inputName]);
     inputPaths = outputPaths;
-    outputPath = fpp.bids.changeName(inputPaths{1},{'echo','desc'},{[],'midprep5optcomb'});
-    system(['t2smap -d ' join(inputPaths,' ') ' -e ' sprintf('%f ',teVals) ' --out-dir ' funcPreprocDir]);
-    system(['mv ' funcPreprocDir '/desc-full_T2starmap.nii.gz ' strrep(outputPath,'_bold.nii.gz','_T2star.nii.gz')]);
-    system(['mv ' funcPreprocDir '/desc-full_S0map.nii.gz ' strrep(outputPath,'_bold.nii.gz','_S0map.nii.gz')]);
-    system(['mv ' funcPreprocDir '/desc-optcom_bold.nii.gz ' outputPath]);
-    fpp.bids.jsonReconstruct(convertNiiJson(inputPaths{1}),convertNiiJson(outputPath));
-    fpp.bids.jsonChangeValue(convertNiiJson(outputPath),{'Description','Sources','EchoTime','EchoNumber'},...
-        {'Partially preprocessed data generated by fmriPermPipe, saved after multi-echo combination step.',...
-        cellfun(removeBidsBaseDir,inputPaths,'UniformOutput',false),teVals,[]});
+    outputPath = fpp.bids.changeName(inputPaths{1},{'echo','desc'},{[],'midprep4tedana'});
+    outputDescription = 'Partially preprocessed data generated by fmriPermPipe, saved after TEDANA denoising step.';
+    fpp.func.preproc.tedana(inputPaths,outputPath,initMaskPath,outputDescription);
+elseif multiEcho
+    fprintf('%s\n',['Step 7, Multi-echo combination               - ' inputName]);
+    inputPaths = outputPaths;
+    outputPath = fpp.bids.changeName(inputPaths{1},{'echo','desc'},{[],'midprep4optcomb'});
+    outputDescription = 'Partially preprocessed data generated by fmriPermPipe, saved after multi-echo combination step.';
+    fpp.func.preproc.tedana(inputPaths,outputPath,initMaskPath,outputDescription,0);
 else
     outputPath = outputPaths{1};
 end
- 
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -444,10 +444,11 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fprintf('%s\n',['Step 8, Intensity normalization                - ' inputName]);
 inputPath = outputPath;
-outputPath = fpp.bids.changeName(inputPath,'desc',{[],'midprep6intnorm'});
+outputPath = fpp.bids.changeName(inputPath,'desc',{[],'midprep5intnorm'});
 % Normalize image median (also called "grand mean scaling" in SPM)
-[~,funcMedian] = system([fslPrefix 'fslstats ' inputPath ' -k ' initMaskPath ' -p 50']);
-system([fslPrefix 'fslmaths ' inputPath ' -mul ' num2str(newMedian/funcMedian) ' ' outputPath]);
+[~,funcMedian] = system(['fslstats ' inputPath ' -k ' initMaskPath ' -p 50']);
+funcMedian = str2num(strtrim(funcMedian));
+system(['fslmaths ' inputPath ' -mul ' num2str(newMedian/funcMedian) ' ' outputPath]);
 fpp.bids.jsonReconstruct(convertNiiJson(inputPath),convertNiiJson(outputPath));
 fpp.bids.jsonChangeValue(convertNiiJson(outputPath),{'Description','Sources'},...
     {'Partially preprocessed data generated by fmriPermPipe, saved after intensity normalization step.',...
@@ -461,7 +462,7 @@ fpp.bids.jsonChangeValue(convertNiiJson(outputPath),{'Description','Sources'},..
 fprintf('%s\n',['Step 9, Temporal filtering                     - ' inputName]);
 if tempFilt
     inputPath = outputPath;
-    outputPath = fpp.bids.changeName(inputPath,'desc',{[],'midprep7tempfilt'});
+    outputPath = fpp.bids.changeName(inputPath,'desc',{[],'midprep6tempfilt'});
     
     % TEMPORAL FILTERING HERE!!!
     % Compare FSL/matlab-based methods
@@ -486,7 +487,7 @@ end
 fprintf('%s\n',['Step 10, Spatial smoothing                     - ' inputName]);
 if fwhm>0
     inputPath = outputPath;
-    outputPath = fpp.bids.changeName(inputPath,'desc',{[],'midprep8smooth'});
+    outputPath = fpp.bids.changeName(inputPath,'desc',{[],'midprep7smooth'});
     
     % Spatial smoothing here!
     % FSL's method relies on brain-masked data. Just use fslmaths? Ideally
@@ -509,10 +510,22 @@ end
 %%% STEP 11: Rename output
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 inputPath = outputPath;
-outputPath = fpp.bids.changeName(inputPath,'desc',{[],'preproc'});
+outputPath = fpp.bids.changeName(inputPath,'desc','preproc');
 system(['mv ' inputPath ' ' outputPath]);
 system(['mv ' convertNiiJson(inputPath) ' ' convertNiiJson(outputPath)]);
 fpp.bids.jsonChangeValue(convertNiiJson(outputPath),{'Description'},{'Preprocessed data generated by fmriPermPipe.'});
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% STEP 12: tSNR computation
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+
 fprintf('%s\n\n',['Finished preproc for ' inputName]);
 
 end

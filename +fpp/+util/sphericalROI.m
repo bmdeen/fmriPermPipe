@@ -12,7 +12,6 @@ function sphericalROI(brainPath,outPath,coords,r,maskPath)
 
 radius = 7.5;
 tmpName = 'tmp163140398143';
-fslprefix = '';                 % SWITCH TO CHECKCONFIG!
 
 if exist('r','var'), radius = r; end
 if exist('maskPath','var') && ~exist(maskPath,'file'), clear maskPath; end
@@ -22,12 +21,12 @@ if isempty(brainPath), brainPath = [getenv('FSLDIR') '/data/standard/MNI152_T1_2
 if ~exist(outDir,'dir'), mkdir(outDir); end
 tmpPath = [outDir '/' tmpName '.nii.gz'];
 
-system([fslprefix 'fslmaths ' brainPath ' -Tmean -mul 0 -add 1 -roi ' int2str(coords(1)) ' 1 ' int2str(coords(2)) ...
+system(['fslmaths ' brainPath ' -Tmean -mul 0 -add 1 -roi ' int2str(coords(1)) ' 1 ' int2str(coords(2)) ...
     ' 1 ' int2str(coords(3)) ' 1 0 1 ' tmpPath ' -odt float']);
-system([fslprefix 'fslmaths ' tmpPath ' -kernel sphere ' num2str(radius) ...
+system(['fslmaths ' tmpPath ' -kernel sphere ' num2str(radius) ...
     ' -fmean -thr .0000001 -bin ' outPath]);
 if exist('maskPath','var')
-    system([fslprefix 'fslmaths ' outPath ' -mul ' maskPath ' ' outPath]);
+    system(['fslmaths ' outPath ' -mul ' maskPath ' ' outPath]);
 end
 system(['rm -rf ' tmpPath]);
 

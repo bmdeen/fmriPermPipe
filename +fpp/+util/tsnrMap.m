@@ -1,9 +1,12 @@
 
 % Function to compute tSNR map from fMRI data.
+%
+% TODO: Add json file
 
 function tsnrMap(inputPath,outputPath)
 
 [inputDir,inputName,~] = fpp.util.fileParts(inputPath);
+if isempty(inputDir), inputDir = pwd; end
 if ~exist('outputPath','var')
     outputPath = [inputDir '/' strrep(inputName,'_bold','') '_tsnr.nii.gz'];
 end

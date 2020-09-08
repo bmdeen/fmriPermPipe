@@ -7,6 +7,6 @@ outStr = int2str(num);
 
 while length(outStr)<len
     outStr = ['0' outStr];
-end;
+end
 
 end

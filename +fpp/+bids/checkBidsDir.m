@@ -16,7 +16,6 @@ for i=0:length(inputPathTerms)-1
         return;
     elseif ~isempty(regexp(inputPathTerms{end-i},'sub-.*'))
         % Input directory contains a BIDS subject directory, no session dir
-        disp(i);
         bidsBaseDir = join(inputPathTerms(1:end-i-1),'/');
         bidsInternalDirs = join(inputPathTerms(end-i:end),'/');
         return;
