@@ -251,7 +251,7 @@ for s = 1:length(subjects)
             outputDir = [analDir '/' expts{i} runSuffix inputSuffix outputSuffix '.perm'];
             outputDirOrig = outputDir;
             if exist(outputDir,'dir')
-                if overwrite, system(['rm -rf ' outputDir]);
+                if overwrite, fpp.util.system(['rm -rf ' outputDir]);
                 else continue; end
             end
             mkdir(outputDir);
@@ -317,15 +317,15 @@ for s = 1:length(subjects)
             end
             funcMask = [outputDir '/mask.nii.gz'];
             if isempty(maskName) || ~exist(funcMaskInit,'file')
-                system(['cp ' funcMaskInit ' ' funcMask]);
+                fpp.util.system(['cp ' funcMaskInit ' ' funcMask]);
             else
-                system(['fslmaths ' funcMaskInit ' -mul ' ...
+                fpp.util.system(['fslmaths ' funcMaskInit ' -mul ' ...
                     prepRegTargDir '/mask.nii.gz ' funcMask]);
             end
             
             rfd = [prepDir '/raw_func.nii.gz'];
             badVols = load([prepDir '/art/badvols']);
-            [~,numVols] = system(['fslval ' rfd ' dim4']);
+            [~,numVols] = fpp.util.system(['fslval ' rfd ' dim4']);
             numVols = str2num(strtrim(numVols));
             goodVols = setdiff(1:numVols,badVols);
             
@@ -645,7 +645,7 @@ for s = 1:length(subjects)
                         MRIwrite(newData,outputPath);
                     end
                     
-                    system(['cp ' prepRegDir '/target_func.nii.gz ' outputDir '/target_func.nii.gz']);
+                    fpp.util.system(['cp ' prepRegDir '/target_func.nii.gz ' outputDir '/target_func.nii.gz']);
                 end
                 
                 if mod(iter,10)==0

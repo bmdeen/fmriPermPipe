@@ -104,7 +104,7 @@ for f=1:length(spinEchoPaths)
 end
 spinEchoPaths = spinEchoPathsNew;
 spinEchoPaths{3} = fpp.bids.changeName(spinEchoPaths{1},'dir','Both');
-system(['fslmerge -t ' spinEchoPaths{3} ' ' spinEchoPaths{1} ' ' spinEchoPaths{2}]);
+fpp.util.system(['fslmerge -t ' spinEchoPaths{3} ' ' spinEchoPaths{1} ' ' spinEchoPaths{2}]);
 inputJsonPath = strrep(spinEchoPaths{1},'.nii.gz','.json');
 outputJsonPath = strrep(spinEchoPaths{3},'.nii.gz','.json');
 fpp.bids.jsonReconstruct(inputJsonPath,outputJsonPath);

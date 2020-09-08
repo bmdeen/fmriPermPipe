@@ -7,7 +7,7 @@
 function motionParams = estimateHeadMotion(inputPath,outputDir,moCorrTargetVolNum)
 
 if ~exist('moCorrTargetVolNum','var')
-    [~,vols] = system(['fslval ' inputPath ' dim4']);
+    [~,vols] = fpp.util.system(['fslval ' inputPath ' dim4']);
     vols = str2num(strtrim(vols));
     moCorrTargetVolNum = ceil(vols/2);
 end
@@ -19,7 +19,7 @@ if exist(confoundFile,'file')
 end
 
 % Run FSL's MCFLIRT
-system(['mcflirt -in ' inputPath ' -out ' mcBase ...
+fpp.util.system(['mcflirt -in ' inputPath ' -out ' mcBase ...
     ' -mats -plots -refvol ' int2str(moCorrTargetVolNum)]);
 
 % Load motion parameters
@@ -37,11 +37,11 @@ fpp.bids.tsvWrite(confoundFile,tsvData);
 % Rename xfm outputs
 matFiles = dir([mcBase '.mat/MAT_*']);
 for f=1:length(matFiles)
-    system(['mv ' mcBase '.mat/' matFiles(f).name ' ' outputDir '/' ...
+    fpp.util.system(['mv ' mcBase '.mat/' matFiles(f).name ' ' outputDir '/' ...
         fpp.bids.changeName(inputName,{'from','to','mode'},{['orig' ...
         matFiles(f).name(5:end)],'orig','image'},'xfm','.mat')]);
 end
-system(['rm -rf ' mcBase '.nii.gz ' mcBase '.mat ' mcBase '.par']);
+fpp.util.system(['rm -rf ' mcBase '.nii.gz ' mcBase '.mat ' mcBase '.par']);
 
 
 end

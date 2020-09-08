@@ -19,9 +19,9 @@ mkdir(tmpDir);
 tmpPath = [tmpDir '/newImage.nii.gz'];
 tmpPath2 = [tmpDir '/newImageSwap.nii.gz'];
 if strcmp(inputExt,'.nii.gz')
-    system(['cp ' inputPath ' ' tmpPath]);
+    fpp.util.system(['cp ' inputPath ' ' tmpPath]);
 else
-    system(['mri_convert ' inputPath ' ' tmpPath]);
+    fpp.util.system(['mri_convert ' inputPath ' ' tmpPath]);
 end
 
 inputOrientation = fpp.util.getImageOrientation(tmpPath);
@@ -29,33 +29,33 @@ if ~strcmp(inputOrientation,'LAS')
     
     % If image isn't in LAS/RAS orientation, rotate to this orientation
     if ~strcmp(inputOrientation,'RAS')
-        system(['fslreorient2std ' tmpPath ' ' tmpPath]);
+        fpp.util.system(['fslreorient2std ' tmpPath ' ' tmpPath]);
     end
     
     % If fslreorient2std converted image to RAS, a left-right reflection is
     % required to get to LAS.
     imageOrientation = fpp.util.getImageOrientation(tmpPath);
     if ~strcmp(imageOrientation,'LAS')
-        system(['cp ' tmpPath ' ' tmpPath2]);
-        system(['fslorient -swaporient ' tmpPath2]);
-        system(['echo $''-1 0 0 0\n0 1 0 0\n0 0 1 0\n0 0 0 1'' > ' tmpDir '/flipLR.mat']);
-        system(['flirt -in ' tmpPath ' -ref ' tmpPath2 ' -applyxfm -init ' ...
+        fpp.util.system(['cp ' tmpPath ' ' tmpPath2]);
+        fpp.util.system(['fslorient -swaporient ' tmpPath2]);
+        fpp.util.system(['echo $''-1 0 0 0\n0 1 0 0\n0 0 1 0\n0 0 0 1'' > ' tmpDir '/flipLR.mat']);
+        fpp.util.system(['flirt -in ' tmpPath ' -ref ' tmpPath2 ' -applyxfm -init ' ...
             tmpDir '/flipLR.mat -out ' tmpPath]);
     end
 end
 
 if strcmp(outputExt,'.nii.gz')
-    system(['cp ' tmpPath ' ' outputPath]);
+    fpp.util.system(['cp ' tmpPath ' ' outputPath]);
 else
-    system(['mri_convert ' tmpPath ' ' outputPath]);
+    fpp.util.system(['mri_convert ' tmpPath ' ' outputPath]);
 end
-system(['rm -rf ' tmpDir]);
+fpp.util.system(['rm -rf ' tmpDir]);
 
 % Convert orientation of accompanying JSON file if it exist
 inputJsonPath = strrep(inputPath,inputExt,'.json');
 if exist(inputJsonPath,'file')
     outputJsonPath = strrep(outputPath,outputExt,'.json');
-    system(['cp ' inputJsonPath ' ' outputJsonPath]);
+    fpp.util.system(['cp ' inputJsonPath ' ' outputJsonPath]);
     fpp.bids.jsonReorient(outputJsonPath,inputOrientation,'LAS')
 end
 

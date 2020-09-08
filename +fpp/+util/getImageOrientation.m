@@ -3,11 +3,11 @@
 
 function orientString = getImageOrientation(inputPath)
 
-[~,fslValOutput] = system(['fslval ' inputPath ' qform_xorient']);
+[~,fslValOutput] = fpp.util.system(['fslval ' inputPath ' qform_xorient']);
 orientString(1) = fslValOutput(findstr(fslValOutput,'-to-')+4);
-[~,fslValOutput] = system(['fslval ' inputPath ' qform_yorient']);
+[~,fslValOutput] = fpp.util.system(['fslval ' inputPath ' qform_yorient']);
 orientString(2) = fslValOutput(findstr(fslValOutput,'-to-')+4);
-[~,fslValOutput] = system(['fslval ' inputPath ' qform_zorient']);
+[~,fslValOutput] = fpp.util.system(['fslval ' inputPath ' qform_zorient']);
 orientString(3) = fslValOutput(findstr(fslValOutput,'-to-')+4);
 
 end

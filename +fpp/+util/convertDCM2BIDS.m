@@ -95,9 +95,9 @@ end
 % Run dcm2niix to convert DCM to NII
 niixDir = [outputDir '/dcm2niix_tmp'];
 mkdir(niixDir);
-system(['dcm2niix -f %s -z y -b y -ba y -o ' niixDir ' ' dicomDir]);
+fpp.util.system(['dcm2niix -f %s -z y -b y -ba y -o ' niixDir ' ' dicomDir]);
 
-% Convert to BIDS naming and filesystem structure
+% Convert to BIDS naming and filefpp.util.system structure
 indSpinEcho = []; outputJsonPathsSpinEcho = {};
 for i=1:length(scanlog.series)
   
@@ -186,8 +186,8 @@ for i=1:length(scanlog.series)
             outputNiftiPathsRelative{i,e} = strrep(outputNiftiPath,[outputDir '/'],'');
             outputJsonPath = strrep(outputNiftiPath,'.nii.gz','.json');
             if ~exist(outputNiftiPath,'file') || overwrite
-                system(['cp ' inputNiftiPath ' ' outputNiftiPath]);
-                system(['cp ' inputJsonPath ' ' outputJsonPath]);
+                fpp.util.system(['cp ' inputNiftiPath ' ' outputNiftiPath]);
+                fpp.util.system(['cp ' inputJsonPath ' ' outputJsonPath]);
                 if imageTypeID(i)==2
                     json = bids.util.jsondecode(outputJsonPath);
                     json.TaskName = scanlog.task{i};
@@ -209,8 +209,8 @@ for i=1:length(scanlog.series)
         outputNiftiPathsRelative{i,1} = strrep(outputNiftiPath,[outputDir '/'],'');
         outputJsonPath = strrep(outputNiftiPath,'.nii.gz','.json');
         if ~exist(outputNiftiPath,'file') || overwrite
-            system(['cp ' inputNiftiPath ' ' outputNiftiPath]);
-            system(['cp ' inputJsonPath ' ' outputJsonPath]);
+            fpp.util.system(['cp ' inputNiftiPath ' ' outputNiftiPath]);
+            fpp.util.system(['cp ' inputJsonPath ' ' outputJsonPath]);
             if imageTypeID(i)==2
                 json = bids.util.jsondecode(outputJsonPath);
                 json.TaskName = scanlog.task{i};
@@ -232,8 +232,8 @@ for i=1:length(scanlog.series)
         outputBvalPath = strrep(outputNiftiPath,'.nii.gz','.bval');
         outputBvecPath = strrep(outputNiftiPath,'.nii.gz','.bvec');
         if exist(inputBvalPath,'file') && (~exist(outputBvalPath,'file') || overwrite)
-            system(['cp ' inputBvalPath ' ' outputBvalPath]);
-            system(['cp ' inputBvecPath ' ' outputBvecPath]);
+            fpp.util.system(['cp ' inputBvalPath ' ' outputBvalPath]);
+            fpp.util.system(['cp ' inputBvecPath ' ' outputBvecPath]);
         end
     end
     
@@ -276,6 +276,6 @@ for i=1:length(indSpinEcho)
     end
 end
 
-system(['rm -rf ' niixDir]);
+fpp.util.system(['rm -rf ' niixDir]);
 
 end

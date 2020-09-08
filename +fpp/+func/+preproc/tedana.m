@@ -41,14 +41,14 @@ if useTedana
     inputPathStr = join(inputPaths,' ');
     
     % Run tedana
-    [~,~] = system(['tedana -d ' inputPathStr{1} ' -e ' sprintf('%f ',teVals) ' --out-dir ' ...
+    fpp.util.system(['tedana -d ' inputPathStr{1} ' -e ' sprintf('%f ',teVals) ' --out-dir ' ...
         outputDir ' --mask ' maskPath ' --verbose']);
     
     % Rename main outputs
-    system(['mv ' outputDir '/t2svG.nii.gz ' strrep(outputPath,'_bold.nii.gz','_T2star.nii.gz')]);
-    system(['mv ' outputDir '/s0vG.nii.gz ' strrep(outputPath,'_bold.nii.gz','_S0map.nii.gz')]);
-    system(['mv ' outputDir '/dn_ts_OC.nii.gz ' outputPath]);
-    system(['mv ' outputDir '/ts_OC.nii.gz ' fpp.bids.changeName(outputPath,'desc','midprep4optcomb')]);
+    fpp.util.system(['mv ' outputDir '/t2svG.nii.gz ' strrep(outputPath,'_bold.nii.gz','_T2star.nii.gz')]);
+    fpp.util.system(['mv ' outputDir '/s0vG.nii.gz ' strrep(outputPath,'_bold.nii.gz','_S0map.nii.gz')]);
+    fpp.util.system(['mv ' outputDir '/dn_ts_OC.nii.gz ' outputPath]);
+    fpp.util.system(['mv ' outputDir '/ts_OC.nii.gz ' fpp.bids.changeName(outputPath,'desc','midprep4optcomb')]);
     
     % Define main json file
     fpp.bids.jsonReconstruct(convertNiiJson(inputPaths{1}),convertNiiJson(outputPath));
@@ -56,16 +56,16 @@ if useTedana
         {outputDescription,cellfun(removeBidsBaseDir,inputPaths,'UniformOutput',false),teVals,[]});
     
     % Rename component analysis results outputs
-    system(['mv ' outputDir '/tedana_*.tsv ' fpp.bids.changeName(outputPath,'desc','tedanaICA','log','.tsv')]);
-    system(['mv ' outputDir '/figures ' strrep(fpp.bids.changeName(outputPath,...
+    fpp.util.system(['mv ' outputDir '/tedana_*.tsv ' fpp.bids.changeName(outputPath,'desc','tedanaICA','log','.tsv')]);
+    fpp.util.system(['mv ' outputDir '/figures ' strrep(fpp.bids.changeName(outputPath,...
         {'space','desc'},{[],[]}),'_bold.nii.gz','_images')]);
-    system(['mv ' outputDir '/betas_OC.nii.gz ' fpp.bids.changeName(outputPath,'desc','tedanaICA','betas')]);
-    system(['mv ' outputDir '/feats_OC2.nii.gz ' fpp.bids.changeName(outputPath,'desc','tedanaICAzscore','components')]);
+    fpp.util.system(['mv ' outputDir '/betas_OC.nii.gz ' fpp.bids.changeName(outputPath,'desc','tedanaICA','betas')]);
+    fpp.util.system(['mv ' outputDir '/feats_OC2.nii.gz ' fpp.bids.changeName(outputPath,'desc','tedanaICAzscore','components')]);
     methods = {'PCA','ICA'}; suffices = {'components','decomposition','mixing'};
     componentExts = {'.nii.gz','.json','.tsv'};
     for m=1:2
         for s=1:3
-            system(['mv ' outputDir '/' lower(methods{m}) '_' suffices{s} componentExts{s} ' ' ...
+            fpp.util.system(['mv ' outputDir '/' lower(methods{m}) '_' suffices{s} componentExts{s} ' ' ...
                 fpp.bids.changeName(outputPath,'desc',['tedana' methods{m}],suffices{s},componentExts{s})]);
         end
     end
@@ -79,13 +79,13 @@ else
     inputPathStr = join(inputPaths,' ');
     
     % Run t2smap
-    [~,~] = system(['t2smap -d ' inputPathStr{1} ' -e ' sprintf('%f ',teVals) ' --out-dir ' ...
+    fpp.util.system(['t2smap -d ' inputPathStr{1} ' -e ' sprintf('%f ',teVals) ' --out-dir ' ...
         outputDir ' --mask ' maskPath]);
     
     % Rename outputs
-    system(['mv ' outputDir '/desc-full_T2starmap.nii.gz ' strrep(outputPath,'_bold.nii.gz','_T2star.nii.gz')]);
-    system(['mv ' outputDir '/desc-full_S0map.nii.gz ' strrep(outputPath,'_bold.nii.gz','_S0map.nii.gz')]);
-    system(['mv ' outputDir '/desc-optcom_bold.nii.gz ' outputPath]);
+    fpp.util.system(['mv ' outputDir '/desc-full_T2starmap.nii.gz ' strrep(outputPath,'_bold.nii.gz','_T2star.nii.gz')]);
+    fpp.util.system(['mv ' outputDir '/desc-full_S0map.nii.gz ' strrep(outputPath,'_bold.nii.gz','_S0map.nii.gz')]);
+    fpp.util.system(['mv ' outputDir '/desc-optcom_bold.nii.gz ' outputPath]);
     
     % Define main json file
     fpp.bids.jsonReconstruct(convertNiiJson(inputPaths{1}),convertNiiJson(outputPath));
@@ -96,6 +96,6 @@ else
 end
 
 % Delete unneeded results
-system(['rm -rf ' outputDir]);
+fpp.util.system(['rm -rf ' outputDir]);
 
 end

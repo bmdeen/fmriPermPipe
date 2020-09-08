@@ -49,13 +49,13 @@ end
 % phase encode direction to functional data.
 %%% TO ADD: ACCOMODATE ODD-SLICE-NUMBER BY ADDING DUMMY SLICE
 if ~exist(topupWarpPath,'file') || ~exist(topupJacobianPath,'file')
-    system(['topup --imain=' spinEchoPaths{end} ' --datain=' fieldMapParamPath ' --config=b02b0.cnf --out=' ...
+    fpp.util.system(['topup --imain=' spinEchoPaths{end} ' --datain=' fieldMapParamPath ' --config=b02b0.cnf --out=' ...
         topupOutputStem ' --iout=' fpp.bids.changeName(topupOutputStem,'desc','Undistorted') '_epi --fout=' ...
         topupOutputStem '_fieldmapHz --dfout=' topupOutputStem '_warp --jacout=' topupOutputStem '_jacobian']);
-    system(['mv ' topupOutputStem '_jacobian_01.nii.gz ' topupJacobianPath]);
-    system(['rm -rf ' topupOutputStem '_jacobian_02.nii.gz']);
-    system(['mv ' topupOutputStem '_warp_01.nii.gz ' topupWarpPath]);
-    system(['rm -rf ' topupOutputStem '_warp_02.nii.gz']);
+    fpp.util.system(['mv ' topupOutputStem '_jacobian_01.nii.gz ' topupJacobianPath]);
+    fpp.util.system(['rm -rf ' topupOutputStem '_jacobian_02.nii.gz']);
+    fpp.util.system(['mv ' topupOutputStem '_warp_01.nii.gz ' topupWarpPath]);
+    fpp.util.system(['rm -rf ' topupOutputStem '_warp_02.nii.gz']);
 end
 
 % Register input func volume to spin echo image
@@ -63,17 +63,17 @@ xfmFunc2SpinEcho = fpp.bids.changeName(inputFuncPath,{'desc','from','to','mode'}
     {'','orig','SpinEcho','image'},'xfm','.mat');
 xfmSpinEcho2Func = fpp.bids.changeName(inputFuncPath,{'desc','from','to','mode'},...
     {'','SpinEcho','orig','image'},'xfm','.mat');
-system(['flirt -in ' inputFuncPath ' -ref ' spinEchoPaths{1} ' -omat ' xfmFunc2SpinEcho ...
+fpp.util.system(['flirt -in ' inputFuncPath ' -ref ' spinEchoPaths{1} ' -omat ' xfmFunc2SpinEcho ...
     ' -cost corratio -dof 6 -searchrx -90 90 -searchry -90 90 -searchrz -90 90']);
-system(['convert_xfm -omat ' xfmSpinEcho2Func ' -inverse ' xfmFunc2SpinEcho]);
+fpp.util.system(['convert_xfm -omat ' xfmSpinEcho2Func ' -inverse ' xfmFunc2SpinEcho]);
 
 % Undistort, by applying warp and multiplying by Jacobian.
-system(['applywarp --in=' inputFuncPath ' --ref=' inputFuncPath ' --out=' inputFuncUndistortedPath ...
+fpp.util.system(['applywarp --in=' inputFuncPath ' --ref=' inputFuncPath ' --out=' inputFuncUndistortedPath ...
     ' --warp=' topupWarpPath ' --premat=' xfmFunc2SpinEcho ' --postmat=' xfmSpinEcho2Func]);
-system(['flirt -in ' topupJacobianPath ' -ref ' inputFuncPath ' -out ' topupJacobian2FuncPath ...
+fpp.util.system(['flirt -in ' topupJacobianPath ' -ref ' inputFuncPath ' -out ' topupJacobian2FuncPath ...
     ' -applyxfm -init ' xfmSpinEcho2Func]);
-system(['fslmaths ' inputFuncUndistortedPath ' -mul ' topupJacobian2FuncPath ' ' inputFuncUndistortedPath]);
-system(['rm -rf ' topupJacobian2FuncPath]);
+fpp.util.system(['fslmaths ' inputFuncUndistortedPath ' -mul ' topupJacobian2FuncPath ' ' inputFuncUndistortedPath]);
+fpp.util.system(['rm -rf ' topupJacobian2FuncPath]);
 
 % Generate output JSON file
 [~,~,inputExt] = fpp.util.fileParts(inputFuncPath);

@@ -47,12 +47,12 @@ fclose(fid);
 % Apply FSL's slicetimer
 for e=1:length(inputPaths)
     outputPaths{e} = fpp.bids.changeName(inputPaths{e},'desc',outputDescShort);
-    system(['slicetimer -i ' inputPaths{e} ' -o ' outputPaths{e} ' --tcustom=' stFilePath]);
+    fpp.util.system(['slicetimer -i ' inputPaths{e} ' -o ' outputPaths{e} ' --tcustom=' stFilePath]);
     fpp.bids.jsonReconstruct(strrep(inputPaths{e},'.nii.gz','.json'),strrep(outputPaths{e},'.nii.gz','.json'));
     fpp.bids.jsonChangeValue(strrep(outputPaths{e},'.nii.gz','.json'),{'Description','Sources'},...
         {outputDescLong,strrep(inputPaths{e},[bidsBaseDir '/'],'')});
 end
 
-system(['rm -rf ' stFilePath]);
+fpp.util.system(['rm -rf ' stFilePath]);
 
 end

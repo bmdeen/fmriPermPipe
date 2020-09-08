@@ -63,11 +63,11 @@ for i=1:numTEs
 end
 
 % Separate data from different numTEs
-[~,vols] = system(['fslval ' inputPath ' dim4']);
+[~,vols] = fpp.util.system(['fslval ' inputPath ' dim4']);
 vols = str2num(strtrim(vols));
 volsPerTE = vols/numTEs;
 tr = fpp.util.checkMRIProperty('tr',inputPath);
-system(['fslsplit ' inputPath ' ' tmpDir '/split -t']);
+fpp.util.system(['fslsplit ' inputPath ' ' tmpDir '/split -t']);
 for e=1:numTEs
     sepTEPaths{e} = [tmpDir '/rawdata' teSuffices{e} '.nii.gz'];
     mergeCmd{e} = ['fslmerge -tr ' sepTEPaths{e}];
@@ -78,13 +78,13 @@ for t=1:vols
 end
 for e=1:numTEs
     mergeCmd{e} = [mergeCmd{e} ' ' num2str(tr)];
-    system(mergeCmd{e});
+    fpp.util.system(mergeCmd{e});
 end
 
 
 for e=1:numTEs
     meanFuncSep{e} = [tmpDir '/mean_func' teSuffices{e} '.nii.gz'];
-    system(['fslmaths ' sepTEPaths{e} ' -Tmean ' meanFuncSep{e}]);
+    fpp.util.system(['fslmaths ' sepTEPaths{e} ' -Tmean ' meanFuncSep{e}]);
 end
 meanFuncCombined = [tmpDir '/mean_func_TEsep.nii.gz'];
 mergeCmd{1} = ['fslmerge -tr ' meanFuncCombined];
@@ -92,7 +92,7 @@ for e=1:numTEs
     mergeCmd{1} = [mergeCmd{1} ' ' meanFuncSep{e}];
 end
 mergeCmd{1} = [mergeCmd{1} ' ' num2str(tr)];
-system(mergeCmd{1});
+fpp.util.system(mergeCmd{1});
 
 funcData = fpp.util.mriRead(meanFuncCombined);
 dims = size(funcData.vol);
@@ -131,6 +131,6 @@ end
 newData.vol = weightedFuncVol;
 fpp.util.mriWrite(newData,outputPath,'short');
 
-system(['rm -rf ' tmpDir]);
+fpp.util.system(['rm -rf ' tmpDir]);
 
 end

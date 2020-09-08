@@ -21,14 +21,14 @@ if isempty(brainPath), brainPath = [getenv('FSLDIR') '/data/standard/MNI152_T1_2
 if ~exist(outDir,'dir'), mkdir(outDir); end
 tmpPath = [outDir '/' tmpName '.nii.gz'];
 
-system(['fslmaths ' brainPath ' -Tmean -mul 0 -add 1 -roi ' int2str(coords(1)) ' 1 ' int2str(coords(2)) ...
+fpp.util.system(['fslmaths ' brainPath ' -Tmean -mul 0 -add 1 -roi ' int2str(coords(1)) ' 1 ' int2str(coords(2)) ...
     ' 1 ' int2str(coords(3)) ' 1 0 1 ' tmpPath ' -odt float']);
-system(['fslmaths ' tmpPath ' -kernel sphere ' num2str(radius) ...
+fpp.util.system(['fslmaths ' tmpPath ' -kernel sphere ' num2str(radius) ...
     ' -fmean -thr .0000001 -bin ' outPath]);
 if exist('maskPath','var')
-    system(['fslmaths ' outPath ' -mul ' maskPath ' ' outPath]);
+    fpp.util.system(['fslmaths ' outPath ' -mul ' maskPath ' ' outPath]);
 end
-system(['rm -rf ' tmpPath]);
+fpp.util.system(['rm -rf ' tmpPath]);
 
 
 end

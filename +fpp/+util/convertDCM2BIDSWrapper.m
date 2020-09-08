@@ -15,7 +15,7 @@
 % 
 % Example usage: convertDCM('/pathto/studyDirectory','SUB*','overwrite',true)
 % 
-% SETUP: Prior to using this function with a given scanning system, the 
+% SETUP: Prior to using this function with a given scanning fpp.util.system, the 
 %        line beginning "dcm = dir" must be edited. See inline comments.
 % 
 % Required arguments:
@@ -128,7 +128,7 @@ for s = 1:length(subjects)
             end
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %%% NOTE: the below line must be changed to fit your system's
+            %%% NOTE: the below line must be changed to fit your fpp.util.system's
             %%% dicom naming convention. This dir command should return
             %%% only the first dicom image for series number acq.
             %%% Asterisk-based regular expressions can be used, and the 
@@ -155,14 +155,14 @@ for s = 1:length(subjects)
             if ~exist(outputPath,'file') || overwrite
                 
                 % Convert DCM to NIFTI
-                %system(['mri_convert ' dcmPath ' ' outputPath]);
+                %fpp.util.system(['mri_convert ' dcmPath ' ' outputPath]);
                 
                 % Change orientation to LAS
-                system(['analyze2bxh ' outputPath ' ' funcDir '/tmp_img_realign.bxh']);
-                system(['bxhreorient --orientation=LAS ' funcDir '/tmp_img_realign.bxh ' funcDir '/tmp_img_realign-1.bxh']);
-                system(['bxh2analyze --niigz ' funcDir '/tmp_img_realign-1.bxh ' funcDir '/tmp_img_realign-2']);
-                system(['rm -rf ' outputPath '; mv ' funcDir '/tmp_img_realign-2.nii.gz ' outputPath]);
-                system(['rm -rf ' funcDir '/tmp_img_realign*']);
+                fpp.util.system(['analyze2bxh ' outputPath ' ' funcDir '/tmp_img_realign.bxh']);
+                fpp.util.system(['bxhreorient --orientation=LAS ' funcDir '/tmp_img_realign.bxh ' funcDir '/tmp_img_realign-1.bxh']);
+                fpp.util.system(['bxh2analyze --niigz ' funcDir '/tmp_img_realign-1.bxh ' funcDir '/tmp_img_realign-2']);
+                fpp.util.system(['rm -rf ' outputPath '; mv ' funcDir '/tmp_img_realign-2.nii.gz ' outputPath]);
+                fpp.util.system(['rm -rf ' funcDir '/tmp_img_realign*']);
                 
                 fprintf('%s\n',['Converted data for subject ' subject ', expt: ' expts{i} runSuffix '.']);
         

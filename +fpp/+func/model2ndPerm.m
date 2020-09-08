@@ -262,12 +262,12 @@ for s = 1:length(subjects)
         end
         
         gpermDir = [analDir '/' exptType runSuffix inputSuffix outputSuffix '.gperm'];
-        if exist(gpermDir,'dir') && overwrite, system(['rm -rf ' gpermDir]); end
+        if exist(gpermDir,'dir') && overwrite, fpp.util.system(['rm -rf ' gpermDir]); end
         if ~exist(gpermDir,'dir'), mkdir(gpermDir); end
         
         targetNew = [gpermDir '/target_func.nii.gz'];
         if ~exist(targetNew,'file')
-            system(['cp ' permDirs{1} '/target_func.nii.gz ' targetNew]);
+            fpp.util.system(['cp ' permDirs{1} '/target_func.nii.gz ' targetNew]);
         end
         
         for c=conList
@@ -316,7 +316,7 @@ for s = 1:length(subjects)
                     for r=1:numRuns
                         inputCope = [permDirs{r} '/cope' int2str(c) '.nii.gz'];
                         tmpPath{r} = [permDirs{r} '/tmp_weighted_cope.nii.gz'];
-                        system(['fslmaths ' inputCope ' -mul ' ...
+                        fpp.util.system(['fslmaths ' inputCope ' -mul ' ...
                             num2str(1/rData{r}.conVarBase(c)) ' ' tmpPath{r}]);
                         sumWeights = sumWeights+1/rData{r}.conVarBase(c);
                         if r==1
@@ -326,9 +326,9 @@ for s = 1:length(subjects)
                         end
                     end
                     cmd = [cmd '-div ' num2str(sumWeights) ' ' outputCope];
-                    system(cmd);
+                    fpp.util.system(cmd);
                     for r=1:numRuns
-                        system(['rm -rf ' tmpPath{r}]);
+                        fpp.util.system(['rm -rf ' tmpPath{r}]);
                     end
                 end
                 
@@ -337,7 +337,7 @@ for s = 1:length(subjects)
                 copeStd = [outputDir '/cope' int2str(c) '_standard.nii.gz'];
                 standard = [getenv('FSL_DIR') '/data/standard/MNI152_T1_2mm_brain.nii.gz'];
                 highres2StdWarp = [regDir '/highres2standard_warp.nii.gz'];
-                system(['applywarp --ref=' standard ' --in=' outputCope ' --out=' ...
+                fpp.util.system(['applywarp --ref=' standard ' --in=' outputCope ' --out=' ...
                     copeStd ' --warp=' highres2StdWarp ' --premat=' target2Highres]);
                 
                 % Do this for many iterations of lists of input permutations
@@ -349,7 +349,7 @@ for s = 1:length(subjects)
                         for r=1:numRuns
                             inputCope = [permDirs{r} '/perms/iter' int2str(iter) '/cope' int2str(c) '.nii.gz'];
                             tmpPath{r} = [permDirs{r} '/perms/iter' int2str(iter) '/tmp_weighted_cope.nii.gz'];
-                            system(['fslmaths ' inputCope ' -mul ' ...
+                            fpp.util.system(['fslmaths ' inputCope ' -mul ' ...
                                 num2str(1/rData{r}.conVarBasePerm{iter}(c)) ' ' tmpPath{r}]);
                             sumWeights = sumWeights+1/rData{r}.conVarBasePerm{iter}(c);
                             if r==1
@@ -359,9 +359,9 @@ for s = 1:length(subjects)
                             end
                         end
                         cmd = [cmd '-div ' num2str(sumWeights) ' ' outputCopePerm];
-                        system(cmd);
+                        fpp.util.system(cmd);
                         for r=1:numRuns
-                            system(['rm -rf ' tmpPath{r}]);
+                            fpp.util.system(['rm -rf ' tmpPath{r}]);
                         end
                     end
                     
@@ -391,18 +391,18 @@ for s = 1:length(subjects)
                         outputCopePerm = [permsDir '/cope' int2str(c) '_iter' int2str(j) '.nii.gz'];
                         mergeCmd2 = [mergeCmd2 ' ' outputCopePerm];
                     end
-                    system(mergeCmd2);
+                    fpp.util.system(mergeCmd2);
                 end
                 mergeCmd = [mergeCmd '; rm -rf ' permsDir '/cope' ...
                     int2str(c) '_concat_miter*'];
-                system(mergeCmd);
+                fpp.util.system(mergeCmd);
                 
                 % Compute zstat file from perm stat files, by fitting a Gaussian
                 copeMean = [permsDir '/cope' int2str(c) '_mean.nii.gz'];
                 copeStd = [permsDir '/cope' int2str(c) '_std.nii.gz'];
-                system(['fslmaths ' copeConcat ' -Tmean ' copeMean]);
-                system(['fslmaths ' copeConcat ' -Tstd ' copeStd]);
-                system(['fslmaths ' outputCope ' -sub ' copeMean ...
+                fpp.util.system(['fslmaths ' copeConcat ' -Tmean ' copeMean]);
+                fpp.util.system(['fslmaths ' copeConcat ' -Tstd ' copeStd]);
+                fpp.util.system(['fslmaths ' outputCope ' -sub ' copeMean ...
                     ' -div ' copeStd ' ' outputZStat]);
                 
             end
@@ -427,9 +427,9 @@ for s = 1:length(subjects)
                 for iter=1:permIters
                     outputCopePerm = [permsDir '/cope' int2str(c) '_iter' int2str(iter) '.nii.gz'];
                     zStatPermPath = [permsDir '/zstat' int2str(c) '_iter' int2str(iter) '.nii.gz'];
-                    system(['fslmaths ' outputCopePerm ' -sub ' copeMean ...
+                    fpp.util.system(['fslmaths ' outputCopePerm ' -sub ' copeMean ...
                         ' -div ' copeStd ' ' zStatPermPath]);
-                    [~,clustInfo] = system(['cluster -i ' zStatPermPath ' -t ' num2str(zCutoff)]);
+                    [~,clustInfo] = fpp.util.system(['cluster -i ' zStatPermPath ' -t ' num2str(zCutoff)]);
                     clustInfo = regexp(clustInfo, '[\f\n\r]', 'split');
                     clustInfo{2} = strread(clustInfo{2});
                     
@@ -446,7 +446,7 @@ for s = 1:length(subjects)
                 end
                 
                 % Determine maximum cluster size to consider, based on mean cope
-                [~,maxClustSize] = system(['fslstats ' copeMean ' -V']);
+                [~,maxClustSize] = fpp.util.system(['fslstats ' copeMean ' -V']);
                 maxClustSize = str2num(strtrim(maxClustSize));
                 maxClustSize = maxClustSize(1);
                 
@@ -467,11 +467,11 @@ for s = 1:length(subjects)
             
             zCutoff = icdf('norm',1-voxThresh,0,1);
             tmpPath{1} = [outputDir '/tmp_cluster_thresholding.nii.gz'];
-            system(['cluster -i ' outputZStat ' -t ' num2str(zCutoff) ' --othresh=' ...
+            fpp.util.system(['cluster -i ' outputZStat ' -t ' num2str(zCutoff) ' --othresh=' ...
                 outputThreshZStat ' --osize=' tmpPath{1} ' --no_table']);
-            system(['fslmaths ' tmpPath{1} ' -thr ' int2str(clustCutoff) ' -bin ' tmpPath{1}]);
-            system(['fslmaths ' outputThreshZStat ' -mul ' tmpPath{1} ' ' outputThreshZStat]);
-            system(['rm -rf ' tmpPath{1}]);
+            fpp.util.system(['fslmaths ' tmpPath{1} ' -thr ' int2str(clustCutoff) ' -bin ' tmpPath{1}]);
+            fpp.util.system(['fslmaths ' outputThreshZStat ' -mul ' tmpPath{1} ' ' outputThreshZStat]);
+            fpp.util.system(['rm -rf ' tmpPath{1}]);
             
             fprintf('%s\n\n',['Finished 2nd-level analysis for subject ' subject ', expt ' ...
                 exptType runSuffix inputSuffix outputSuffix ', contrast ' int2str(c) '.']);

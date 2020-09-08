@@ -13,12 +13,12 @@ topupJacobian2FuncTemplatePath = fpp.bids.changeName(topupJacobianPath,'space',f
 [~,mcName,~] = fileparts(mcDir);
 
 % Move warp Jacobian to FuncTemplate space
-system(['convert_xfm -omat ' xfmSpinEcho2FuncTemplate ' -concat ' xfmNativeFunc2FuncTemplate ' ' xfmSpinEcho2NativeFunc]);
-system(['flirt -in ' topupJacobianPath ' -ref ' funcTemplatePath ' -out ' topupJacobian2FuncTemplatePath ...
+fpp.util.system(['convert_xfm -omat ' xfmSpinEcho2FuncTemplate ' -concat ' xfmNativeFunc2FuncTemplate ' ' xfmSpinEcho2NativeFunc]);
+fpp.util.system(['flirt -in ' topupJacobianPath ' -ref ' funcTemplatePath ' -out ' topupJacobian2FuncTemplatePath ...
     ' -applyxfm -init ' xfmSpinEcho2FuncTemplate]);
 
 % Check # of volumes
-[~,vols] = system(['fslval ' inputPaths{1} ' dim4']);
+[~,vols] = fpp.util.system(['fslval ' inputPaths{1} ' dim4']);
 vols = str2num(strtrim(vols));
 tr = fpp.util.checkMRIProperty('tr',inputPaths{1});
 
@@ -26,20 +26,20 @@ for e=1:length(outputPaths)
     mergeCmd = ['fslmerge -tr ' outputPaths{e}];
     inputSplitStem = [strrep(inputPaths{e},'.nii.gz','') '_SplitForMoco'];
     outputSplitStem = [strrep(fpp.bids.changeName(inputPaths{e},'space',funcTemplateName),'.nii.gz','') '_SplitForMoco'];
-    system(['fslsplit ' inputPaths{e} ' ' inputSplitStem ' -t']);
+    fpp.util.system(['fslsplit ' inputPaths{e} ' ' inputSplitStem ' -t']);
     for t=0:vols-1
         inputVolPath = [inputSplitStem fpp.util.numPad(t,4) '.nii.gz'];
         outputVolPath = [outputSplitStem fpp.util.numPad(t,4) '.nii.gz'];
-        system(['convert_xfm -omat ' xfmSpinEcho2FuncTemplate ' -concat ' xfmNativeFunc2FuncTemplate ' ' xfmSpinEcho2NativeFunc]);
+        fpp.util.system(['convert_xfm -omat ' xfmSpinEcho2FuncTemplate ' -concat ' xfmNativeFunc2FuncTemplate ' ' xfmSpinEcho2NativeFunc]);
         xfmInputVol2NativeFunc = [mcDir '/' fpp.bids.changeName(mcName,{'echo','desc','from','to','mode'},...
             {int2str(echoForMoCorr),'',['orig' fpp.util.numPad(t,4)],'orig','image'},'xfm','.mat')];
         xfmInputVol2SpinEcho = [mcDir '/' fpp.bids.changeName(mcName,{'echo','desc','from','to','mode'},...
             {int2str(echoForMoCorr),'',['orig' fpp.util.numPad(t,4)],'SpinEcho','image'},'xfm','.mat')];
-        system(['convert_xfm -omat ' xfmInputVol2SpinEcho ' -concat ' xfmNativeFunc2SpinEcho ' ' xfmInputVol2NativeFunc]);
+        fpp.util.system(['convert_xfm -omat ' xfmInputVol2SpinEcho ' -concat ' xfmNativeFunc2SpinEcho ' ' xfmInputVol2NativeFunc]);
         % Single-shot application of motion correction, undistortion, and registration to FuncTemplate
-        system(['applywarp --in=' inputVolPath ' --ref=' funcTemplatePath ' --out=' outputVolPath ...
+        fpp.util.system(['applywarp --in=' inputVolPath ' --ref=' funcTemplatePath ' --out=' outputVolPath ...
             ' --warp=' topupWarpPath ' --premat=' xfmInputVol2SpinEcho ' --postmat=' xfmSpinEcho2FuncTemplate]);
-        system(['fslmaths ' outputVolPath ' -mul ' topupJacobian2FuncTemplatePath ' ' outputVolPath]);
+        fpp.util.system(['fslmaths ' outputVolPath ' -mul ' topupJacobian2FuncTemplatePath ' ' outputVolPath]);
         mergeCmd = [mergeCmd ' ' outputVolPath];
         if mod(t+1,10)==0
            fprintf('\t%s\n',['Finished warping echo ' int2str(e) ', volume ' int2str(t+1)]);
@@ -48,8 +48,8 @@ for e=1:length(outputPaths)
     
     % Merge output into single time series file, delete individual time points
     mergeCmd = [mergeCmd ' ' num2str(tr)];
-    system(mergeCmd);
-    system(['rm -rf ' inputSplitStem '*.nii.gz ' outputSplitStem '*.nii.gz']);
+    fpp.util.system(mergeCmd);
+    fpp.util.system(['rm -rf ' inputSplitStem '*.nii.gz ' outputSplitStem '*.nii.gz']);
     
     % Generate output JSON file
     [~,~,inputExt] = fpp.util.fileParts(inputPaths{e});

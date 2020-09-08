@@ -124,7 +124,7 @@ if isempty(disdaqs)
 else
     disdaqVols = (1:disdaqs)';
 end
-[~,numVols] = system(['fslval ' dataPath ' dim4']);
+[~,numVols] = fpp.util.system(['fslval ' dataPath ' dim4']);
 numVols = str2num(strtrim(numVols));
 goodVols = setdiff(1:numVols,union(disdaqVols,badVols));
 

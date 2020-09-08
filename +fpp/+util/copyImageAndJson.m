@@ -20,9 +20,9 @@ inputJsonPath = strrep(inputImagePath,inputExt,'.json');
 outputJsonPath = strrep(outputImagePath,outputExt,'.json');
 
 if strcmpi(inputExt,outputExt)
-    system(['cp ' inputImagePath ' ' outputImagePath]);
+    fpp.util.system(['cp ' inputImagePath ' ' outputImagePath]);
 else
-    system(['mri_convert ' inputImagePath ' ' outputImagePath]);
+    fpp.util.system(['mri_convert ' inputImagePath ' ' outputImagePath]);
 end
 
 fpp.bids.jsonReconstruct(inputJsonPath,outputJsonPath);

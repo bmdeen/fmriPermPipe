@@ -14,9 +14,9 @@ for e=1:nEchoes
     mergeCmd{e} = ['fslmerge -tr ' outputPaths{e}];
 end
 
-[~,vols] = system(['fslval ' inputPath ' dim4']);
+[~,vols] = fpp.util.system(['fslval ' inputPath ' dim4']);
 vols = str2num(strtrim(vols));
-system(['fslsplit ' inputPath ' ' outputDir '/' randStem ' -t']);
+fpp.util.system(['fslsplit ' inputPath ' ' outputDir '/' randStem ' -t']);
 
 for t=1:vols
     tReal = ceil(t/nEchoes);
@@ -25,8 +25,8 @@ for t=1:vols
 end
 for e=1:nEchoes
     mergeCmd{e} = [mergeCmd{e} ' ' num2str(tr)];
-    system(mergeCmd{e});
+    fpp.util.system(mergeCmd{e});
 end
-system(['rm -rf ' outputDir '/' randStem '*']);
+fpp.util.system(['rm -rf ' outputDir '/' randStem '*']);
 
 end
