@@ -8,6 +8,7 @@
 %   Options:
 %   + TR - Repetition time (s)
 %   + TE - Echo time (ms), in vector form for multi-echo data
+%   + Vols - # of volumes in 4D dataset
 %   + PEDir - Phase-encode direction, BIDS format (e.g. "j-")
 %   + PEDirStr - Phase-encode direction, orientation string format (e.g.
 %       "AP")
@@ -123,4 +124,7 @@ switch lower(propertyName)
         if exist('jsonData','var') && isfield(jsonData,'SliceTiming')
             propertyValue = jsonData.SliceTiming;
         end
+    case 'vols'
+        [~,vols] = fpp.util.system(['fslval ' inputPath ' dim4']);
+        propertyValue = str2num(strtrim(vols));
 end

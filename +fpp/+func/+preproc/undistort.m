@@ -25,7 +25,7 @@ errorMsg = [];
 % Topup output files
 [~,spinEchoName,~] = fpp.util.fileParts(spinEchoPaths{1});
 topupOutputStem = [fmapPreprocDir '/' strrep(fpp.bids.changeName(spinEchoName,'dir',''),'_epi','')];
-topupWarpPath = [fpp.bids.changeName(topupOutputStem,'desc','UndistortionWarp') '_warp.nii.gz'];
+topupWarpPath = [fpp.bids.changeName(topupOutputStem,'desc','UndistortionWarp') '_xfm.nii.gz'];
 topupJacobianPath = [fpp.bids.changeName(topupOutputStem,'desc','UndistortionWarp') '_jacobian.nii.gz'];
 topupJacobian2FuncPath = fpp.bids.changeName(inputFuncPath,{'desc','echo'},{'UndistortionWarp',[]},'jacobian','.nii.gz');
 
@@ -48,6 +48,7 @@ end
 % Run topup. NOTE: assuming that first spin echo file is matched in
 % phase encode direction to functional data.
 %%% TO ADD: ACCOMODATE ODD-SLICE-NUMBER BY ADDING DUMMY SLICE
+%%% Generate json files for warp/jacobian
 if ~exist(topupWarpPath,'file') || ~exist(topupJacobianPath,'file')
     fpp.util.system(['topup --imain=' spinEchoPaths{end} ' --datain=' fieldMapParamPath ' --config=b02b0.cnf --out=' ...
         topupOutputStem ' --iout=' fpp.bids.changeName(topupOutputStem,'desc','Undistorted') '_epi --fout=' ...
@@ -76,12 +77,8 @@ fpp.util.system(['fslmaths ' inputFuncUndistortedPath ' -mul ' topupJacobian2Fun
 fpp.util.system(['rm -rf ' topupJacobian2FuncPath]);
 
 % Generate output JSON file
-[~,~,inputExt] = fpp.util.fileParts(inputFuncPath);
-inputJsonPath = strrep(inputFuncPath,inputExt,'.json');
-[~,~,inputUndistortedExt] = fpp.util.fileParts(inputFuncPath);
-inputJsonUndistortedPath = strrep(inputFuncUndistortedPath,inputUndistortedExt,'.json');
-if exist(inputJsonPath)
-    fpp.bids.jsonReconstruct(inputJsonPath,inputUndistortedJsonPath);
+if exist(fpp.bids.jsonPath(inputFuncPath))
+    fpp.bids.jsonReconstruct(inputFuncPath,inputUndistortedFuncPath);
 end
 
 end

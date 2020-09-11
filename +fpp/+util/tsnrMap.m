@@ -1,20 +1,31 @@
 
 % Function to compute tSNR map from fMRI data.
-%
-% TODO: Add json file
 
-function tsnrMap(inputPath,outputPath)
+function tsnrMap(inputPath,outputPath,outputDescription)
 
+% Define i/o directories/names
 [inputDir,inputName,~] = fpp.util.fileParts(inputPath);
 if isempty(inputDir), inputDir = pwd; end
 if ~exist('outputPath','var')
     outputPath = [inputDir '/' strrep(inputName,'_bold','') '_tsnr.nii.gz'];
 end
+[outputDir,outputName,~] = fpp.util.fileParts(outputPath);
+if isempty(outputDir), outputDir = pwd; end
 
+% Compute tSNR
 fpp.util.system(['fslmaths ' inputPath ' -Tmean ' inputDir '/input_mean2350982452.nii.gz']);
 fpp.util.system(['fslmaths ' inputPath ' -Tstd ' inputDir '/input_std2350982452.nii.gz']);
 fpp.util.system(['fslmaths ' inputDir '/input_mean2350982452.nii.gz -div ' inputDir ...
     '/input_std2350982452.nii.gz ' outputPath]);
 fpp.util.system(['rm -rf ' inputDir '/input_mean2350982452.nii.gz ' inputDir '/input_std2350982452.nii.gz']);
+
+% Generate tSNR map json file
+fpp.bids.jsonReconstruct(inputName,outputName);
+if exist('outputDescription','var') && ischar(outputDescription)
+    fpp.bids.jsonChangeValue(outputName,'Description',outputDesciption);
+else
+    fpp.bids.jsonChangeValue(outputName,'Description','- tSNR map',1);
+end
+fpp.bids.jsonChangeValue(outputName,'Sources',fpp.bids.removeBidsDir(inputPath));
 
 end

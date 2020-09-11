@@ -4,7 +4,7 @@
 % empty vector.
 %
 % Arguments:
-% - inputJsonPath (string): JSON file to edit
+% - inputJsonPath (string): path to JSON file, or corresponding data
 % - fieldsToChange (cell array of strings): fields to edit
 % - newValues (cell array): new values for those fields
 % - appendValue (optional, boolean): whether to append new value to
@@ -19,6 +19,9 @@ if ~exist('appendValue','var') || isempty(appendValue)
 end
 jsonOpts.indent = '\t';     % Use tab indentation for JSON outputs
 
+if length(inputJsonPath)>=5 && ~strcmpi(inputJsonPath(end-4:end),'.json')
+    inputJsonPath = fpp.bids.jsonPath(inputJsonPath);
+end
 if ~exist(inputJsonPath,'file'), return; end
 
 jsonData = bids.util.jsondecode(inputJsonPath);

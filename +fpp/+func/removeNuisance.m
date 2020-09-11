@@ -94,8 +94,7 @@ if isempty(disdaqs)
 else
     disdaqVols = (1:disdaqs)';
 end
-[~,numVols] = fpp.util.system(['fslval ' inputPath ' dim4']);
-numVols = str2num(strtrim(numVols));
+numVols = fpp.util.checkMRIProperty('vols',inputPath);
 goodVols = setdiff(1:numVols,union(disdaqVols,badVols));
 
 % Load data/mask

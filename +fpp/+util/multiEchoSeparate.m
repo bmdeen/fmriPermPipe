@@ -14,8 +14,7 @@ for e=1:nEchoes
     mergeCmd{e} = ['fslmerge -tr ' outputPaths{e}];
 end
 
-[~,vols] = fpp.util.system(['fslval ' inputPath ' dim4']);
-vols = str2num(strtrim(vols));
+vols = fpp.util.checkMRIProperty('vols',inputPath);
 fpp.util.system(['fslsplit ' inputPath ' ' outputDir '/' randStem ' -t']);
 
 for t=1:vols

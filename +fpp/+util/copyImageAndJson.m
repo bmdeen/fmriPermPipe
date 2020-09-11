@@ -12,12 +12,8 @@
 
 function copyImageAndJson(inputImagePath,outputImagePath)
 
-
 [~,~,inputExt] = fpp.util.fileParts(inputImagePath);
 [~,~,outputExt] = fpp.util.fileParts(outputImagePath);
-
-inputJsonPath = strrep(inputImagePath,inputExt,'.json');
-outputJsonPath = strrep(outputImagePath,outputExt,'.json');
 
 if strcmpi(inputExt,outputExt)
     fpp.util.system(['cp ' inputImagePath ' ' outputImagePath]);
@@ -25,7 +21,7 @@ else
     fpp.util.system(['mri_convert ' inputImagePath ' ' outputImagePath]);
 end
 
-fpp.bids.jsonReconstruct(inputJsonPath,outputJsonPath);
+fpp.bids.jsonReconstruct(inputImagePath,outputImagePath);
 
 
 end

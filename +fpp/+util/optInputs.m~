@@ -26,7 +26,7 @@ if ismember(lower(argName),lower({'expt','inputSuffix','outputSuffix','funcTempl
         'aff','inwarp','intin','cout','iout','fout','jout','logout','config',...
         'refmask','inmask','minmet','miter','subsamp','warpres','infwhm','reffwhm',...
         'regmod','jacrange','intmod','biasres','numprec','interp','warp','postmat',...
-        'premat','midmat','mask','warp1','warp2','jacobian'}))
+        'mask'}))
     if ischar(argVal)
         argGood = 1;
     end
@@ -38,8 +38,7 @@ elseif ismember(lower(argName),lower({'overwrite','clustCorrect','permuteRest',.
         'genTSNR','multiEcho','plotResults','writeResiduals','erodeROI',...
         'pcaUnsmoothed','removeBadVols','useSTC','useTedana','undistort',...
         'useTaskTemplate','applyxfm','imprefm','impinm','ssqlambda','refderiv',...
-        'estint','verbose','abs','rel','absout','relout','super','usesqform',...
-        'constrainj','noconstraint'}))
+        'estint','verbose' }))
     if (isnumeric(argVal) || islogical(argVal)) && isscalar(argVal) && ismember(argVal,[0 1])
         argGood = 1;
     end
@@ -58,14 +57,13 @@ elseif ismember(lower(argName),lower({'nuisanceType'}))
     
 % Scalar integer in [0,Inf)
 elseif ismember(lower(argName),lower({'tptsAfter','disdaqs','looRun','pcaOrder',...
-        'superlevel','paddingsize'}))
+        'superleve','echoForMoCorr'}))
     if isnumeric(argVal) && isscalar(argVal) && mod(argVal,1)==0 && argVal>=0
         argGood = 1;
     end
     
 % Scalar integer in (0,Inf)
-elseif ismember(lower(argName),lower({'filtOrder','permIters','dof','splineorder',...
-        'intorder','echoForMoCorr'}))
+elseif ismember(lower(argName),lower({'filtOrder','permIters','dof','splineorder','intorder'}))
     if isnumeric(argVal) && isscalar(argVal) && mod(argVal,1)==0 && argVal>0
         argGood = 1;
     end
@@ -102,8 +100,7 @@ elseif ismember(lower(argName),lower({'transCutoff','rotCutoff','transSingleAxis
     end
     
 % Scalar in [0,Inf)
-elseif ismember(lower(argName),lower({'fwhm','imprefval','impinval','lambda','biaslambda',...
-        'jmin','jmax'}))
+elseif ismember(lower(argName),lower({'fwhm','imprefval','impinval','lambda','biaslambda'}))
     if isnumeric(argVal) && isscalar(argVal) && argVal>=0 && argVal~=inf
         argGood = 1;
     end

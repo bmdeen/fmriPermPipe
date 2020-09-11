@@ -6,13 +6,14 @@
 %   build a BIDS filename from empty string input.
 % - If input filename has at least one BIDS key (sub, ses, etc), it will be
 %   considered BIDS-formatted. Any unrecognized entities will be left at
-%   of the filename (this includes the file suffix, and other unrecognized
-%   key-value pairs, e.g. used by derivatives).
-% - Deals with non-BIDS-formatted inputs by adding entities and a default 
-%   suffix to the end of the file name. Any input with no recognized BIDS 
-%   keys is considered non-BIDS-formatted (note: this includes names like 
-%   "bold.nii.gz," because the script has no knowledge about which strings
-%   are valid BIDS suffices.)
+%   the end of the filename (this includes the file suffix, and other
+%   unrecognized key-value pairs).
+% - Deals with non-BIDS-formatted inputs by adding entities and default or 
+%   specified suffix to the end of the file name. Any input with no
+%   recognized BIDS keys is considered non-BIDS-formatted (note: this
+%   includes names like "bold.nii.gz," because the script has no knowledge
+%   about which strings are valid BIDS suffices. "sub-X_bold.nii.gz" is
+%   fine.)
 %
 % Arguments:
 %   inputPath (string) - filename to modify
@@ -88,7 +89,7 @@ if sum(keyIndByEntity<Inf)==0
         end
     end
     entityString = join(entities,'_');
-    entityString = entityString{1};
+    if ~isempty(entityString), entityString = entityString{1}; end
     
     outputPath = [];
     if ~isempty(inputDir), outputPath = [inputDir '/']; end

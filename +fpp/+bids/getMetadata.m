@@ -5,7 +5,7 @@ function meta = getMetadata(filename, pattern)
 currentDir = pwd;
 bidsMatlabDir = fileparts(which('bids.query'));
 if isempty(bidsMatlabDir)
-    error('bids-matlab is not sourced.');
+    error('Error: bids-matlab is not sourced.');
 end
 cd([bidsMatlabDir '/private']);
 if nargin == 1

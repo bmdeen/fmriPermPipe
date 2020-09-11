@@ -7,8 +7,7 @@
 function motionParams = estimateHeadMotion(inputPath,outputDir,moCorrTargetVolNum)
 
 if ~exist('moCorrTargetVolNum','var')
-    [~,vols] = fpp.util.system(['fslval ' inputPath ' dim4']);
-    vols = str2num(strtrim(vols));
+    vols = fpp.util.checkMRIProperty('vols',inputPath);
     moCorrTargetVolNum = ceil(vols/2);
 end
 [~,inputName,inputExt] = fpp.util.fileParts(inputPath);

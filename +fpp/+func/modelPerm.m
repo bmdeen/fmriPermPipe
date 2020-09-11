@@ -325,8 +325,7 @@ for s = 1:length(subjects)
             
             rfd = [prepDir '/raw_func.nii.gz'];
             badVols = load([prepDir '/art/badvols']);
-            [~,numVols] = fpp.util.system(['fslval ' rfd ' dim4']);
-            numVols = str2num(strtrim(numVols));
+            numVols = fpp.util.checkMRIProperty('vols',rfd);
             goodVols = setdiff(1:numVols,badVols);
             
             % Check TR of data for regressor definition

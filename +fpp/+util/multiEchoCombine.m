@@ -63,8 +63,7 @@ for i=1:numTEs
 end
 
 % Separate data from different numTEs
-[~,vols] = fpp.util.system(['fslval ' inputPath ' dim4']);
-vols = str2num(strtrim(vols));
+vols = fpp.util.checkMRIProperty('vols',inputPath);
 volsPerTE = vols/numTEs;
 tr = fpp.util.checkMRIProperty('tr',inputPath);
 fpp.util.system(['fslsplit ' inputPath ' ' tmpDir '/split -t']);
@@ -100,7 +99,7 @@ dims = size(funcData.vol);
 logFuncMat = reshape(log(funcData.vol),[prod(dims(1:3)) numTEs]);
 X = [ones(numTEs,1) teVals];
 betas = inv(X'*X)*X'*logFuncMat';
-r2Vec = -betas(2,:)';      % Estimated T2* (ms)
+r2Vec = -betas(2,:)';      % Estimated R2* (1/ms)
 r2Vec(funcData.vol(:,:,:,1)==0) = 0;	% Apply simple brain mask
 r2Vol = reshape(r2Vec,dims(1:3));
 t2Vec = -betas(2,:)'.^-1;      % Estimated T2* (ms)

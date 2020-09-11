@@ -22,16 +22,13 @@ if ~exist('spinEchoPaths','var') || isempty(spinEchoPaths)
     fmapRawNames = dir([fmapRawDir '/*_epi.nii.gz']);
     for f=1:length(fmapRawNames)
         fmapRawPath = [fmapRawDir '/' fmapRawNames(f).name];
-        fmapJsonPath = strrep(fmapRawPath,'.nii.gz','.json');
-        if exist(fmapJsonPath,'file')
-            jsonData = bids.util.jsondecode(fmapJsonPath);
-            if isfield(jsonData,'IntendedFor')
-                intendedFor = jsonData.IntendedFor;
-                if ~iscell(intendedFor), intendedFor = {intendedFor}; end
-                for i=1:length(intendedFor)
-                    if any(strfind(intendedFor{i},inputName))
-                        spinEchoPaths{end+1} = fmapRawPath;
-                    end
+        fmapRawMetadata = fpp.bids.getMetadata(fmapRawPath);
+        if isfield(fmapRawMetadata,'IntendedFor')
+            intendedFor = fmapRawMetadata.IntendedFor;
+            if ~iscell(intendedFor), intendedFor = {intendedFor}; end
+            for i=1:length(intendedFor)
+                if any(strfind(intendedFor{i},inputName))
+                    spinEchoPaths{end+1} = fmapRawPath;
                 end
             end
         end
@@ -105,10 +102,8 @@ end
 spinEchoPaths = spinEchoPathsNew;
 spinEchoPaths{3} = fpp.bids.changeName(spinEchoPaths{1},'dir','Both');
 fpp.util.system(['fslmerge -t ' spinEchoPaths{3} ' ' spinEchoPaths{1} ' ' spinEchoPaths{2}]);
-inputJsonPath = strrep(spinEchoPaths{1},'.nii.gz','.json');
-outputJsonPath = strrep(spinEchoPaths{3},'.nii.gz','.json');
-fpp.bids.jsonReconstruct(inputJsonPath,outputJsonPath);
-fpp.bids.jsonChangeValue(outputJsonPath,{'PhaseEncodingDirection'},{[]});
+fpp.bids.jsonReconstruct(spinEchoPaths{1},spinEchoPaths{3});
+fpp.bids.jsonChangeValue(spinEchoPaths{3},{'PhaseEncodingDirection'},{[]});
 
 % Check topup properties, write to field map param file
 if ~exist('fieldMapParamPath','var') || isempty(fieldMapParamPath) || ~exist(fieldMapParamPath,'file')
