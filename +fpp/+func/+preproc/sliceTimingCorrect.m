@@ -5,6 +5,11 @@
 % Arguments:
 % - inputPaths (cell array of strings): paths to input data
 % - sliceTimes
+%
+% TEST after fixing slice timing file definition!!
+% - See https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FEAT/UserGuide
+% - https://www.jiscmail.ac.uk/cgi-bin/wa-jisc.exe?A2=ind1703&L=FSL&P=R81364
+% - https://www.jiscmail.ac.uk/cgi-bin/wa-jisc.exe?A2=ind1801&L=FSL&P=R17338
 
 function [errorMsg,outputPaths] = sliceTimingCorrect(inputPaths,sliceTimes,tr,outputDescShort,outputDescLong)
 
@@ -38,7 +43,7 @@ end
 [inputDir,~,~] = fpp.util.fileParts(inputPaths{1});
 stFilePath = [inputDir '/tmp_slice_timing_file.txt'];
 fid = fopen(stFilePath,'w+');
-fprintf(fid,'%f\n',sliceTimes/tr);
+fprintf(fid,'%f\n',.5-sliceTimes/tr);
 fclose(fid);
 
 % Apply FSL's slicetimer

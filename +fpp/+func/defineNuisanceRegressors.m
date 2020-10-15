@@ -124,13 +124,13 @@ if isempty(disdaqs)
 else
     disdaqVols = (1:disdaqs)';
 end
-vols = fpp.util.checkMRIProperty('vols',dataPath);
+numVols = fpp.util.checkMRIProperty('vols',dataPath);
 goodVols = setdiff(1:numVols,union(disdaqVols,badVols));
 
 % Load data/mask
-funcData = fpp.util.readMRI(dataPath);
+funcData = fpp.util.mriRead(dataPath);
 dims = size(funcData.vol);
-maskData = fpp.util.readMRI(maskPath);
+maskData = fpp.util.mriRead(maskPath);
 funcMat = reshape(funcData.vol,[prod(dims(1:3)) dims(4)])';
 funcMat = funcMat(:,maskData.vol==1);
 newData = funcData;
@@ -175,7 +175,7 @@ if useNuisWMPCA || useNuisCSFPCA
     
     % Load unsmoothed functional data
     if pcaUnsmoothed
-        funcDataTmp = fpp.util.readMRI(unsmoothedDataPath);
+        funcDataTmp = fpp.util.mriRead(unsmoothedDataPath);
         funcMatTmp = reshape(funcDataTmp.vol,[prod(dims(1:3)) dims(4)])';
     else
         funcMatTmp = funcMat;
@@ -184,7 +184,7 @@ if useNuisWMPCA || useNuisCSFPCA
     noiseMat = [];  % Time point by voxel matrix, corresponding to noise volume
     
     if useNuisWMPCA
-        wmData = fpp.util.readMRI(roiPathWM);
+        wmData = fpp.util.mriRead(roiPathWM);
         if erodeROI==1, wmData.vol = erodeROIImg(wmData.vol); end
         wmInd = find(wmData.vol==1);
         wmMat = funcMatTmp(:,wmInd);
@@ -192,7 +192,7 @@ if useNuisWMPCA || useNuisCSFPCA
     end
     
     if useNuisCSFPCA
-        csfData = fpp.util.readMRI(roiPathCSF);
+        csfData = fpp.util.mriRead(roiPathCSF);
         if erodeROI==1, csfData.vol = erodeROIImg(csfData.vol); end
         csfInd = find(csfData.vol==1);
         csfMat = funcMatTmp(:,csfInd);
@@ -227,7 +227,7 @@ if tempFilt
         regrIndsToFilt = setdiff(regrIndsToFilt,pcaRegrInds);
     end
     
-    tr = fpp.utils.checkMRIProperty('tr',dataPath);
+    tr = fpp.util.checkMRIProperty('tr',dataPath);
     nuisRegrMat(:,regrIndsToFilt) = firFilter(nuisRegrMat(:,regrIndsToFilt),filtCutoff,1/tr);
 end
 

@@ -98,9 +98,9 @@ numVols = fpp.util.checkMRIProperty('vols',inputPath);
 goodVols = setdiff(1:numVols,union(disdaqVols,badVols));
 
 % Load data/mask
-funcData = fpp.utils.mriRead(inputPath);
+funcData = fpp.util.mriRead(inputPath);
 dims = size(funcData.vol);
-maskData = fpp.utils.mriRead(maskPath);
+maskData = fpp.util.mriRead(maskPath);
 funcMat = reshape(funcData.vol,[prod(dims(1:3)) dims(4)])';
 funcMat = funcMat(:,maskData.vol==1);
 newData = funcData;
@@ -119,7 +119,7 @@ funcMat = funcMat - nuisRegrMat*betas(2:end,:);
 funcMatAllVoxels = zeros(dims(4),prod(dims(1:3)));
 funcMatAllVoxels(:,maskData.vol==1) = funcMat;
 newData.vol = reshape(funcMatAllVoxels',dims);
-fpp.utils.mriWrite(newData,outputPath);
+fpp.util.mriWrite(newData,outputPath);
 
 % Save output .mat file with regressor info, if specified
 if ~isempty(outputMat)

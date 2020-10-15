@@ -33,7 +33,7 @@ topupJacobian2FuncPath = fpp.bids.changeName(inputFuncPath,{'desc','echo'},{'Und
 if ~exist('fieldMapParamPath','var') || isempty(fieldMapParamPath) || ~exist(fieldMapParamPath,'file')
     fmapProperties = [];
     for f=1:length(spinEchoPaths)
-        fmapProperties(end+1,:) = fpp.utils.checkMRIProperty('Topup',spinEchoPaths{f});
+        fmapProperties(end+1,:) = fpp.util.checkMRIProperty('Topup',spinEchoPaths{f});
     end
     if isempty(fmapProperties)
         errorMsg = 'ERROR: Could not determine spin echo topup parameters.';

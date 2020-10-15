@@ -1,4 +1,6 @@
-
+%
+% propertyValue = fpp.util.checkMRIProperty(propertyName,inputPath)
+%
 % Function to check property of input MR image, using sidecar JSON file if
 % it exists, or alternative method if available. Returns null if it can't
 % find a way to check the property.
@@ -18,13 +20,16 @@
 %   + Topup - Spin-echo EPI properties for FSL's topup (phase dir/timing)
 %   + ST/SliceTiming - vector of slice acquisition times relative to start
 %       of volume acquisition
+% - inputPath (string): path to input image
 %
 % Dependencies: bids-matlab
 
 function propertyValue = checkMRIProperty(propertyName,inputPath)
 
 propertyValue = [];
-jsonData = fpp.bids.getMetadata(inputPath);
+if exist(fpp.bids.jsonPath(inputPath),'file')
+    jsonData = fpp.bids.getMetadata(inputPath);
+end
 [inputDir,inputName,inputExt] = fpp.util.fileParts(inputPath);
 if isempty(inputDir), inputDir = pwd; end
 
@@ -43,8 +48,8 @@ switch lower(propertyName)
             end
         end
     case 'te'
-        % Check for BIDS-formatted multi-echo data, return multiple echoes
         if exist('jsonData','var') && isfield(jsonData,'EchoTime')
+            % Check for BIDS-formatted multi-echo data, return multiple TE values if so
             if any(regexp(inputPath,'_echo-[0-9]+_'))
                 % Get list of input paths
                 inputNames = struct2cell(fpp.util.regExpDir(inputDir,regexprep([inputName inputExt],'_echo-[0-9]+_','_echo-[0-9]+_')));

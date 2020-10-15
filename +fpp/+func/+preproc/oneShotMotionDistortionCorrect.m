@@ -15,9 +15,6 @@ topupJacobian2FuncTemplatePath = fpp.bids.changeName(topupJacobianPath,'space',f
 [~,mcName,~] = fileparts(mcDir);
 
 % Move warp Jacobian to FuncTemplate space
-% fpp.util.system(['convert_xfm -omat ' xfmSpinEcho2FuncTemplate ' -concat ' xfmNativeFunc2FuncTemplate ' ' xfmSpinEcho2NativeFunc]);
-% fpp.util.system(['flirt -in ' topupJacobianPath ' -ref ' funcTemplatePath ' -out ' topupJacobian2FuncTemplatePath ...
-%     ' -applyxfm -init ' xfmSpinEcho2FuncTemplate]);
 fpp.fsl.concatXfm(xfmNativeFunc2FuncTemplate,xfmSpinEcho2NativeFunc,xfmSpinEcho2FuncTemplate);
 fpp.fsl.moveImage(topupJacobianPath,funcTemplatePath,topupJacobian2FuncTemplatePath,xfmSpinEcho2FuncTemplate);
 
@@ -33,17 +30,12 @@ for e=1:length(outputPaths)
     for t=0:vols-1
         inputVolPath = [inputSplitStem fpp.util.numPad(t,4) '.nii.gz'];
         outputVolPath = [outputSplitStem fpp.util.numPad(t,4) '.nii.gz'];
-%         fpp.util.system(['convert_xfm -omat ' xfmSpinEcho2FuncTemplate ' -concat ' xfmNativeFunc2FuncTemplate ' ' xfmSpinEcho2NativeFunc]);
         fpp.fsl.concatXfm(xfmNativeFunc2FuncTemplate,xfmSpinEcho2NativeFunc,xfmSpinEcho2FuncTemplate);
         xfmInputVol2NativeFunc = [mcDir '/' fpp.bids.changeName(mcName,{'echo','desc','from','to','mode'},...
             {int2str(echoForMoCorr),'',['orig' fpp.util.numPad(t,4)],'orig','image'},'xfm','.mat')];
         xfmInputVol2SpinEcho = [mcDir '/' fpp.bids.changeName(mcName,{'echo','desc','from','to','mode'},...
             {int2str(echoForMoCorr),'',['orig' fpp.util.numPad(t,4)],'SpinEcho','image'},'xfm','.mat')];
-%         fpp.util.system(['convert_xfm -omat ' xfmInputVol2SpinEcho ' -concat ' xfmNativeFunc2SpinEcho ' ' xfmInputVol2NativeFunc]);
         fpp.fsl.concatXfm(xfmNativeFunc2SpinEcho,xfmInputVol2NativeFunc,xfmInputVol2SpinEcho);
-        % Single-shot application of motion correction, undistortion, and registration to FuncTemplate
-%         fpp.util.system(['applywarp --in=' inputVolPath ' --ref=' funcTemplatePath ' --out=' outputVolPath ...
-%             ' --warp=' topupWarpPath ' --premat=' xfmInputVol2SpinEcho ' --postmat=' xfmSpinEcho2FuncTemplate]);
         fpp.fsl.moveImage(inputVolPath,funcTemplatePath,outputVolPath,xfmInputVol2SpinEcho,...
             'warp',topupWarpPath,'postmat',xfmSpinEcho2FuncTemplate);
         fpp.util.system(['fslmaths ' outputVolPath ' -mul ' topupJacobian2FuncTemplatePath ' ' outputVolPath]);
