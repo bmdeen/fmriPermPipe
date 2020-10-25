@@ -38,8 +38,8 @@ switch lower(propertyName)
         if exist('jsonData','var') && isfield(jsonData,'RepetitionTime')
             propertyValue = jsonData.RepetitionTime;
         else
-            [~, tr] = fpp.util.system(['fslval ' funcPath ' pixdim4']);
-            [~, tu] = fpp.util.system(['fslval ' funcPath ' time_units']);
+            [~, tr] = fpp.util.system(['fslval ' inputPath ' pixdim4']);
+            [~, tu] = fpp.util.system(['fslval ' inputPath ' time_units']);
             tu = strtrim(tu);
             if strcmp(tu,'ms')
                 propertyValue = str2num(tr)/1000;
