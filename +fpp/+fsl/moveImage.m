@@ -4,6 +4,22 @@
 %
 % If variable argument warp is specified, uses applywarp. Otherwise, uses
 % flirt -applyxfm.
+%
+% fpp.fsl.moveImage(inputPath,referencePath,outputPath,preMat,varargin)
+%
+% Arguments:
+% inputPath (string): path to input image
+% referencPath (string): path to reference image (registration target)
+% outputPath (string): path to output image
+% preMat (string): linear transformation to apply
+% 
+% Optional arguments:
+% - warp (string): path to warp coefficient image (cout from fnirt)
+% - postMat (string): path to linear transform to apply after warp
+% - interp (string): interpolation type (nn/nearestneighbour, trilinear, 
+%       sinc, spline)
+% - datatype, mask, superlevel, paddingsize, abs, rel ,superlevel, 
+%       usesqform - see flirt/applywarp documentation for info on these
 
 function moveImage(inputPath,referencePath,outputPath,preMat,varargin)
 
@@ -39,7 +55,7 @@ if ~isempty(warp)
     % Define applywarp command
     cmd = ['applywarp --in=' inputPath ' --ref=' referencePath ' --out=' outputPath];
     
-    if ~isempty('preMat')
+    if ~isempty(preMat)
         cmd = [cmd ' --premat=' preMat];
     end
 
@@ -87,8 +103,7 @@ fpp.util.system(cmd);
 % Write json output files
 if exist(fpp.bids.jsonPath(inputPath),'file') && exist('outputPath','var')
     fpp.bids.jsonReconstruct(inputPath,outputPath);
-    fpp.bids.jsonChangeValue(outputPath,'SpatialRef',...
-        strrep(referencePath,fpp.bids.checkBidsDir(referencePath),''));
+    fpp.bids.jsonChangeValue(outputPath,'SpatialRef',fpp.bids.removeBidsDir(referencePath));
 end
 
 

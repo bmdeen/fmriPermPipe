@@ -8,6 +8,13 @@ if strcmp(filename(1:2),'~/')
     filename = [getenv('HOME') filename(2:end)];
 end
 
+% If file is specified in current dir, add directory string
+[fPath,~,~] = fpp.util.fileParts(filename);
+if isempty(fPath)
+    filename = [pwd '/' filename];
+end
+
+% Move to bids-matlab private dir, run get_metadata, move back
 currentDir = pwd;
 bidsMatlabDir = fileparts(which('bids.query'));
 if isempty(bidsMatlabDir)

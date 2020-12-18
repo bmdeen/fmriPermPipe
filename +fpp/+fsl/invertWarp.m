@@ -1,6 +1,18 @@
 
 % Wrapper for FSL's invwarp, to invert a nonlinear warp image. Generates
 % .json metadata for output warp coefficient image.
+%
+% fpp.fsl.invertWarp(inputWarp,outputWarp,referencePath,varargin)
+%
+% Arguments:
+% - inputWarp (string): path to input warp coefficient file
+% - outputWarp (string): path to output warp coefficient file
+% - referencePath (string): path to the new reference image, i.e. the input
+%       of the inputWarp transform
+%
+% Optional arguments:
+% - jmin, jmax, rel, abs, noconstraint (see invwarp documentation for
+%       further info)
 
 function invertWarp(inputWarp,outputWarp,referencePath,varargin)
 
@@ -41,8 +53,9 @@ fpp.util.system(cmd);
 % Write json output files
 if exist(fpp.bids.jsonPath(inputWarp),'file')
     fpp.bids.jsonReconstruct(inputWarp,outputWarp);
+    jsonData = fpp.bids.getMetadata(fpp.bids.jsonPath(inputWarp));
     fpp.bids.jsonChangeValue(outputWarp,{'FromFile','ToFile','CommandLine'},...
-        {fpp.bids.getMetadata(inputWarp,'ToFile'),fpp.bids.getMetadata(inputWarp,'FromFile'),cmd});
+        {jsonData.ToFile,jsonData.FromFile,cmd});
 end
 
 end

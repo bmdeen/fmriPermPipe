@@ -67,6 +67,26 @@ if useTedana
                 fpp.bids.changeName(outputPath,'desc',['tedana' methods{m}],suffices{s},componentExts{s})]);
         end
     end
+    
+    % Save rejected component mixing matrix (output data time series are orthogonal to these components)
+    mixPath = fpp.bids.changeName(outputPath,'desc','tedanaICA','mixing','.tsv');
+    mixPathOut = fpp.bids.changeName(outputPath,'desc','tedanaICARejected','mixing','.tsv');
+    decompPath = fpp.bids.changeName(outputPath,'desc','tedanaICA','decomposition','.json');
+    mixTSV = bids.util.tsvread(mixPath);
+    decompJson = bids.util.jsondecode(decompPath);
+    if isfield(decompJson,'ica_000')
+        nDigits = 3;
+    else
+        nDigits = 2;
+    end
+    % Remove non-rejected components from mixTSV
+    for i=0:length(fields(mixTSV))-1
+        if ~strcmpi(eval(['decompJson.ica_' fpp.util.numPad(i,nDigits) '.classification']),'rejected')
+            mixTSV = rmfield(mixTSV,['ica_' fpp.util.numPad(i,nDigits)]);
+        end
+    end
+    fpp.bids.tsvWrite(mixPathOut,mixTSV);
+    
 else
     
     % Define i/o variables

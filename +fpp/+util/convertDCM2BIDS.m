@@ -64,9 +64,6 @@ end
 if isfield(scanlog,'ses') && (any(strcmp(scanlog.ses,'-')) || any(strcmpi(scanlog.ses,'n/a')))
     error('If sessions are specified, they must be defined for all series.');
 end
-if ~exist('overwrite','var')
-    overwrite = 0;
-end
 
 % Convert all fields of scanlog, other than series, to cell arrays of
 % strings.
@@ -117,6 +114,8 @@ for i=1:length(scanlog.series)
         imageTypeID(i) = 4;
     elseif contains(imageType,'sbref')
         imageTypeID(i) = 5;
+    elseif contains(imageType,'phase')
+        imageTypeID(i) = 6;
     else
         continue;   % Skip unrecognized image types
     end
@@ -161,10 +160,26 @@ for i=1:length(scanlog.series)
         case 5
             if strcmp(scanlog.type{i+1},'bold')
                 outputSubDir = [outputSubDir '/func'];
-                sbrefForBold = 1;
+                acqForBold = 1;
             elseif strcmp(scanlog.type{i+1},'dwi')
                 outputSubDir = [outputSubDir '/dwi'];
-                sbrefForBold = 0;
+                acqForBold = 0;
+            else
+                continue;
+            end
+        case 6
+            if i>1 && strcmp(scanlog.type{i-1},'bold')
+                outputSubDir = [outputSubDir '/func'];
+                acqForBold = 1;
+            elseif i>1 && strcmp(scanlog.type{i-1},'dwi')
+                outputSubDir = [outputSubDir '/dwi'];
+                acqForBold = 0;
+            elseif i>1 && strcmp(scanlog.type{i-1},'anat')
+                outputSubDir = [outputSubDir '/anat'];
+                acqForBold = 0;
+            elseif i>1 && strcmp(scanlog.type{i-1},'fmap')
+                outputSubDir = [outputSubDir '/fmap'];
+                acqForBold = 0;
             else
                 continue;
             end
@@ -174,7 +189,11 @@ for i=1:length(scanlog.series)
     
     % If multiple echoes exist, process each separately
     didNotWrite(i) = 0;
-    meFiles = fpp.util.regExpDir([niixDir '/' int2str(scanlog.series(i)) '_e*.nii.gz'],[int2str(scanlog.series(i)) '_e[1-9].nii.gz']);
+    if imageTypeID(i)==6
+        meFiles = fpp.util.regExpDir([niixDir '/' int2str(scanlog.series(i)) '_e*_ph.nii.gz'],[int2str(scanlog.series(i)) '_e[1-9]_ph.nii.gz']);
+    else
+        meFiles = fpp.util.regExpDir([niixDir '/' int2str(scanlog.series(i)) '_e*.nii.gz'],[int2str(scanlog.series(i)) '_e[1-9].nii.gz']);
+    end
     if length(meFiles)>1
         keys{end+1} = 'echo';
         values{end+1} = 1;
@@ -192,9 +211,9 @@ for i=1:length(scanlog.series)
                     json = bids.util.jsondecode(outputJsonPath);
                     json.TaskName = scanlog.task{i};
                     bids.util.jsonencode(outputJsonPath,json,jsonOpts);
-                elseif imageTypeID(i)==5 && sbrefForBold
+                elseif ismember(imageTypeID(i),[5 6]) && acqForBold
                     json = bids.util.jsondecode(outputJsonPath);
-                    json.TaskName = scanlog.task{i+1};
+                    json.TaskName = scanlog.task{i};
                     bids.util.jsonencode(outputJsonPath,json,jsonOpts);
                 end
             else
@@ -203,7 +222,11 @@ for i=1:length(scanlog.series)
             end
         end
     else
-        inputNiftiPath = [niixDir '/' int2str(scanlog.series(i)) '.nii.gz'];
+        if imageTypeID(i)==6
+            inputNiftiPath = [niixDir '/' int2str(scanlog.series(i)) '_ph.nii.gz'];
+        else
+            inputNiftiPath = [niixDir '/' int2str(scanlog.series(i)) '.nii.gz'];
+        end
         inputJsonPath = strrep(inputNiftiPath,'.nii.gz','.json');
         outputNiftiPath = [outputSubDir '/' fpp.bids.changeName('',keys,values,imageType,'.nii.gz')];
         outputNiftiPathsRelative{i,1} = strrep(outputNiftiPath,[outputDir '/'],'');
@@ -215,9 +238,9 @@ for i=1:length(scanlog.series)
                 json = bids.util.jsondecode(outputJsonPath);
                 json.TaskName = scanlog.task{i};
                 bids.util.jsonencode(outputJsonPath,json,jsonOpts);
-            elseif imageTypeID(i)==5 && sbrefForBold
+            elseif ismember(imageTypeID(i),[5 6]) && acqForBold
                 json = bids.util.jsondecode(outputJsonPath);
-                json.TaskName = scanlog.task{i+1};
+                json.TaskName = scanlog.task{i};
                 bids.util.jsonencode(outputJsonPath,json,jsonOpts);
             end
         else

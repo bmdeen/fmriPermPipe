@@ -1,4 +1,8 @@
 
+% FPP utility to check validity of optional inputs (varargin).
+%
+% fpp.util.optInputs(argList,argName)
+
 function argVal = optInputs(argList,argName)
 
 %%% Find intended value for argument argName
@@ -39,7 +43,7 @@ elseif ismember(lower(argName),lower({'overwrite','clustCorrect','permuteRest',.
         'pcaUnsmoothed','removeBadVols','useSTC','useTedana','undistort',...
         'useTaskTemplate','applyxfm','imprefm','impinm','ssqlambda','refderiv',...
         'estint','verbose','abs','rel','absout','relout','super','usesqform',...
-        'constrainj','noconstraint'}))
+        'constrainj','noconstraint','useDespike','nosearch'}))
     if (isnumeric(argVal) || islogical(argVal)) && isscalar(argVal) && ismember(argVal,[0 1])
         argGood = 1;
     end
