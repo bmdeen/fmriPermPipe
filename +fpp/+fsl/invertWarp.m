@@ -52,7 +52,7 @@ fpp.util.system(cmd);
 
 % Write json output files
 if exist(fpp.bids.jsonPath(inputWarp),'file')
-    fpp.bids.jsonReconstruct(inputWarp,outputWarp);
+    fpp.bids.jsonReconstruct(inputWarp,outputWarp,'xfm');
     jsonData = fpp.bids.getMetadata(fpp.bids.jsonPath(inputWarp));
     fpp.bids.jsonChangeValue(outputWarp,{'FromFile','ToFile','CommandLine'},...
         {jsonData.ToFile,jsonData.FromFile,cmd});

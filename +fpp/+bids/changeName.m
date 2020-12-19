@@ -46,7 +46,7 @@ if ~exist('newExtension','var') || ~ischar(newExtension) || ~strcmp(newExtension
 end
 
 % Potential key names, in order of precedence in filename. "Key index"
-% refers to position in this list.
+% refers to position in this list. Based on BIDS 1.4.1 spec.
 keys = {'sub','ses','tpl','task','acq','ce','rec','dir','run','mod','echo','recording',...
     'proc','hemi','space','volspace','atlas','split','res','den','label','model',...
     'parameter','desc','subset','from','to','mode'};

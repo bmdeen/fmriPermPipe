@@ -102,7 +102,7 @@ end
 spinEchoPaths = spinEchoPathsNew;
 spinEchoPaths{3} = fpp.bids.changeName(spinEchoPaths{1},'dir','Both');
 fpp.util.system(['fslmerge -t ' spinEchoPaths{3} ' ' spinEchoPaths{1} ' ' spinEchoPaths{2}]);
-fpp.bids.jsonReconstruct(spinEchoPaths{1},spinEchoPaths{3});
+fpp.bids.jsonReconstruct(spinEchoPaths{1},spinEchoPaths{3},'fmap');
 fpp.bids.jsonChangeValue(spinEchoPaths{3},{'PhaseEncodingDirection'},{[]});
 
 % Check topup properties, write to field map param file

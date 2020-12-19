@@ -78,7 +78,7 @@ fpp.util.system(['rm -rf ' topupJacobian2FuncPath]);
 
 % Generate output JSON file
 if exist(fpp.bids.jsonPath(inputFuncPath))
-    fpp.bids.jsonReconstruct(inputFuncPath,inputUndistortedFuncPath);
+    fpp.bids.jsonReconstruct(inputFuncPath,inputUndistortedFuncPath,'midprepfmri');
 end
 
 end

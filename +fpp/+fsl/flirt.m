@@ -77,7 +77,7 @@ if exist(inputJsonPath,'file')
     end
     if ~isempty(outputPath)
         outputJsonPath = fpp.bids.jsonPath(outputPath);
-        fpp.bids.jsonReconstruct(inputJsonPath,outputJsonPath);
+        fpp.bids.jsonReconstruct(inputJsonPath,outputJsonPath,'midprepfmri');
         fpp.bids.jsonChangeValue(outputJsonPath,'SpatialRef',...
             strrep(referencePath,fpp.bids.checkBidsDir(referencePath),''));
     end

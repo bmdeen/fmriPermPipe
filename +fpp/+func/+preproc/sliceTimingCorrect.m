@@ -50,7 +50,7 @@ fclose(fid);
 for e=1:length(inputPaths)
     outputPaths{e} = fpp.bids.changeName(inputPaths{e},'desc',outputDescShort);
     fpp.util.system(['slicetimer -i ' inputPaths{e} ' -o ' outputPaths{e} ' --tcustom=' stFilePath]);
-    fpp.bids.jsonReconstruct(inputPaths{e},outputPaths{e});
+    fpp.bids.jsonReconstruct(inputPaths{e},outputPaths{e},'midprepfmri');
     fpp.bids.jsonChangeValue(outputPaths{e},{'Description','Sources'},...
         {outputDescLong,fpp.bids.removeBidsDir(inputPaths{e})});
 end

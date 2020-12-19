@@ -20,7 +20,7 @@ fpp.util.system(['fslmaths ' inputDir '/input_mean2350982452.nii.gz -div ' input
 fpp.util.system(['rm -rf ' inputDir '/input_mean2350982452.nii.gz ' inputDir '/input_std2350982452.nii.gz']);
 
 % Generate tSNR map json file
-fpp.bids.jsonReconstruct(inputName,outputName);
+fpp.bids.jsonReconstruct(inputName,outputName,'mri');
 if exist('outputDescription','var') && ischar(outputDescription)
     fpp.bids.jsonChangeValue(outputName,'Description',outputDesciption);
 else

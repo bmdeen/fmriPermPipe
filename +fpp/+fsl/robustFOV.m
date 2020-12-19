@@ -66,7 +66,7 @@ if exist(inputJsonPath,'file')
         bids.util.jsonencode(outputXfmJsonPath,jsonData,jsonOpts);
         
         outputJsonPath = fpp.bids.jsonPath(outputPath);
-        fpp.bids.jsonReconstruct(inputJsonPath,outputJsonPath);
+        fpp.bids.jsonReconstruct(inputJsonPath,outputJsonPath,'mri');
         fpp.bids.jsonChangeValue(outputJsonPath,'SpatialRef',...
             fpp.bids.removeBidsDir(outputPath));
 end

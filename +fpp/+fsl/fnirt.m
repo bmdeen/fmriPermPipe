@@ -74,7 +74,7 @@ if exist(inputJsonPath,'file')
     % Warped input image
     if ~isempty(iout)
         outputPath = iout;
-        fpp.bids.jsonReconstruct(inputPath,outputPath);
+        fpp.bids.jsonReconstruct(inputPath,outputPath,'midprepfmri');
         fpp.bids.jsonChangeValue(outputPath,'SpatialRef',...
             strrep(referencePath,fpp.bids.checkBidsDir(referencePath),''));
     end
