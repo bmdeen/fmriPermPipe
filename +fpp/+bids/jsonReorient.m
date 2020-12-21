@@ -1,6 +1,8 @@
 
-% Script to alter fields in a .json metadata file pertinent to image
+% Function to alter fields in a .json metadata file pertinent to image
 % orientation.
+%
+% jsonReorient(inputJsonPath,inputOrientation,outputOrientation)
 %
 % Arguments:
 %   inputJsonPath (string): path to json file to edit
@@ -33,7 +35,7 @@ end
 % Load JSON file
 json = bids.util.jsondecode(inputJsonPath);
 
-% Remove fields that will no longer be accurate
+% Remove fields that may no longer be accurate
 if isfield(json,'ImageOrientationPatientDICOM')
     json = rmfield(json,'ImageOrientationPatientDICOM');
 end
@@ -57,16 +59,16 @@ for d=1:3
     dimSwappedIJK(d) = ~strcmp(inputOrientation(d),outputOrientation(dimsOutputIJK==dimsInputIJK(d)));
 end
 
+% Change phase encode dir
 if isfield(json,'PhaseEncodingDirection')
     newPhaseString = ijk(dimsOutputIJK==dimsInputIJK(findstr(json.PhaseEncodingDirection(1),ijk)));
-%     if (dimSwappedIJK(findstr(json.PhaseEncodingDirection(1),ijk)) && isempty(findstr(json.PhaseEncodingDirection,'-')))...
-%             || (~dimSwappedIJK(findstr(json.PhaseEncodingDirection(1),ijk)) && ~isempty(findstr(json.PhaseEncodingDirection,'-')))
     if xor(dimSwappedIJK(findstr(json.PhaseEncodingDirection(1),ijk)),~isempty(findstr(json.PhaseEncodingDirection,'-')))
         newPhaseString(end+1) = '-';
     end
     json.PhaseEncodingDirection = newPhaseString;
 end
 
+% Change slice encode dir
 if isfield(json,'SliceEncodingDirection')
     newSliceString = ijk(dimsOutputIJK==dimsInputIJK(findstr(json.SliceEncodingDirection(1),ijk)));
     if ~xor(dimSwappedIJK(findstr(json.SliceEncodingDirection(1),ijk)),isempty(findstr(json.SliceEncodingDirection(1),'-')))

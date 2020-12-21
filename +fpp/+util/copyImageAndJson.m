@@ -3,14 +3,15 @@
 % well as JSON sidecar (if it exists), maintaining fields used by
 % fmriPermPipe, based on BIDS 1.4.1 specification.
 %
-% fpp.util.copyImageAndJson
+% fpp.util.copyImageAndJson(inputImagePath,outputImagePath,fieldsToKeep)
 %
 % Arguments:
 % - inputImagePath (string)
 % - outputImagePath (string)
 % - fieldsToKeep (optional, cell array of strings): JSON fields to copy
 %    OR (string): label for image type, determining which fields to keep.
-%    Options: midprepFMRI, fMRI, MRI, Mask, Seg, Surf, Cifti, keepAll
+%    Options: midprepFMRI, fMRI, Mask, Seg, MRI, Surf, Cifti, Xfm, Fmap,
+%    keepAll, keepAllPreproc
 %
 % Dependencies: bids-matlab (required), bids-matlab-tools (recommended for
 % JSONio)

@@ -1,8 +1,8 @@
 
 % fpp.util.system(cmd,verbose)
 %
-% Wrapper for MATLAB's system function, which gives an error if the system
-% command errors.
+% Wrapper for MATLAB's system function, which throws a MATLAB error if the
+% system command errors.
 
 function [status,cmdOut] = system(cmd,verbose)
 

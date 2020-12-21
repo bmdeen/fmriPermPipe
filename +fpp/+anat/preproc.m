@@ -16,7 +16,7 @@
 %
 % recon-all -s ${subject} -i ${anatDir}/sub-${subject}_space-individual_desc-preproc_T1w.nii.gz
 %     -all -hires -expert ${optsFile} -T2 ${anatDir}/sub-${subject}_space-individual_desc-preproc_T2w.nii.gz
-%     -T2pial -deface
+%     -T2pial
 %
 %
 %

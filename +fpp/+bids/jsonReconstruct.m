@@ -11,7 +11,8 @@
 % - outputJsonPath (string): path to output json field
 % - fieldsToKeep (optional, cell array of strings): JSON fields to copy
 %    OR (string): label for image type, determining which fields to keep.
-%    Options: midprepFMRI, fMRI, Mask, Seg, MRI, Surf, Cifti, Xfm, Fmap, keepAll
+%    Options: midprepFMRI, fMRI, Mask, Seg, MRI, Surf, Cifti, Xfm, Fmap,
+%    keepAll, keepAllPreproc
 %
 % Dependencies: bids-matlab (required), bids-matlab-tools (recommended for
 % JSONio)
@@ -46,8 +47,9 @@ if ~exist('fieldsToKeep','var') || isempty(fieldsToKeep)
         'DatasetType','Authors','Space','BandpassFilter','Neighborhood','Threshold',...
         'Transformations','ROI'};
 elseif ischar(fieldsToKeep)
+    fieldsToKeepLabel = fieldsToKeep;
     fieldsToKeep = {'Description','Sources','RawSources'};   % Keep for all derivatives
-    switch lower(fieldsToKeep)
+    switch lower(fieldsToKeepLabel)
         case 'midprepfmri'  % fMRI data in middle stages of preprocessing (volume, surface, or cifti)
             fieldsToKeep = [fieldsToKeep {'SpatialRef','SkullStripped',...
                 'Resolution','Density','TaskName','RepetitionTime','DelayAfterTrigger',...
@@ -67,15 +69,24 @@ elseif ischar(fieldsToKeep)
         case 'surf'     % Surface file (surf or metric - func/shape)
             fieldsToKeep = [fieldsToKeep {'SpatialRef','Density'}];
         case 'citfi'    % Cifti file (dseries, dscalar, etc)
-            fieldsToKeep = [fieldsToKeep {'SpatialRef','SkuppStripped','Resolution','Density'}];
+            fieldsToKeep = [fieldsToKeep {'SpatialRef','SkullStripped','Resolution','Density'}];
         case 'xfm'      % Transformation file
             fieldsToKeep = [fieldsToKeep {'Software','SoftwareVersion','Invertible',...
                 'Multiplexed','FromFile','ToFile','FromFileSHA','ToFileSHA','CommandLine'}];
         case 'fmap'     % Field map or spin-echo EPI
             fieldsToKeep = [fieldsToKeep {'SpatialRef','PhaseEncodingDirection',...
                 'EffectiveEchoSpacing','TotalReadoutTime','IntendedFor','Units'}];
-        case keepAll
+        case 'keepall'	% Keep all fields
             keepAllFields = 1;
+        case 'keepallpreproc'   % Keep all fields involved in preprocessing
+            fieldsToKeep = [fieldsToKeep {'SpatialRef','SkullStripped',...
+                'Resolution','Density','TaskName','RepetitionTime','DelayAfterTrigger',...
+                'NumberOfVolumesDiscardedByScanner','NumberOfVolumesDiscardedByUser',...
+                'EchoTime','EchoNumber','SliceTiming','PhaseEncodingDirection',...
+                'SliceEncodingDirection','EffectiveEchoSpacing','TotalReadoutTime','DwellTime',...
+                'Type','Manual','Atlas','Software','SoftwareVersion','Invertible',...
+                'Multiplexed','FromFile','ToFile','FromFileSHA','ToFileSHA','CommandLine',...
+                'IntendedFor','Units'}];
         otherwise
             error('If fieldsToKeep is specified as a string, it must correspond to one of the allowed keywords.');
     end
