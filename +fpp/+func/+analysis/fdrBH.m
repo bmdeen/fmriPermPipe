@@ -16,7 +16,7 @@
 %
 %
 % Usage:
-%  >> [h, crit_p, adj_ci_cvrg, adj_p]=fdr_bh(pvals,q,method,report);
+%  >> [h, crit_p, adj_ci_cvrg, adj_p] = fpp.func.analysis.fdrBH(pvals,q,method,report);
 %
 % Required Input:
 %   pvals - A vector or matrix (two dimensions or more) containing the
@@ -127,8 +127,9 @@
 % 5/7/2010-Added FDR adjusted p-values
 % 5/14/2013- D.H.J. Poot, Erasmus MC, improved run-time complexity
 % 10/2015- Now returns FCR adjusted confidence intervals
+% 2020 - minor modifications (Ben Deen)
 
-function [h, crit_p, adj_ci_cvrg, adj_p]=fdrBH(pvals,q,method,report)
+function [h, crit_p, adj_ci_cvrg, adj_p] = fdrBH(pvals,q,method,report)
 
 if nargin<1,
     error('You need to provide a vector or matrix of p-values.');

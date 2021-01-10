@@ -2,6 +2,8 @@
 % Function to decompose a BIDS-style path into a BIDS base directory -
 % defined as one level above the sub directory - and everything after
 % the base directory.
+%
+% [bidsBaseDir,bidsInternalDirs] = fpp.bids.checkBidsDir(inputPath)
 
 function [bidsBaseDir,bidsInternalDirs] = checkBidsDir(inputPath)
 
@@ -31,6 +33,7 @@ for i=startInd:length(inputPathTerms)-1
         return;
     end
 end
+
 % Not BIDS formatted
 bidsBaseDir = '';
 bidsInternalDirs = inputPath;

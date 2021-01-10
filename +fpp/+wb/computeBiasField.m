@@ -3,7 +3,7 @@
 % by measuring sqrt(T1*T2). Requires aligned input T1/T2 images, and a
 % rough brain mask.
 %
-% fpp.wb.computeBiasField(inputT1Path,inputT2Path,inputMask,outputBiasPath,
+% fpp.wb.computeBiasField(inputT1Path,inputT2Path,inputMask,outputBiasPath,...
 %   outputDescription,appendDescription)
 %
 % This script is a modified version of the Human Connectome Project's

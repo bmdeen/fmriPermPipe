@@ -1,5 +1,7 @@
 
-% Function to change file path to .json file.
+% Function to change file path to .json file path.
+%
+% outputPath = fpp.bids.jsonPath(inputPath)
 
 function outputPath = jsonPath(inputPath)
 

@@ -2,16 +2,19 @@
 % Function to apply slice timing correction using FSL's slicetimer.
 % Second two arguments are optional, will be read from data by default.
 %
+% [errorMsg,outputPaths] = fpp.func.preproc.sliceTimingCorrect(inputPaths,...
+%   sliceTimes,tr,outputDescShort,outputDescLong)
+%
 % Arguments:
 % - inputPaths (cell array of strings): paths to input data
 % - sliceTimes
-%
-% TEST after fixing slice timing file definition!!
+
+function [errorMsg,outputPaths] = sliceTimingCorrect(inputPaths,sliceTimes,tr,outputDescShort,outputDescLong)
+
+% Info on slice time definition:
 % - See https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FEAT/UserGuide
 % - https://www.jiscmail.ac.uk/cgi-bin/wa-jisc.exe?A2=ind1703&L=FSL&P=R81364
 % - https://www.jiscmail.ac.uk/cgi-bin/wa-jisc.exe?A2=ind1801&L=FSL&P=R17338
-
-function [errorMsg,outputPaths] = sliceTimingCorrect(inputPaths,sliceTimes,tr,outputDescShort,outputDescLong)
 
 errorMsg = [];
 outputPaths = [];

@@ -19,7 +19,7 @@ giiCiiLabels = {'surf','shape','label','dconn','dscalar','dtseries','dlabel',...
 
 for i=1:length(giiCiiLabels)
     if contains(name,['.' giiCiiLabels{i}])
-        strrep(name,['.' giiCiiLabels{i}],'');
+        name = strrep(name,['.' giiCiiLabels{i}],'');
         ext = ['.' giiCiiLabels{i} ext];
         break;
     end

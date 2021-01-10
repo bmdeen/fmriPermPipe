@@ -2,6 +2,12 @@
 % Wrapper for FSL's convertwarp, to concatenate multiple affine transforms
 % and nonlinear warps. Generates .json metadata for output warp and
 % jacobian files.
+%
+% fpp.fsl.concatWarp(outputWarp,referencePath,varargin)
+%
+% Variable arguments: premat, warp1, midmat, warp2, postmat, jacobian,
+% jmin, jmax, constrainj, abs, rel, absout, relat (see FSL's convertwarp
+% for further explanation)
 
 function concatWarp(outputWarp,referencePath,varargin)
 

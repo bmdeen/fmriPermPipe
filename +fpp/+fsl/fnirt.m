@@ -2,6 +2,8 @@
 % Wrapper for FSL's fnirt, a nonlinear registration tool. Generates .json
 % metadata files for output images and transform files.
 %
+% fpp.fsl.fnirt(inputPath,referencePath,varargin)
+%
 % Main output, cout: warp field coefficient image.
 %
 % Note: scalar numeric arguments should be specified as numeric. All other

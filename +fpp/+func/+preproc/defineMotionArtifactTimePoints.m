@@ -1,6 +1,9 @@
 
 % Function to identify motionParams-based artifact time points, based on
 % intervolume translation and rotation.
+%
+% artifactTPs = fpp.func.preproc.defineMotionArtifactTimePoints(motionParams,...
+%   transCutoff,rotCutoff,tptsAfter)
 
 function artifactTPs = defineMotionArtifactTimePoints(motionParams,transCutoff,rotCutoff,tptsAfter)
 

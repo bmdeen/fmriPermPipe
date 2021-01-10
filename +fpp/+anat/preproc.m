@@ -14,11 +14,13 @@
 % For hi-res data with T1w and T2w images, follow this script with
 % recon-all as follows (opts file should include "mris_inflate -n 30")
 %
-% recon-all -s ${subject} -i ${anatDir}/sub-${subject}_space-individual_desc-preproc_T1w.nii.gz
+% recon-all -s sub-${subject} -i ${anatDir}/sub-${subject}_space-individual_desc-preproc_T1w.nii.gz
 %     -all -hires -expert ${optsFile} -T2 ${anatDir}/sub-${subject}_space-individual_desc-preproc_T2w.nii.gz
 %     -T2pial
 %
-%
+
+function preproc(inputT1Paths,inputT2Paths,outputDir,varargin)
+
 %
 % TODO
 % - N4 bias correction option when not using T2 images. (e.g., try to use
@@ -27,8 +29,6 @@
 % - Change naming of run # for xfms to the real run, if BIDS info is
 %   available?
 % - Why isn't T2 to T1 xfm concatenation method working?
-
-function preproc(inputT1Paths,inputT2Paths,outputDir,varargin)
 
 % Load/check config variables.
 configError = fpp.util.checkConfig;
@@ -45,9 +45,9 @@ dataDir = tmp(1).folder;
 % standardPath = [getenv('FSLDIR') '/data/standard/MNI152_T1_1mm.nii.gz']; % Alternative: 1mm MNI space
 standardDir = [getenv('FSLDIR') '/data/standard'];
 standardName = 'MNI152NLin6ASym';
-standardPath = [dataDir '/MNI152_T1_0.7mm.nii.gz'];
-standardPath2mm = [standardDir '/MNI152_T1_2mm.nii.gz'];
-standardMask = [dataDir '/MNI152_T1_2mm_brain_mask_dil_edit.nii.gz'];    % Use dilated input to provide an inclusive initial brain mask
+standardPath = [dataDir '/space-MNI152Nlin6Asym_res-p8_T1w.nii.gz'];
+standardPath2mm = [standardDir '/space-MNI152Nlin6Asym_res-2_T1w.nii.gz'];
+standardMask = [dataDir '/space-MNI152Nlin6Asym_res-2_desc-brainDilEdit_mask.nii.gz'];    % Use dilated input to provide an inclusive initial brain mask
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
 varArgList = {'overwrite'};
@@ -76,7 +76,7 @@ if strcmp(outputDir(end),'/'), outputDir = outputDir(1:end-1); end
 anatPreprocDir = [outputDir '/anat'];
 
 % Check if output exists.
-finalOutputPath = fpp.bids.changeName([anatPreprocDir '/' inputName '.nii.gz'],{'desc','run','space'},{'preproc',[],'individual'});
+finalOutputPath = fpp.bids.changeName([anatPreprocDir '/' inputName '.nii.gz'],{'desc','run','space'},{'preproc',[],'individual'},'T1w');
 if exist(finalOutputPath,'file') && ~overwrite
     return;
 end
@@ -87,7 +87,7 @@ if ~exist(anatPreprocDir,'dir'), mkdir(anatPreprocDir); end
 % Copy raw data/metadata, convert to .nii.gz if necessary
 for i=1:length(inputT1Paths)
     [~,inputT1Names{i},~] = fpp.util.fileParts(inputT1Paths{i});
-    outputT1Paths{i} = [anatPreprocDir '/' inputT1Names{i} '.nii.gz'];
+    outputT1Paths{i} = [anatPreprocDir '/' fpp.bids.changeName(inputT1Names{i},'','','T1w','.nii.gz')];
     fpp.util.copyImageAndJson(inputT1Paths{i},outputT1Paths{i},'mri');
     fpp.bids.jsonChangeValue(fpp.bids.jsonPath(outputT1Paths{i}),{'Description','RawSources'},...
         {'Raw data copied to derivative directory.',fpp.bids.removeBidsDir(inputT1Paths{i})});
@@ -95,7 +95,7 @@ end
 outputT2Paths = {};
 for i=1:length(inputT2Paths)
     [~,inputT2Names{i},~] = fpp.util.fileParts(inputT2Paths{i});
-    outputT2Paths{i} = [anatPreprocDir '/' inputT2Names{i} '.nii.gz'];
+    outputT2Paths{i} = [anatPreprocDir '/' fpp.bids.changeName(inputT2Names{i},'','','T2w','.nii.gz')];
     fpp.util.copyImageAndJson(inputT2Paths{i},outputT2Paths{i},'mri');
     fpp.bids.jsonChangeValue(fpp.bids.jsonPath(outputT2Paths{i}),{'Description','RawSources'},...
         {'Raw data copied to derivative directory.',fpp.bids.removeBidsDir(inputT2Paths{i})});
@@ -149,6 +149,8 @@ if length(inputT1Paths)>1
     fpp.bids.jsonChangeValue(fpp.bids.jsonPath(outputT1Path),{'Description','Sources','RawSources'},...
         {'Raw data, averaged across runs.',cellfun(removeBidsDir,outputT1Paths,'UniformOutput',false),...
         cellfun(removeBidsDir,inputT1PathsRaw,'UniformOutput',false)});
+else
+    fpp.util.copyImageAndJson(inputT1Paths{1},outputT1Path,'mri');
 end
 if usingT2 && length(inputT2Paths)>1
     addCmdT2 = [addCmdT2 '-div ' int2str(length(inputT2Paths))];
@@ -156,6 +158,8 @@ if usingT2 && length(inputT2Paths)>1
     fpp.bids.jsonChangeValue(fpp.bids.jsonPath(outputT2Path),{'Description','Sources','RawSources'},...
         {'Raw data, averaged across runs.',cellfun(removeBidsDir,outputT2Paths,'UniformOutput',false),...
         cellfun(removeBidsDir,inputT2PathsRaw,'UniformOutput',false)});
+else
+    fpp.util.copyImageAndJson(inputT2Paths{1},outputT2Path,'mri');
 end
 
 

@@ -28,16 +28,16 @@ jsonOpts.indent = '\t';     % Use tab indentation for JSON outputs
 removeBidsDir = @(x) fpp.bids.removeBidsDir(x); % Define wrapper function for fpp.bids.removeBidsDir (for cellfun functionality)
 
 % Process arguments
-if ~exist('argText','var')
+if ~exist('argText','var') || isempty(argText)
     argText = '';
 end
-if ~exist('outputPath','var')
+if ~exist('outputPath','var') || isempty(outputPath)
     outputPath = '';
 end
-if ~exist('flagText','var')
+if ~exist('flagText','var') || isempty(flagText)
     flagText = '';
 end
-if ~exist('outputDescription','var')
+if ~exist('outputDescription','var') || isempty(outputDescription)
     outputDescription = '';
 end
 if ~exist('appendDescription','var') || isempty(appendDescription)
@@ -75,7 +75,6 @@ if sum(regexp(cmdType,'-math'))>0
 end
 
 cmd = ['wb_command -' cmdType ' ' inputPath ' ' argText ' ' outputPath ' ' flagText];
-disp(cmd);      % TEMPORARY FOR DEBUGGING
 [~,cmdOut] = fpp.util.system(cmd);
 
 % For commands that output display text, show output and return
@@ -91,7 +90,9 @@ end
 % Convert inputs to cell arrays
 if ~isempty(inputPath), inputPath = {inputPath}; end
 if ~isempty(outputPath), outputPath = {outputPath}; end
-allArgs = [split(argText,' '); split(flagText,' ')];
+allArgs = {};
+if ~isempty(argText), allArgs = [allArgs; split(argText,' ')]; end
+if ~isempty(flagText), allArgs = [allArgs; split(flagText,' ')]; end
 
 % Adjust input list relevant to json output
 if cmdInfo.NonstandardInput(cmdInd) && cmdInfo.NonstandardOutput(cmdInd)
@@ -156,14 +157,13 @@ elseif cmdInfo.NonstandardInput(cmdInd)
     % Shift the new input to be indexed first, so json comes from this:
     if ismember(cmdType,{'create-signed-distance-volume','foci-get-projection-vertex'})
         inputPath{end+1} = inputPath{1};
-        inputPath{1} = [];
+        inputPath(1) = [];
     end
     % Remove the first input, which shouldn't contribute to json output
     if ismember(cmdType,{'gifti-convert','label-to-border','metric-extrema'',''metric-false-correlation',...
             'metric-fill-holes','metric-find-clusters','metric-gradient','metric-remove-islands',...
             'metric-rois-from-extrema','metric-rois-to-border','metric-smoothing','metric-tfce'})
-        inputPath{end+1} = inputPath{1};
-        inputPath{1} = [];
+        inputPath(1) = [];
     end
 end
 
@@ -177,12 +177,18 @@ end
 
 % Modify list of outputs that need json files, based on additional args
 if cmdInfo.NonstandardOutput(cmdInd) && ~cmdInfo.NonstandardInput(cmdInd)
-    % Find gifti, nifti, cifti, .border, .scene, .spec, .wbsparse files in 
-    % args/flags, add these to outputs.
-    [files,types] = findData(allArgs);
-    outputPath = [outputPath files];
-    if strcmp(outputType,'n/a') && ~isempty(types)
-        outputType = types{1};
+    switch lower(cmdType)
+        case {'set-structure','set-map-names'}
+            % Set output to input
+            outputPath = inputPath;
+        otherwise
+            % Find gifti, nifti, cifti, .border, .scene, .spec, .wbsparse files in 
+            % args/flags, add these to outputs.
+            [files,types] = findData(allArgs);
+            outputPath = [outputPath files];
+            if strcmp(outputType,'n/a') && ~isempty(types)
+                outputType = types{1};
+            end
     end
 end
 
@@ -253,6 +259,7 @@ if ~isempty(inputPath)
 end
 
 % Modify output json metadata where necessary
+if isempty(outputPath), return; end
 outputJsonPath = fpp.bids.jsonPath(outputPath{1});
 if cmdInfo.NonstandardJsonDef(cmdInd)
     switch lower(cmdType)
@@ -317,19 +324,25 @@ if cmdInfo.NonstandardJsonDef(cmdInd)
         case {'cifti-create-dense-scalar','cifti-create-dense-timeseries','cifti-create-label'}
             spatialRefData = [];
             volInd = find(strcmp('-volume',allArgs))+1;
-            volJsonData = fpp.bids.getMetadata(allArgs{volInd});
-            if isfield(volJsonData,'SpatialRef')
-                spatialRefData.VolumeReference = volJsonData.SpatialRef;
+            if ~isempty(volInd)
+                volJsonData = fpp.bids.getMetadata(allArgs{volInd});
+                if isfield(volJsonData,'SpatialRef')
+                    spatialRefData.VolumeReference = volJsonData.SpatialRef;
+                end
             end
             lhInd = [find(strcmp('-left-metric',allArgs)) find(strcmp('-left-label',allArgs))] + 1;
-            lhJsonData = fpp.bids.getMetadata(allArgs{lhInd});
-            if isfield(lhJsonData,'SpatialRef')
-                spatialRefData.CIFTI_STRUCTURE_CORTEX_LEFT = lhJsonData.SpatialRef;
+            if ~isempty(lhInd)
+                lhJsonData = fpp.bids.getMetadata(allArgs{lhInd});
+                if isfield(lhJsonData,'SpatialRef')
+                    spatialRefData.CIFTI_STRUCTURE_CORTEX_LEFT = lhJsonData.SpatialRef;
+                end
             end
             rhInd = [find(strcmp('-right-metric',allArgs)) find(strcmp('-right-label',allArgs))] + 1;
-            rhJsonData = fpp.bids.getMetadata(allArgs{rhInd});
-            if isfield(rhJsonData,'SpatialRef')
-                spatialRefData.CIFTI_STRUCTURE_CORTEX_RIGHT = rhJsonData.SpatialRef;
+            if ~isempty(rhInd)
+                rhJsonData = fpp.bids.getMetadata(allArgs{rhInd});
+                if isfield(rhJsonData,'SpatialRef')
+                    spatialRefData.CIFTI_STRUCTURE_CORTEX_RIGHT = rhJsonData.SpatialRef;
+                end
             end
             if ~isempty(spatialRefData)
                 fpp.bids.jsonChangeValue(outputJsonPath,'SpatialRef',spatialRefData);

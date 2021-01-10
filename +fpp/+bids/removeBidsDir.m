@@ -1,6 +1,8 @@
 
 % Function to remove BIDS base directory (defined as above sub directory)
-% from path.
+% from path string.
+%
+% outputPath = fpp.bids.removeBidsDir(inputPath)
 
 function outputPath = removeBidsDir(inputPath)
 

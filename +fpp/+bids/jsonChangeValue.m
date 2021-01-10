@@ -3,6 +3,8 @@
 % remove fields, by setting the corresponding element of newValues to an
 % empty vector.
 %
+% fpp.bids.jsonChangeValue(inputJsonPath,fieldsToChange,newValues,appendValue)
+%
 % Arguments:
 % - inputJsonPath (string): path to JSON file, or corresponding data
 % - fieldsToChange (cell array of strings): fields to edit

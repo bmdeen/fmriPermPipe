@@ -2,15 +2,20 @@
 % Function to apply motion and distortion correct, and registration to
 % functional template with a single interpolation step.
 %
+% fpp.func.preproc.oneShotMotionDistortionCorrect(inputPaths,outputPaths,funcTemplatePath,...
+%   funcTemplateName,mcDir,topupWarpPath,topupJacobianPath,xfmNativeFunc2FuncTemplate,...
+%   xfmSpinEcho2NativeFunc,xfmNativeFunc2SpinEcho,echoForMoCorr)
+%
 % Assumes matched naming between input and mcDir.
 %
-% TODO: Add option to change short/long descriptions
 
 function oneShotMotionDistortionCorrect(inputPaths,outputPaths,funcTemplatePath,funcTemplateName,mcDir,topupWarpPath,...
     topupJacobianPath,xfmNativeFunc2FuncTemplate,xfmSpinEcho2NativeFunc,xfmNativeFunc2SpinEcho,echoForMoCorr)
 
+% TODO: Add option to change short/long descriptions
+
 xfmSpinEcho2FuncTemplate = fpp.bids.changeName(topupJacobianPath,{'desc','from','to','mode'},...
-    {'','orig',funcTemplateName,'image'},'xfm','.mat');
+    {'','native',funcTemplateName,'image'},'xfm','.mat');
 topupJacobian2FuncTemplatePath = fpp.bids.changeName(topupJacobianPath,'space',funcTemplateName,'jacobian');
 [~,mcName,~] = fileparts(mcDir);
 
@@ -32,9 +37,9 @@ for e=1:length(outputPaths)
         outputVolPath = [outputSplitStem fpp.util.numPad(t,4) '.nii.gz'];
         fpp.fsl.concatXfm(xfmNativeFunc2FuncTemplate,xfmSpinEcho2NativeFunc,xfmSpinEcho2FuncTemplate);
         xfmInputVol2NativeFunc = [mcDir '/' fpp.bids.changeName(mcName,{'echo','desc','from','to','mode'},...
-            {int2str(echoForMoCorr),'',['orig' fpp.util.numPad(t,4)],'orig','image'},'xfm','.mat')];
+            {int2str(echoForMoCorr),'',['native' fpp.util.numPad(t,4)],'native','image'},'xfm','.mat')];
         xfmInputVol2SpinEcho = [mcDir '/' fpp.bids.changeName(mcName,{'echo','desc','from','to','mode'},...
-            {int2str(echoForMoCorr),'',['orig' fpp.util.numPad(t,4)],'SpinEcho','image'},'xfm','.mat')];
+            {int2str(echoForMoCorr),'',['native' fpp.util.numPad(t,4)],'SpinEcho','image'},'xfm','.mat')];
         fpp.fsl.concatXfm(xfmNativeFunc2SpinEcho,xfmInputVol2NativeFunc,xfmInputVol2SpinEcho);
         fpp.fsl.moveImage(inputVolPath,funcTemplatePath,outputVolPath,xfmInputVol2SpinEcho,...
             'warp',topupWarpPath,'postmat',xfmSpinEcho2FuncTemplate);

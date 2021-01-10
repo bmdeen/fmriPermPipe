@@ -2,6 +2,8 @@
 % Function to construct hemodynamic response function, to use as a kernel
 % for convolution with boxcar regressors.
 %
+% [y,t] = fpp.func.analysis.constructHRF(tr,hrfType)
+%
 % tr: Temporal sampling rate
 %
 % hrfType: 1 or 2

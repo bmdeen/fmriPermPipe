@@ -2,6 +2,10 @@
 % Function to undistort a functional volume using blip-up/blip-down spin
 % echo measurements.
 %
+% [errorMsg,topupWarpPath,topupJacobianPath,xfmFunc2SpinEcho,xfmSpinEcho2Func] = ...
+%   fpp.func.preproc.undistort(inputFuncPath,inputFuncUndistortedPath,spinEchoPaths,...
+%   fmapPreprocDir,fieldMapParamPath)
+%
 % Arguments:
 % inputPath (string): path to input distorted functional
 % outputPath (string): path to output undistorted functional
@@ -11,14 +15,14 @@
 %   derivatives
 % fieldMapParamPath: text file with field map parameters for topup
 %
-%
+
+function [errorMsg,topupWarpPath,topupJacobianPath,xfmFunc2SpinEcho,xfmSpinEcho2Func] = ...
+    undistort(inputFuncPath,inputFuncUndistortedPath,spinEchoPaths,fmapPreprocDir,fieldMapParamPath)
+
 % TODO:
 % - Topup: accomodate odd slice number by adding dummy slice in this case
 % - Generate json files for produced images, with Description, Sources,
 %   SkullStripped, and SpatialReference fields.
-
-function [errorMsg,topupWarpPath,topupJacobianPath,xfmFunc2SpinEcho,xfmSpinEcho2Func] = ...
-    undistort(inputFuncPath,inputFuncUndistortedPath,spinEchoPaths,fmapPreprocDir,fieldMapParamPath)
 
 errorMsg = [];
 
@@ -60,25 +64,22 @@ if ~exist(topupWarpPath,'file') || ~exist(topupJacobianPath,'file')
 end
 
 % Register input func volume to spin echo image
-xfmFunc2SpinEcho = fpp.bids.changeName(inputFuncPath,{'desc','from','to','mode'},...
-    {'','orig','SpinEcho','image'},'xfm','.mat');
-xfmSpinEcho2Func = fpp.bids.changeName(inputFuncPath,{'desc','from','to','mode'},...
-    {'','SpinEcho','orig','image'},'xfm','.mat');
-fpp.util.system(['flirt -in ' inputFuncPath ' -ref ' spinEchoPaths{1} ' -omat ' xfmFunc2SpinEcho ...
-    ' -cost corratio -dof 6 -searchrx -90 90 -searchry -90 90 -searchrz -90 90']);
-fpp.util.system(['convert_xfm -omat ' xfmSpinEcho2Func ' -inverse ' xfmFunc2SpinEcho]);
+xfmFunc2SpinEcho = fpp.bids.changeName(inputFuncPath,{'desc','from','to','mode','echo'},...
+    {'','native','SpinEcho','image',[]},'xfm','.mat');
+xfmSpinEcho2Func = fpp.bids.changeName(inputFuncPath,{'desc','from','to','mode','echo'},...
+    {'','SpinEcho','native','image',[]},'xfm','.mat');
+fpp.fsl.flirt(inputFuncPath,spinEchoPaths{1},xfmFunc2SpinEcho,[],'cost','corratio',...
+    'dof',6,'searchrx',[-90 90],'searchry',[-90 90],'searchrz',[-90 90]);
+fpp.fsl.invertXfm(xfmFunc2SpinEcho,xfmSpinEcho2Func);
 
 % Undistort, by applying warp and multiplying by Jacobian.
-fpp.util.system(['applywarp --in=' inputFuncPath ' --ref=' inputFuncPath ' --out=' inputFuncUndistortedPath ...
-    ' --warp=' topupWarpPath ' --premat=' xfmFunc2SpinEcho ' --postmat=' xfmSpinEcho2Func]);
-fpp.util.system(['flirt -in ' topupJacobianPath ' -ref ' inputFuncPath ' -out ' topupJacobian2FuncPath ...
-    ' -applyxfm -init ' xfmSpinEcho2Func]);
-fpp.util.system(['fslmaths ' inputFuncUndistortedPath ' -mul ' topupJacobian2FuncPath ' ' inputFuncUndistortedPath]);
+fpp.fsl.moveImage(inputFuncPath,inputFuncPath,inputFuncUndistortedPath,xfmFunc2SpinEcho,...
+    'warp',topupWarpPath,'postmat',xfmSpinEcho2Func);
+fpp.fsl.moveImage(topupJacobianPath,inputFuncPath,topupJacobian2FuncPath,xfmSpinEcho2Func);
+fpp.fsl.fslMaths(inputFuncUndistortedPath,['-mul ' topupJacobian2FuncPath],inputFuncUndistortedPath);
 fpp.util.system(['rm -rf ' topupJacobian2FuncPath]);
 
 % Generate output JSON file
-if exist(fpp.bids.jsonPath(inputFuncPath))
-    fpp.bids.jsonReconstruct(inputFuncPath,inputUndistortedFuncPath,'midprepfmri');
-end
+fpp.bids.jsonReconstruct(inputFuncPath,inputFuncUndistortedPath,'midprepfmri');
 
 end

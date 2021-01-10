@@ -1,6 +1,8 @@
 
 % Wrapper for FSL's convert_xfm -concat, to combine affine transforms.
 % Generates .json metadata for output transform.
+%
+% fpp.fsl.concatXfm(inputBtoC,inputAtoB,outputAtoC)
 
 function concatXfm(inputBtoC,inputAtoB,outputAtoC)
 

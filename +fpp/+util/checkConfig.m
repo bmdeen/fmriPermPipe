@@ -27,7 +27,7 @@ if cmdError==1
     return;
 end
 
-fsCommands = {'mri_convert','bbregister','tkregister2'};
+fsCommands = {'mri_convert','mris_convert','bbregister','tkregister2'};
 cmdError = 0;
 for c=1:length(fsCommands)
     [status,~] = system([fsCommands{c}]);

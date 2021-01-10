@@ -1,6 +1,9 @@
-function meta = getMetadata(filename, pattern)
 
 % Wrapper for bids-matlab function get_metadata
+%
+% meta = fpp.bids.getMetadata(filename, pattern)
+
+function meta = getMetadata(filename, pattern)
 
 % Replace initial tilda with home directory, otherwise get_metadata will
 % fail for tilda input

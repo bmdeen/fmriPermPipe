@@ -2,7 +2,7 @@
 % Function to alter fields in a .json metadata file pertinent to image
 % orientation.
 %
-% jsonReorient(inputJsonPath,inputOrientation,outputOrientation)
+% fpp.bids.jsonReorient(inputJsonPath,inputOrientation,outputOrientation)
 %
 % Arguments:
 %   inputJsonPath (string): path to json file to edit

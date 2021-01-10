@@ -1,39 +1,43 @@
 
 % Function to change BIDS file name: key/value pairs, suffix, and
 % extension.
-% 
-% - Can remove entities by setting new value to an empty string, and can
-%   build a BIDS filename from empty string input.
-% - If input filename has at least one BIDS key (sub, ses, etc), it will be
-%   considered BIDS-formatted. Any unrecognized entities will be left at
-%   the end of the filename (this includes the file suffix, and other
-%   unrecognized key-value pairs).
-% - Deals with non-BIDS-formatted inputs by adding entities and default or 
-%   specified suffix to the end of the file name. Any input with no
-%   recognized BIDS keys is considered non-BIDS-formatted (note: this
-%   includes names like "bold.nii.gz," because the script has no knowledge
-%   about which strings are valid BIDS suffices. "sub-X_bold.nii.gz" is
-%   fine.)
+%
+% outputPath = fpp.bids.changeName(inputPath,keysToChange,newValues,newSuffix,newExtension)
 %
 % Arguments:
 %   inputPath (string) - filename to modify
 %   keysToChange (cell array or string) - keys to modify
 %   newValues (cell array or string) - new values for each specified key
-%   newSuffix (string, optional) - n
+%   newSuffix (string, optional) - new suffix
 %   newExtension (string, optional) - new file extension
+% 
+% Notes:
+% - Can remove entities by setting new value to [], and can build a BIDS 
+%   filename from an empty input.
+% - If input filename has at least one valid BIDS key (sub, ses, etc), it
+%   will be considered BIDS-formatted. Any unrecognized entities will be
+%   left at the end of the filename (this includes the file suffix, and other
+%   other unrecognized key-value pairs).
+% - Deals with non-BIDS-formatted inputs by adding entities to the
+%   beginning of the file name, and default or specified suffix to the end.
+%   Any input with no recognized BIDS keys is considered non-BIDS-formatted
+%   (note: this includes names like "bold.nii.gz," because the script has 
+%   no knowledge about which strings are valid BIDS suffices.
+%   "sub-X_bold.nii.gz" is fine.)
 
 function outputPath = changeName(inputPath,keysToChange,newValues,newSuffix,newExtension)
 
 defaultSuffix = 'bold';
 changeSuffix = 0;
-if ~exist('keysToChange','var'), keysToChange = {};
-elseif ~iscell(keysToChange), keysToChange = {keysToChange}; end
-if ~exist('newValues','var'), newValues = {};
-elseif ~iscell(newValues), newValues = {newValues}; end
+% Change suffix, if new suffix was specified
 if exist('newSuffix','var') && ~isempty(newSuffix) && ischar(newSuffix)
     defaultSuffix = newSuffix;
     changeSuffix = 1;
 end
+if ~exist('keysToChange','var'), keysToChange = {};
+elseif ~iscell(keysToChange), keysToChange = {keysToChange}; end
+if ~exist('newValues','var'), newValues = {};
+elseif ~iscell(newValues), newValues = {newValues}; end
 if ~isempty(inputPath)
     [inputDir,inputName,inputExtension] = fpp.util.fileParts(inputPath);
 else
@@ -93,14 +97,14 @@ if sum(keyIndByEntity<Inf)==0
     
     outputPath = [];
     if ~isempty(inputDir), outputPath = [inputDir '/']; end
-    if ~isempty(inputName)
-        outputPath = [outputPath inputName];
-    end
     if ~isempty(entityString)
-        if ~isempty(inputName)
-            outputPath = [outputPath '_' entityString];
+        outputPath = [outputPath entityString];
+    end
+    if ~isempty(inputName)
+        if ~isempty(entityString)
+            outputPath = [outputPath '_' inputName];
         else
-            outputPath = [outputPath entityString];
+            outputPath = [outputPath inputName];
         end
     end
     if ~(isempty(inputName) && isempty(entityString))

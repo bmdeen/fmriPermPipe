@@ -1,13 +1,21 @@
 
+% Wrapper for tedana and t2smap; renames outputs based on input name, and
+% generates JSON metadata for outputs.
+%
 % fpp.func.preproc.tedana(inputPaths,outputPaths,outputDescription,useTedana)
 %
-% Wrapper for tedana and t2smap, that renames outputs based on input name.
+% Arguments:
+%   - inputPaths (cell array of strings): paths to input images for each
+%     echo
+%   - outputPath (string): path to output image
 %
 % Optional arguments:
 %   - outputDescription (string): contents of output json Description field
 %   - useTedana (boolean): whether to use tedana or just t2smap
+%   - teVals (vector of values in (0,Inf)): TE values (ms) for multi-echo 
+%       data (default: read from json)
 
-function tedana(inputPaths,outputPath,maskPath,outputDescription,useTedana)
+function tedana(inputPaths,outputPath,maskPath,outputDescription,useTedana,teVals)
 
 % Handle optional variable
 if ~exist('useTedana','var') || isempty(useTedana)
@@ -16,11 +24,13 @@ end
 if ~exist('outputDescription','var')
     outputDescription = '';
 end
+if ~exist('teVals','var') || isempty(teVals)
+    teVals = fpp.util.checkMRIProperty('TE',inputPaths{1});
+end
 
 % Check output directory
 [outputDir,~,~] = fpp.util.fileParts(outputPath);
-% Check input properties
-teVals = fpp.util.checkMRIProperty('TE',inputPaths{1});
+
 
 % Place output in temporary directory to delete extra results
 outputDir = [outputDir '/tedanaTmp'];

@@ -2,8 +2,9 @@
 % Wrapper for FSL's flirt, a linear registration tool. Generates .json
 % metadata files for output images and transform files.
 %
-% Doesn't include bbr or distortion correction functionality, because
-% fmriPermPipe uses bbregister and topup separately from flirt.
+% fpp.fsl.flirt(inputPath,referencePath,outputXfm,outputPath,varargin)
+%
+% Note: doesn't include bbr or distortion correction functionality
 
 function flirt(inputPath,referencePath,outputXfm,outputPath,varargin)
 

@@ -5,6 +5,10 @@
 %
 % If data are BIDS-formatted, and functional data have defined IntendedFor 
 % metadata field, only the first two arguments are needed.
+%
+% [errorMsg,spinEchoPaths,fieldMapParamPath] = fpp.func.preproc.copyAndCheckSpinEcho(...
+%   inputFuncPath,fmapPreprocDir,spinEchoPaths,spinEchoPhaseEncodeDirections,...
+%   funcDataPhaseEncodeDirection,fieldMapParamPath)
 
 function [errorMsg,spinEchoPaths,fieldMapParamPath] = copyAndCheckSpinEcho(inputFuncPath,fmapPreprocDir,spinEchoPaths,...
     spinEchoPhaseEncodeDirections,funcDataPhaseEncodeDirection,fieldMapParamPath)

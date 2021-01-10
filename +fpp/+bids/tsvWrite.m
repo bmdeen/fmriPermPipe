@@ -1,8 +1,8 @@
-function tsvWrite(filename,st)
-%
-% function fpp.bids.tsvWrite(filename,st)
-%
+
 % Saves structure st into filename
+%
+% fpp.bids.tsvWrite(filename,st)
+%
 % st is a structure created with st=tsvread('file.tsv');
 %
 % st is a structure with several fields.  Each field is a vector of
@@ -15,6 +15,7 @@ function tsvWrite(filename,st)
 % Rafael Palacios, Oct 2009
 % Modified by Ben Deen, Jul 2020
 %
+function tsvWrite(filename,st)
 
 %%Error checking
 error(nargchk(2, 2, nargin));  %2 arguments required, 2 maximum

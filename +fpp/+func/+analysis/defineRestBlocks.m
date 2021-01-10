@@ -1,6 +1,8 @@
 
 % Function to define 3-column rest block regressor, based on 3-column task
 % regressor input.
+%
+% restRegr = fpp.func.analysis.defineRestBlocks(taskRegr,exptDuration,regrWeight)
 
 function restRegr = defineRestBlocks(taskRegr,exptDuration,regrWeight)
 

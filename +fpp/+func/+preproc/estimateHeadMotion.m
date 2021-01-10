@@ -1,10 +1,13 @@
 
 % Function to estimate head motion using FSL's MCFLIRT
 %
-% ADD: computation of total translation/rotation, and DVARS. Definition of
-% json file sidecar for confounds.tsv.
+% motionParams = fpp.func.preproc.estimateHeadMotion(inputPath,outputDir,moCorrTargetVolNum)
 
 function motionParams = estimateHeadMotion(inputPath,outputDir,moCorrTargetVolNum)
+
+% TODO: 
+% - Add computation of total translation/rotation, and DVARS.
+% - Add definition of json file sidecar for confounds.tsv.
 
 if ~exist('moCorrTargetVolNum','var')
     vols = fpp.util.checkMRIProperty('vols',inputPath);
@@ -12,7 +15,7 @@ if ~exist('moCorrTargetVolNum','var')
 end
 [~,inputName,inputExt] = fpp.util.fileParts(inputPath);
 mcBase = [outputDir '/' strrep(inputName,'_bold','') '_motion'];
-confoundFile = [outputDir '/' fpp.bids.changeName([inputName inputExt],{},{},'confounds','.tsv')];
+confoundFile = [outputDir '/../' fpp.bids.changeName([inputName inputExt],'echo',[],'confounds','.tsv')];
 if exist(confoundFile,'file')
     tsvData = bids.util.tsvread(confoundFile);
 end
@@ -37,8 +40,8 @@ fpp.bids.tsvWrite(confoundFile,tsvData);
 matFiles = dir([mcBase '.mat/MAT_*']);
 for f=1:length(matFiles)
     fpp.util.system(['mv ' mcBase '.mat/' matFiles(f).name ' ' outputDir '/' ...
-        fpp.bids.changeName(inputName,{'from','to','mode'},{['orig' ...
-        matFiles(f).name(5:end)],'orig','image'},'xfm','.mat')]);
+        fpp.bids.changeName(inputName,{'from','to','mode'},{['native' ...
+        matFiles(f).name(5:end)],'native','image'},'xfm','.mat')]);
 end
 fpp.util.system(['rm -rf ' mcBase '.nii.gz ' mcBase '.mat ' mcBase '.par']);
 

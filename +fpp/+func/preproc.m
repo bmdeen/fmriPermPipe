@@ -6,11 +6,11 @@
 % motion and distoration correction and functional template registration,
 % TEDANA multi-echo ICA denoising and optimal echo combination, intensity
 % normalization, and optional spatial/temporal filtering. Should be run
-% after fpp.util.convertDCM2BIDS [FUTURE EDIT: AND ANAT/REG FCNS]
+% after anatomical scripts, func.defineTemplate, and func.register.
 % 
 % Example usage:
 % fpp.func.preproc({'/pathToData/sub-01_task-faceloc_run-01_echo-1_bold.nii.gz',...
-%       '/pathToData/sub-01_task-faceloc_run-01_echo-2_bold.nii.gz'},'/pathToOutput/');
+%       '/pathToData/sub-01_task-faceloc_run-01_echo-2_bold.nii.gz'},'/bidsDir/sub-01/');
 % 
 % Required arguments:
 % - inputPaths (string or cell array of strings): paths to input fMRI data,
@@ -27,12 +27,8 @@
 %       smoothing.
 % - faValue (scalar in (0,1); default=.3): fractional intensity threshold
 %       for BET2-based brain extraction. Smaller value -> larger mask.
-% - targetName (string; default='target_func'): name of image in func 
-%       directory to register example_func to, without file extension.
-% - genTarget (boolean; default=1): whether to generate target_func image
-%       from example_func of first run analyzed if it doesn't exist.
 % - disdaqs = 3 (integer in [0,Inf); default=3): number of disdaq volumes
-%       (at beginning of run) to remove.
+%       (at beginning of run) to remove. [NOT CURRENTLY IMPLEMENTED]
 % - transCutoff (scalar in [0,Inf]; default=.5): artifact detection cutoff
 %       for total translation (mm).
 % - rotCutoff (scalar in [0,Inf]; default=.5): artifact detection cutoff
@@ -41,7 +37,6 @@
 %       after pairs of volumes with motion.
 % - stdCutoff (scalar in (0,Inf); default=3.5): artifact detection cutoff
 %       for mean signal z-score
-% - multiEcho (boolean; default=0): whether data is multi-echo
 % - teVals (vector of values in (0,Inf)): TE values (ms) for multi-echo 
 %       data (default: read from json)
 % - sliceTimes (vector of values in (0,Inf)): vector of slice acquisition
@@ -57,23 +52,27 @@
 % - useTedana (boolean; default=1): whether to use TEDANA denoising, for
 %       multi-echo data.
 % - funcTemplatePath (string): path to functional template image to
-%   register to
-% - funcTemplateName (string): name of functional template, to be used with
-%   space BIDS entity
-% - useTaskTemplate (boolean): whether to 
+%   register to (default: determined from input name)
+% - funcTemplateSpace (string): space of functional template, needed if
+%   using non-standard funcTemplatePath that lacks a BIDS space entity
+% - useTaskTemplate (boolean): whether to use a task-specific template
 % - funcDataPhaseEncodeDirection (string): phase encode direction of
-%   functional data, in BIDS format (e.g. i, j-)
+%   functional data, in BIDS format (e.g. i, j-; default = read from json)
 % - spinEchoPaths (cell array of strings): paths to two spin echo "field
 %   map" images with opposite phase encoding directions, for distortion
 %   correction (default: derive from fmap json, IntendedFor field)
 % - spinEchoPhaseEncodeDirections (cell array of strings): phase encode
 %   directions of spin echo images, in BIDS format (e.g. i, j-)
+% - deleteMidprep (boolean; default=1): whether to delete midprep images
 %
+
+function preproc(inputPaths,outputDir,varargin)
+
 % SpatialReference info:
 %   Standard spaces:
 %   freesurfer, fsLR, MNI152NLin6ASym (FSL/HCP), MNI152NLin2009cAsym
 %   (fMRIPrep)
-%   Individual spaces: fsnative, anat/T1w, orig, session, task
+%   Individual spaces: fsnative, individual, native, session, task
 %
 %
 %
@@ -88,10 +87,13 @@
 % - Add JSON files for additional TEDANA/ts2map outputs
 %
 % TODO NEXT:
-% - Shift template construction to separate function. Shift field map
-%   preproc as well. Allow option to register to a task- and seq-specific
-%   template, constructed using only that seq/task.
-% - Inherit brain mask from funcTemplate to anat registration
+% - At the end of the script, resample to several spaces if desired:
+%   - 2mm-res individual space
+%   - 2mm-res MNI152Nlin6Asym space
+%   - CIFTI: 32k fsLR surface, 2mm individual subcortical
+%   - CIFTI: 32k fsLR surface, 2mm MNI152Nlin6Asym subcortical space
+% - Consider running steps 8-10 on optcomb (non-TEDANA) output as well
+% - Shift field map preproc to separate function
 % - Add temporal filtering (compare matlab/FSL)
 % - Add spatial smoothing (susan-based, with brain mask)
 % - Add additional confounds - global signal, DVARS, trans/rot,
@@ -108,11 +110,8 @@
 % - Method to deal with disdaqs, taking into account BIDS info, adding them
 %   as artifact time points. Based on NumberOfVolumesDiscardedByUser
 %   and NumberOfVolumesDiscardedByScanner json fields.
-% - Consider changing "Sources/RawSources" functionality to avoid listing
-%   mid-preproc images as sources.
+% - If deleteMidprep==1, remove "Sources" field of final output
 % - Add suffix option for desc
-% - Change SpatialReference from path to "task" or "session" when these are
-%   being used?
 %
 % TODO EVENTUALLY:
 % - Add functionality for multiple spin echo field maps IntendedFor one
@@ -120,8 +119,6 @@
 % - Add physiological regressors!
 % - Track versions of all software used in json descriptions.
 % 
-
-function preproc(inputPaths,outputDir,varargin)
 
 % Load/check config variables.
 configError = fpp.util.checkConfig;
@@ -138,7 +135,7 @@ fwhm = 0;                       % FWHM of spatial smoothing kernel (mm)
 smThresh = [];                  % SUSAN brightness threshold
 faValue = .3;                   % BET2 fractional intensity threshold. Smaller value -> larger mask.
 funcTemplatePath = '';          % Functional template image to register to
-funcTemplateName = '';          % Name of functional template image, required if path is specified
+funcTemplateSpace = '';         % Space of func template, required if using custom funcTemplatePath with BIDs space entity
 useTaskTemplate = 0;            % Use a task/acq-specific functional template, rather than a session template
 newMedian = 10000;              % Target value for intensity normalization (median of data is set to this)
 useTedana = 1;                  % Whether to use tedana-based denoising for multi-echo data
@@ -150,9 +147,10 @@ fieldMapParamPath = '';         % Topup field map parameter file (Default: read 
 useSTC = 1;                     % Whether to use slice timing correction
 useDespike = 1;                 % Whether to apply AFNI's 3dDepike before STC
 sliceTimes = [];                % Slice time (s) relative to onset of volume acquisition (Default: read from JSON file)
+deleteMidprep = 1;              % Whether to delete midprep images
 
 % Artifact detection parameters
-disdaqs = 0;                    % Number of disdaq volumes (at beginning of run) to remove.
+disdaqs = 0;                    % Number of disdaq volumes (at beginning of run) to remove. [NOT CURRENTLY IMPLEMENTED]
 transCutoff = .5;               % Artifact detection cutoff: total translation (mm)
 rotCutoff = .5;                 % Artifact detection cutoff: total rotation (degrees)
 tptsAfter = 0;                  % Remove this many time points after pairs of volumes with motion
@@ -172,8 +170,10 @@ filtOrder = 60;                 % Hanning-window FIR filter order
 genTSNR = 1;                    % Whether to generate TSNR maps
 plotResults = 1;                % Whether to display result plots
 
+pathsToDelete = {};             % Midprep paths to delete at the end
+
 % Edit variable arguments.  Note: optInputs checks for proper input.
-varArgList = {'overwrite','funcTemplatePath','funcTemplateName','fwhm',...
+varArgList = {'overwrite','funcTemplatePath','funcTemplateSpace','fwhm',...
     'tempFilt','teVals','transCutoff','sliceTimes','funcDataPhaseEncodeDirection',...
     'rotCutoff','tptsAfter','stdCutoff','disdaqs','genTSNR','plotResults',...
     'faValue','smThresh','useSTC','useTedana','echoForMoCorr','undistort',...
@@ -228,23 +228,39 @@ fmapPreprocDir = [outputDir '/fmap'];
 if isempty(funcTemplatePath)
     if useTaskTemplate
         funcTemplatePath = [funcPreprocDir '/' fpp.bids.changeName(inputName,...
-            {'desc','run','echo'},{'FuncTemplate','',''},[],'.nii.gz')];
-        funcTemplateName = 'task';
+            {'desc','run','echo','space'},{'template','','1','task'},'sbref','.nii.gz')];
+        if ~exist(funcTemplatePath,'file')
+            funcTemplatePath = fpp.bids.changeName(funcTemplatePath,[],[],'bold');
+        end
+        funcTemplateSpace = 'task';
     else
         funcTemplatePath = [funcPreprocDir '/' fpp.bids.changeName(inputName,...
-            {'desc','task','acq','run','echo'},{'FuncTemplate','','','',''},[],'.nii.gz')];
-        funcTemplateName = 'session';
+            {'desc','task','acq','run','echo','space'},{'template','','','','1','session'},'sbref','.nii.gz')];
+        if ~exist(funcTemplatePath,'file')
+            funcTemplatePath = fpp.bids.changeName(funcTemplatePath,[],[],'bold');
+        end
+        funcTemplateSpace = 'session';
     end
-elseif ~exist(funcTemplatePath,'file')
-    fprintf('%s\n\n',['ERROR: Registration target ' funcTemplatePath ' does not exist.']);
-    return;
-elseif isempty(funcTemplateName)
-    fprintf('%s\n\n','ERROR: Need to specify funcTemplateName if using non-standard template.');
-    return;
+else
+    [spaceInd,spaceEndInd] = regexp(funcTemplateName,'_space-[a-zA-Z0-9]+_');
+    if sum(spaceInd>0)
+        funcTemplateSpace = funcTemplateName(spaceInd(1)+7:spaceEndInd(1)-1);
+    elseif isempty(funcTemplateSpace)
+        error('funcTemplateSpace must be specified when funcTemplatePath lacks a BIDS space entity.')
+    end
+end
+
+if ~exist(funcTemplatePath,'file')
+    error(['Registration target ' funcTemplatePath ' does not exist. Run fpp.func.defineTemplate.']);
+end
+maskPath = fpp.bids.changeName(funcTemplatePath,{'desc','echo'},{'brain',[]},'mask','.nii.gz');
+if ~exist(maskPath,'file')
+    error(['Brain mask ' maskPath ' does not exist. Run fpp.func.register.']);
 end
 
 % Check if output exists.
-finalOutputPath = fpp.bids.changeName([funcPreprocDir '/' inputName '.nii.gz'],{'desc','echo','space'},{'preproc',[],funcTemplateName});
+finalOutputPath = fpp.bids.changeName([funcPreprocDir '/' inputName '.nii.gz'],...
+    {'desc','echo','space'},{'preproc',[],funcTemplateSpace});
 if exist(finalOutputPath,'file') && ~overwrite
     return;
 end
@@ -262,6 +278,7 @@ for e=1:nEchoes
         {'Raw data copied to derivative directory.',fpp.bids.removeBidsDir(inputPaths{e})});
 end
 inputPathsRaw = outputPaths;
+pathsToDelete = [pathsToDelete outputPaths];
 
 % Copy and validate spin echo "field map" images, if undistorting
 if undistort
@@ -269,22 +286,19 @@ if undistort
         fmapPreprocDir,spinEchoPaths,spinEchoPhaseEncodeDirections,funcDataPhaseEncodeDirection,...
         fieldMapParamPath);
     if ~isempty(errorMsg)
-        fprintf('%s\n\n',errorMsg);
-        return;
+        error(errorMsg);
     end
 end
 
 % Check TR
 tr = fpp.util.checkMRIProperty('tr',outputPaths{1});
 if isempty(tr)
-    fprintf('%s\n\n','ERROR: Could not compute TR of functional data.');
-    return;
+    error('Could not compute TR of functional data.');
 end
 % Check # of volumes
 vols = fpp.util.checkMRIProperty('vols',outputPaths{1});
 if isempty(vols)
-    fprintf('%s\n\n','ERROR: Could not # of volumes from functional data header.');
-    return;
+    error('Could not compute # of volumes from functional data header.');
 end
 
 
@@ -306,6 +320,7 @@ if ismember(moCorrTargetVolNum,artifactTPs)
     motionParams = fpp.func.preproc.estimateHeadMotion(inputPaths{echoForMoCorr},mcDir,moCorrTargetVolNum);
     artifactTPs = fpp.func.preproc.defineMotionArtifactTimePoints(motionParams,transCutoff,rotCutoff,tptsAfter);
 end
+pathsToDelete = [pathsToDelete mcDir];
 
 
 
@@ -314,22 +329,22 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if useDespike
     fprintf('%s\n',['Step 2, Despike                                - ' inputName]);
-    fprintf('%s\n',['WARNING: 3dDespike currently causes masking of regions of dropout, '...
-        ' should not be used until further edits are made.']);
     for e=1:nEchoes
         outputPaths{e} = fpp.bids.changeName(outputPaths{e},'desc','midprep1despike');
-        %if exist(outputPaths{e},'file'), continue; end      %%% TEMPORARY DEBUGGING HACK
+%         if exist(outputPaths{e},'file'), continue; end      %%% TEMPORARY DEBUGGING HACK
         fpp.util.system(['3dDespike -nomask ' inputPaths{e}]);
         fpp.util.system(['3dAFNItoNIFTI ' pwd '/despike+orig.BRIK']);
-        fpp.util.system(['mri_convert ' pwd '/despike.nii ' outputPaths{e}]);
+        fpp.fs.mriConvert([pwd '/despike.nii'],outputPaths{e});
+%         fpp.util.system(['mri_convert ' pwd '/despike.nii ' outputPaths{e}]);
         fpp.bids.jsonReconstruct(inputPaths{e},outputPaths{e},'midprepfmri');
         fpp.bids.jsonChangeValue(outputPaths{e},{'Description','Sources','SkullStripped','SpatialReference'},...
             {'Partially preprocessed data generated by fmriPermPipe, saved after despiking step.',...
-            fpp.bids.removeBidsDir(inputPaths{e}),false,'orig'});
+            fpp.bids.removeBidsDir(inputPaths{e}),false,'native'});
         fpp.util.system(['rm -rf ' pwd '/despike+orig.BRIK ' pwd '/despike+orig.HEAD '...
             pwd '/despike.nii']);
     end
 end
+pathsToDelete = [pathsToDelete outputPaths];
 %%%
 %%% Add: extract ART time points from 3dDespike
 %%%
@@ -344,11 +359,11 @@ if useSTC
     inputPaths = outputPaths;
     [errorMsg,outputPaths] = fpp.func.preproc.sliceTimingCorrect(inputPaths,sliceTimes,tr);
     if ~isempty(errorMsg)
-        fprintf('%s\n\n',errorMsg);
-        return;
+        error(errorMsg);
     end
-    fpp.bids.jsonChangeValue(outputPaths{e},{'SkullStripped','SpatialReference'},{false,'orig'});   % in case despiking wasn't run
+    fpp.bids.jsonChangeValue(outputPaths{e},{'SkullStripped','SpatialReference'},{false,'native'});   % in case despiking wasn't run
 end
+pathsToDelete = [pathsToDelete outputPaths];
 
 
 
@@ -364,38 +379,10 @@ if undistort
     [errorMsg,topupWarpPath,topupJacobianPath,xfmMocoTarget2SpinEcho,xfmSpinEcho2MocoTarget] = ...
         fpp.func.preproc.undistort(mocoTargetPath,mocoTargetUndistortedPath,spinEchoPaths,fmapPreprocDir,fieldMapParamPath);
     if ~isempty(errorMsg)
-        fprintf('%s\n\n',errorMsg);
-        return;
+        error(errorMsg);
     end
 end
 
-% If functional template doesn't exist, create it from native func vol
-% EDIT: MODULARIZE AND SWITCH TO SBREF if available
-% Default: Take an average of all available SBRef images, registered to 
-% each other with spline interpolation, undistorted, and reoriented to Std
-if ~exist(funcTemplatePath,'file')
-    if undistort
-        fpp.util.copyImageAndJson(mocoTargetUndistortedPath,funcTemplatePath,'mri');
-    else
-        fpp.util.copyImageAndJson(mocoTargetPath,funcTemplatePath,'mri');
-    end
-    genTemplate = 1;
-end
-fpp.bids.jsonChangeValue(funcTemplatePath,{'Description','TaskName','TaskDescription',...
-    'Instructions','RepetitionTime','AcquisitionDuration','VolumeTiming','DelayTime',...
-    'NumberOfVolumesDiscardedByScanner','NumberOfVolumesDiscardedByUser','DelayAfterTrigger'},...
-    {'Functional template image, to be used as a registration target.',[],[],[],[],[],[],[],[],[],[]});
-
-initMaskPath = fpp.bids.changeName(funcTemplatePath,{'desc','space'},{'brainFS',funcTemplateName},'mask');
-% Compute initial brain mask for funcTemplate using BET, if Freesurfer mask doesn't exist
-% if ~exist(initMaskPath,'file')
-%     initMaskStem = strrep(fpp.bids.changeName(funcTemplatePath,{'desc','space'},{'brainBETInit',funcTemplateName}),'_bold.nii.gz','');
-%     initMaskPath = fpp.bids.changeName(funcTemplatePath,{'desc','space'},{'brainBETInit',funcTemplateName},'mask');
-%     fpp.util.system(['bet2 ' funcTemplatePath ' ' initMaskStem ' -f ' num2str(faValue) ' -m -n']);
-%     fpp.bids.jsonReconstruct(funcTemplatePath,initMaskPath,'mri');
-%     fpp.bids.jsonChangeValue(initMaskPath,{'Description','Sources','Type'},...
-%         {'Initial brain mask for functional template, generated by BET.',fpp.bids.removeBidsDir(funcTemplatePath),'Brain'});
-% end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -407,13 +394,19 @@ if undistort
 else
     mocoTargetToRegisterPath = mocoTargetPath;
 end
-xfmMocoTarget2FuncTemplate = fpp.bids.changeName(mocoTargetPath,{'desc','from','to','mode'},...
-    {'','orig','session','image'},'xfm','.mat');
-xfmFuncTemplate2MocoTarget = fpp.bids.changeName(mocoTargetPath,{'desc','from','to','mode'},...
-    {'','orig','session','image'},'xfm','.mat');
-fpp.util.system(['flirt -in ' mocoTargetPath ' -ref ' funcTemplatePath ' -omat ' xfmMocoTarget2FuncTemplate ...
-    ' -cost corratio -dof 6 -searchrx -180 180 -searchry -180 180 -searchrz -180 180']);
-fpp.util.system(['convert_xfm -omat ' xfmFuncTemplate2MocoTarget ' -inverse ' xfmMocoTarget2FuncTemplate]);
+if multiEcho && exist(fpp.bids.changeName(funcTemplatePath,'echo',echoForMoCorr),'file')
+    funcTemplatePathRegTarget = fpp.bids.changeName(funcTemplatePath,'echo',echoForMoCorr);
+else
+    funcTemplatePathRegTarget = funcTemplatePath;
+end
+xfmMocoTarget2FuncTemplate = fpp.bids.changeName(mocoTargetPath,{'desc','from','to','mode','echo'},...
+    {'','native','session','image',[]},'xfm','.mat');
+xfmFuncTemplate2MocoTarget = fpp.bids.changeName(mocoTargetPath,{'desc','from','to','mode','echo'},...
+    {'','session','native','image',[]},'xfm','.mat');
+fpp.fsl.flirt(mocoTargetPath,funcTemplatePathRegTarget,xfmMocoTarget2FuncTemplate,[],'cost','corratio',...
+    'dof',6,'searchrx',[-180 180],'searchry',[-180 180],'searchrz',[-180 180]);
+fpp.fsl.invertXfm(xfmMocoTarget2FuncTemplate,xfmFuncTemplate2MocoTarget);
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -422,13 +415,14 @@ fpp.util.system(['convert_xfm -omat ' xfmFuncTemplate2MocoTarget ' -inverse ' xf
 fprintf('%s\n',['Step 6, Motion/distortion-correct and register - ' inputName]);
 inputPaths = outputPaths;
 for e=1:nEchoes
-    outputPaths{e} = fpp.bids.changeName(outputPaths{e},{'desc','space'},{'midprep3moco',funcTemplateName});
+    outputPaths{e} = fpp.bids.changeName(outputPaths{e},{'desc','space'},{'midprep3moco',funcTemplateSpace});
 end
 %if ~exist(outputPaths{end},'file')      % TEMPORARY DEBUGGING HACK
 fpp.func.preproc.oneShotMotionDistortionCorrect(inputPaths,outputPaths,funcTemplatePath,...
-    funcTemplateName,mcDir,topupWarpPath,topupJacobianPath,xfmMocoTarget2FuncTemplate,...
+    funcTemplateSpace,mcDir,topupWarpPath,topupJacobianPath,xfmMocoTarget2FuncTemplate,...
     xfmSpinEcho2MocoTarget,xfmMocoTarget2SpinEcho,echoForMoCorr);
 %end
+pathsToDelete = [pathsToDelete outputPaths];
 
 
 
@@ -441,17 +435,18 @@ if useTedana
     outputPath = fpp.bids.changeName(inputPaths{1},{'echo','desc'},{[],'midprep4tedana'});
     outputDescription = 'Partially preprocessed data generated by fmriPermPipe, saved after TEDANA denoising step.';
     %if ~exist(outputPath,'file') %%% TEMPORARY DEBUGGING HACK
-    fpp.func.preproc.tedana(inputPaths,outputPath,initMaskPath,outputDescription);
+    fpp.func.preproc.tedana(inputPaths,outputPath,maskPath,outputDescription,1,teVals);
     %end
 elseif multiEcho
     fprintf('%s\n',['Step 7, Multi-echo combine                     - ' inputName]);
     inputPaths = outputPaths;
     outputPath = fpp.bids.changeName(inputPaths{1},{'echo','desc'},{[],'midprep4optcomb'});
     outputDescription = 'Partially preprocessed data generated by fmriPermPipe, saved after multi-echo combination step.';
-    fpp.func.preproc.tedana(inputPaths,outputPath,initMaskPath,outputDescription,0);
+    fpp.func.preproc.tedana(inputPaths,outputPath,maskPath,outputDescription,0,teVals);
 else
     outputPath = outputPaths{1};
 end
+if useTedana, pathsToDelete = [pathsToDelete outputPath]; end
 
 
 
@@ -462,13 +457,15 @@ fprintf('%s\n',['Step 8, Intensity normalize                    - ' inputName]);
 inputPath = outputPath;
 outputPath = fpp.bids.changeName(inputPath,'desc','midprep5intnorm');
 % Normalize image median (also called "grand mean scaling" in SPM)
-[~,funcMedian] = fpp.util.system(['fslstats ' inputPath ' -k ' initMaskPath ' -p 50']);
+[~,funcMedian] = fpp.util.system(['fslstats ' inputPath ' -k ' maskPath ' -p 50']);
 funcMedian = str2num(strtrim(funcMedian));
-fpp.util.system(['fslmaths ' inputPath ' -mul ' num2str(newMedian/funcMedian) ' ' outputPath]);
+fpp.fsl.fslMaths(inputPath,['-mul ' num2str(newMedian/funcMedian)],outputPath);
+% fpp.util.system(['fslmaths ' inputPath ' -mul ' num2str(newMedian/funcMedian) ' ' outputPath]);
 fpp.bids.jsonReconstruct(inputPath,outputPath,'midprepfmri');
 fpp.bids.jsonChangeValue(outputPath,{'Description','Sources'},...
     {'Partially preprocessed data generated by fmriPermPipe, saved after intensity normalization step.',...
     fpp.bids.removeBidsDir(inputPath)});
+pathsToDelete = [pathsToDelete outputPath];
 
 
 
@@ -493,6 +490,7 @@ if tempFilt
     fpp.bids.jsonChangeValue(outputPath,{'Description','Sources'},...
         {'Partially preprocessed data generated by fmriPermPipe, saved after temporal filtering step.',...
         fpp.bids.removeBidsDir(inputPath)});
+    pathsToDelete = [pathsToDelete outputPath];
 end
 
 
@@ -517,6 +515,7 @@ if fwhm>0
     fpp.bids.jsonChangeValue(outputPath,{'Description','Sources'},...
         {'Partially preprocessed data generated by fmriPermPipe, saved after spatial smoothing step.',...
         fpp.bids.removeBidsDir(inputPath)});
+    pathsToDelete = [pathsToDelete outputPath];
 end
 
 
@@ -539,28 +538,41 @@ fpp.bids.jsonChangeValue(outputPath,'Description','Preprocessed data generated b
 fprintf('%s\n',['Step 11, Compute tSNR                          - ' inputName]);
 % Multi-echo combine raw input data for tSNR comparison
 if multiEcho
-    inputPathRaw = fpp.bids.changeName(inputPathsRaw{1},{'echo','desc'},{[],'optcomb'});
+    inputPathRaw = fpp.bids.changeName(inputPathsRaw{1},{'echo','desc'},{[],'rawOptcomb'});
     outputDescription = 'Raw data, optimally combined across echoes using tedana.';
-    fpp.func.preproc.tedana(inputPathsRaw,inputPathRaw,initMaskPath,outputDescription,0);
+    fpp.func.preproc.tedana(inputPathsRaw,inputPathRaw,maskPath,outputDescription,0);
 else
     inputPathRaw = inputPathsRaw{1};
 end
 % Register raw data to funcTemplate
-inputPathRaw2FuncTemplate = fpp.bids.changeName(inputPathRaw,'space',funcTemplateName);
-% fpp.util.system(['flirt -in ' inputPathRaw ' -ref ' funcTemplatePath ' -out '...
-%     inputPathRaw2FuncTemplate ' -applyxfm -init ' xfmMocoTarget2FuncTemplate]);
+inputPathRaw2FuncTemplate = fpp.bids.changeName(inputPathRaw,'space',funcTemplateSpace);
 fpp.fsl.moveImage(inputPathRaw,funcTemplatePath,inputPathRaw2FuncTemplate,xfmMocoTarget2FuncTemplate);
-fpp.bids.jsonReconstruct(inputPathRaw,inputPathRaw2FuncTemplate,'midprepfmri');
-% fpp.bids.jsonChangeValue(outputPath,{'Description','Sources','SpatialReference'},...
+fpp.bids.jsonReconstruct(inputPathRaw,inputPathRaw2FuncTemplate,'fmri');
+% fpp.bids.jsonChangeValue(inputPathRaw2FuncTemplate,{'Description','Sources','SpatialReference'},...
 %     {'Raw data, optimally combined across echoes, registered to functional template.',...
 %     fpp.bids.removeBidsDir(inputPathRaw),fpp.bids.removeBidsDir(funcTemplatePath)});
-fpp.bids.jsonChangeValue(outputPath,'Description',...
+fpp.bids.jsonChangeValue(inputPathRaw2FuncTemplate,'Description',...
     'Raw data, optimally combined across echoes, registered to functional template.');
 % Compute tSNR maps
-fpp.util.tsnrMap(inputPathRaw2FuncTemplate);
-fpp.util.tsnrMap(outputPath);
-fpp.util.tsnrMap(fpp.bids.changeName(outputPath,'desc','midprep4optcomb'));
+if genTSNR
+    fpp.util.tsnrMap(inputPathRaw2FuncTemplate);
+    fpp.util.tsnrMap(outputPath);
+    fpp.util.tsnrMap(fpp.bids.changeName(outputPath,'desc','midprep4optcomb'));
+end
 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% CLEANUP: Delete midprep files
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+if deleteMidprep
+    for i=1:length(pathsToDelete)
+        fpp.util.system(['rm -rf ' pathsToDelete{i}]);
+        if exist(fpp.bids.jsonPath(pathsToDelete{i}),'file')
+            fpp.util.system(['rm -rf ' fpp.bids.jsonPath(pathsToDelete{i})]);
+        end
+    end
+end
 
 
 fprintf('%s\n\n',['Finished preproc for ' inputName]);
