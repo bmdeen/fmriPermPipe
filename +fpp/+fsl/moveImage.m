@@ -24,7 +24,6 @@
 function moveImage(inputPath,referencePath,outputPath,preMat,varargin)
 
 % Define variable defaults
-jsonOpts.indent = '\t';     % Use tab indentation for JSON outputs
 warp = [];                  % Prevent confusion with MATLAB warp fcn
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
@@ -97,13 +96,22 @@ else
     end
 end
 
-% Run fnirt command
+% Run flirt or applywarp command
 fpp.util.system(cmd);
 
 % Write json output files
-if exist(fpp.bids.jsonPath(inputPath),'file') && exist('outputPath','var')
+if ~isempty(fpp.bids.getMetadata(inputPath)) && exist('outputPath','var')
     fpp.bids.jsonReconstruct(inputPath,outputPath);
-    fpp.bids.jsonChangeValue(outputPath,'SpatialRef',fpp.bids.removeBidsDir(referencePath));
+    refJsonData = fpp.bids.getMetadata(referencePath);
+    if isfield(refJsonData,'SpatialRef')
+        spatialRef = refJsonData.SpatialRef;
+    else
+        spatialRef = fpp.bids.removeBidsDir(referencePath);
+    end
+    fpp.bids.jsonChangeValue(outputPath,'SpatialRef',spatialRef);
+    if ~strcmp(inputPath,outputPath)
+        fpp.bids.jsonChangeValue(outputPath,'Sources',fpp.bids.removeBidsDir(inputPath));
+    end
 end
 
 

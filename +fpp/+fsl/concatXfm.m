@@ -15,9 +15,7 @@ cmd = ['convert_xfm -omat ' outputAtoC ' -concat ' inputBtoC ' ' inputAtoB];
 fpp.util.system(cmd);
 
 % Write json output files
-inputBtoCJsonPath = fpp.bids.jsonPath(inputBtoC);
-inputAtoBJsonPath = fpp.bids.jsonPath(inputAtoB);
-if exist(inputBtoCJsonPath,'file') && exist(inputAtoBJsonPath,'file')
+if ~isempty(fpp.bids.getMetadata(inputBtoC)) && ~isempty(fpp.bids.getMetadata(inputAtoB))
     outputAtoCJsonPath = fpp.bids.jsonPath(outputAtoC);
     jsonDataAtoB = fpp.bids.getMetadata(inputAtoB);
     jsonDataBtoC = fpp.bids.getMetadata(inputBtoC);

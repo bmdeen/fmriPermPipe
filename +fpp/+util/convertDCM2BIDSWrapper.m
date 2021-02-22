@@ -37,11 +37,9 @@
 
 function convertDCM2BIDSWrapper(studyDir,subjects,varargin)
 
-% Load/check config variables.
-configError = fpp.util.checkConfig;
-if ~isempty(configError)
-    error(configError);
-end
+% Check system configuration
+fpp.util.checkConfig;
+
 if ~exist(studyDir,'dir')
     errir(['Study directory ' studyDir ' does not exist.']);
 end

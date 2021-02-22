@@ -1,18 +1,21 @@
 
-% Function to change values in specific fields of a JSON file. Can also
-% remove fields, by setting the corresponding element of newValues to an
-% empty vector.
+% Function to change values in specific json metadata fields for an input 
+% data file. Can also remove fields, by setting the corresponding element 
+% of newValues to an empty vector.
 %
-% fpp.bids.jsonChangeValue(inputJsonPath,fieldsToChange,newValues,appendValue)
+% fpp.bids.jsonChangeValue(inputPath,fieldsToChange,newValues,appendValue)
 %
 % Arguments:
-% - inputJsonPath (string): path to JSON file, or corresponding data
+% - inputPath (string): path to file to modify (data file, not .json file)
 % - fieldsToChange (cell array of strings): fields to edit
 % - newValues (cell array): new values for those fields
 % - appendValue (optional, boolean): whether to append new value to
 %       existing field value, via horizontal vector concatenation
+%
+% Dependencies: bids-matlab (required), bids-matlab-tools (recommended for
+% JSONio)
 
-function jsonChangeValue(inputJsonPath,fieldsToChange,newValues,appendValue)
+function jsonChangeValue(inputPath,fieldsToChange,newValues,appendValue)
 
 if ~iscell(fieldsToChange), fieldsToChange = {fieldsToChange}; end
 if ~iscell(newValues), newValues = {newValues}; end
@@ -21,12 +24,13 @@ if ~exist('appendValue','var') || isempty(appendValue)
 end
 jsonOpts.indent = '\t';     % Use tab indentation for JSON outputs
 
-if length(inputJsonPath)>=5 && ~strcmpi(inputJsonPath(end-4:end),'.json')
-    inputJsonPath = fpp.bids.jsonPath(inputJsonPath);
+[~,~,inputExt] = fpp.util.fileParts(inputPath);
+if strcmpi(inputExt,'.json')
+    error('fpp.bids.jsonChangeValue must be run on data file, not json file.');
 end
-if ~exist(inputJsonPath,'file'), return; end
 
-jsonData = bids.util.jsondecode(inputJsonPath);
+inputJsonPath = fpp.bids.jsonPath(inputPath);
+jsonData = fpp.bids.getMetadata(inputPath);
 
 for f=1:length(fieldsToChange)
     if isempty(newValues{f}) && isfield(jsonData,fieldsToChange{f})

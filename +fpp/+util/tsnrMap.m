@@ -9,7 +9,7 @@ if isempty(inputDir), inputDir = pwd; end
 if ~exist('outputPath','var')
     outputPath = [inputDir '/' strrep(inputName,'_bold','') '_tsnr.nii.gz'];
 end
-[outputDir,outputName,~] = fpp.util.fileParts(outputPath);
+[outputDir,~,~] = fpp.util.fileParts(outputPath);
 if isempty(outputDir), outputDir = pwd; end
 
 % Compute tSNR
@@ -20,12 +20,14 @@ fpp.util.system(['fslmaths ' inputDir '/input_mean2350982452.nii.gz -div ' input
 fpp.util.system(['rm -rf ' inputDir '/input_mean2350982452.nii.gz ' inputDir '/input_std2350982452.nii.gz']);
 
 % Generate tSNR map json file
-fpp.bids.jsonReconstruct(inputName,outputName,'mri');
-if exist('outputDescription','var') && ischar(outputDescription)
-    fpp.bids.jsonChangeValue(outputName,'Description',outputDesciption);
-else
-    fpp.bids.jsonChangeValue(outputName,'Description','- tSNR map',1);
+if ~isempty(fpp.bids.getMetadata(inputPath))
+    fpp.bids.jsonReconstruct(inputPath,outputPath,'mri');
+    if exist('outputDescription','var') && ischar(outputDescription)
+        fpp.bids.jsonChangeValue(outputPath,'Description',outputDesciption);
+    else
+        fpp.bids.jsonChangeValue(outputPath,'Description','- tSNR map',1);
+    end
+    fpp.bids.jsonChangeValue(outputPath,'Sources',fpp.bids.removeBidsDir(inputPath));
 end
-fpp.bids.jsonChangeValue(outputName,'Sources',fpp.bids.removeBidsDir(inputPath));
 
 end

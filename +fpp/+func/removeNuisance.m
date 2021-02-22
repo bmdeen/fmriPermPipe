@@ -20,12 +20,8 @@
 
 function removeNuisance(inputPath,varargin)
 
-% Load/check config variables.
-configError = fpp.util.checkConfig;
-if ~isempty(configError)
-    fprintf('%s\n',configError);
-    return;
-end
+% Check system configuration
+fpp.util.checkConfig;
 
 [inputDir,inputName,inputExt] = fpp.util.fileParts(inputPath);
 

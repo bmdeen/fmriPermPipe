@@ -1,6 +1,7 @@
 
 % Function to reorient a 3D/4D MRI dataset to LAS/RAS orientation via a
-% rotation. Also modifies relevant fields in JSON metadata.
+% rotation, using FSL's fslreorient2std. Also modifies relevant fields in 
+% JSON metadata.
 
 function reorientToStd(inputPath,outputPath)
 
@@ -35,12 +36,10 @@ end
 fpp.util.system(['rm -rf ' tmpDir]);
 
 % Convert orientation of accompanying JSON file if it exist
-inputJsonPath = strrep(inputPath,inputExt,'.json');
-if exist(inputJsonPath,'file')
-    outputJsonPath = strrep(outputPath,outputExt,'.json');
-    fpp.util.system(['cp ' inputJsonPath ' ' outputJsonPath]);
+if ~isempty(fpp.bids.getMetadata(inputPath))
+    fpp.bids.jsonReconstruct(inputPath,outputPath,'keepall');
     if exist('outputOrientation','var') && ~strcmp(inputOrientation,outputOrientation)
-        fpp.bids.jsonReorient(outputJsonPath,inputOrientation,outputOrientation);
+        fpp.bids.jsonReorient(outputPath,inputOrientation,outputOrientation);
     end
 end
 

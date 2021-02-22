@@ -76,7 +76,7 @@ fpp.fsl.invertXfm(xfmFunc2SpinEcho,xfmSpinEcho2Func);
 fpp.fsl.moveImage(inputFuncPath,inputFuncPath,inputFuncUndistortedPath,xfmFunc2SpinEcho,...
     'warp',topupWarpPath,'postmat',xfmSpinEcho2Func);
 fpp.fsl.moveImage(topupJacobianPath,inputFuncPath,topupJacobian2FuncPath,xfmSpinEcho2Func);
-fpp.fsl.fslMaths(inputFuncUndistortedPath,['-mul ' topupJacobian2FuncPath],inputFuncUndistortedPath);
+fpp.fsl.maths(inputFuncUndistortedPath,['-mul ' topupJacobian2FuncPath],inputFuncUndistortedPath);
 fpp.util.system(['rm -rf ' topupJacobian2FuncPath]);
 
 % Generate output JSON file

@@ -33,10 +33,9 @@ cmd = ['aff2rigid ' inputXfm ' ' outputXfm];
 fpp.util.system(cmd);
 
 % Write json output files
-inputXfmJsonPath = fpp.bids.jsonPath(inputXfm);
-if exist(inputXfmJsonPath,'file')
+if ~isempty(fpp.bids.getMetadata(inputXfm))
     outputXfmJsonPath = fpp.bids.jsonPath(outputXfm);
-    jsonData = fpp.bids.getMetadata(inputXfmJsonPath);
+    jsonData = fpp.bids.getMetadata(inputXfm);
     jsonData.Type = '6-dof affine';
     jsonData.Software = 'aff2rigid';
     jsonData.SoftwareVersion = '';

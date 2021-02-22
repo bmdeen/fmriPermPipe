@@ -17,7 +17,6 @@ end
 if isempty(argVal), return; end
 
 %%% Check input compatibility
-
 argGood = 0;
 
 % String
@@ -30,7 +29,8 @@ if ismember(lower(argName),lower({'expt','inputSuffix','outputSuffix','funcTempl
         'aff','inwarp','intin','cout','iout','fout','jout','logout','config',...
         'refmask','inmask','minmet','miter','subsamp','warpres','infwhm','reffwhm',...
         'regmod','jacrange','intmod','biasres','numprec','interp','warp','postmat',...
-        'premat','midmat','mask','warp1','warp2','jacobian'}))
+        'premat','midmat','mask','warp1','warp2','jacobian','confoundPath','outlierPath',...
+        'analysisDir'}))
     if ischar(argVal)
         argGood = 1;
     else
@@ -70,7 +70,7 @@ elseif ismember(lower(argName),lower({'nuisanceType'}))
     
 % Scalar integer in [0,Inf)
 elseif ismember(lower(argName),lower({'tptsAfter','disdaqs','looRun','pcaOrder',...
-        'superlevel','paddingsize'}))
+        'superlevel','paddingsize','randSeed','permIters'}))
     if isnumeric(argVal) && isscalar(argVal) && mod(argVal,1)==0 && argVal>=0
         argGood = 1;
     else
@@ -78,7 +78,7 @@ elseif ismember(lower(argName),lower({'tptsAfter','disdaqs','looRun','pcaOrder',
     end
     
 % Scalar integer in (0,Inf)
-elseif ismember(lower(argName),lower({'filtOrder','permIters','dof','splineorder',...
+elseif ismember(lower(argName),lower({'filtOrder','dof','splineorder',...
         'intorder','echoForMoCorr'}))
     if isnumeric(argVal) && isscalar(argVal) && mod(argVal,1)==0 && argVal>0
         argGood = 1;
@@ -95,7 +95,7 @@ elseif ismember(lower(argName),lower({'echoesToUse'}))
     end
     
 % Vector of integers in (0,Inf)
-elseif ismember(lower(argName),lower({'runList','conList'}))
+elseif ismember(lower(argName),lower({'runList','conList','outlierInd'}))
     if isnumeric(argVal) && isvector(argVal) && sum(mod(argVal,1)==0)==length(argVal) && sum(argVal==0)==0
         argGood = 1;
     else
@@ -171,7 +171,8 @@ elseif ismember(lower(argName),lower({'customNuisRegr'}))
     end
 
 % Cell array of strings
-elseif ismember(lower(argName),lower({'spinEchoPaths','spinEchoPhaseEncodeDirections'}))
+elseif ismember(lower(argName),lower({'spinEchoPaths','spinEchoPhaseEncodeDirections',...
+        'condNames','confoundNames','contrastNames'}))
     if iscellstr(argVal)
         argGood = 1;
     else
@@ -179,6 +180,7 @@ elseif ismember(lower(argName),lower({'spinEchoPaths','spinEchoPhaseEncodeDirect
     end
 end
 
+%%% Throw error if argVal is not compatible
 if argGood==0
     argVal = []; 
     error(errorMsg);

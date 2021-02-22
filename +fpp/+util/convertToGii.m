@@ -75,13 +75,12 @@ end
 % Generate .json metadata, if specified
 if exist('fieldsToChange','var') && ~isempty(fieldsToChange) && ...
         exist('newValues','var') && ~isempty(newValues)
-    inputJsonPath = fpp.bids.jsonPath(inputPath);
-    outputJsonPath = fpp.bids.jsonPath(outputPath);
-    if exist(inputJsonPath,'file')
-        fpp.bids.jsonReconstruct(inputJsonPath,outputJsonPath);
-        fpp.bids.jsonChangeValue(outputJsonPath,fieldsToChange,newValues);
+    if ~isempty(fpp.bids.getMetadata(inputPath))
+        fpp.bids.jsonReconstruct(inputPath,outputPath);
+        fpp.bids.jsonChangeValue(outputPath,fieldsToChange,newValues);
     else
         jsonData = struct();
+        outputJsonPath = fpp.bids.jsonPath(outputPath);
         if ~iscell(fieldsToChange), fieldsToChange = {fieldsToChange}; end
         if ~iscell(newValues), newValues = {newValues}; end
         for f=1:length(fieldsToChange)

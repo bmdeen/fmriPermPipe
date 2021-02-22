@@ -2,6 +2,8 @@
 % Wrapper for Freesurfer's MRIwrite function, which swaps the first two
 % dimensions so that first matlab dimension corresponds to first image
 % dimension.
+%
+% err = fpp.util.mriWrite(mri,fstring,datatype)
 
 function err = mriWrite(mri,fstring,datatype)
 

@@ -64,12 +64,9 @@
 
 function model2ndPerm(studyDir,subjects,varargin)
 
-% Load/check config variables.
-configError = fpp.util.checkConfig;
-if ~isempty(configError)
-    fprintf('%s\n',configError);
-    return;
-end
+% Check system configuration
+fpp.util.checkConfig;
+
 if ~exist(studyDir,'dir')
     fprintf('%s\n',['ERROR: Study directory ' studyDir ' does not exist.']);
     return;

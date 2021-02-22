@@ -10,12 +10,8 @@
 
 function defineTemplate(inputPath,outputDir,varargin)
 
-% Load/check config variables.
-configError = fpp.util.checkConfig;
-if ~isempty(configError)
-    fprintf('%s\n',configError);
-    return;
-end
+% Check system configuration
+fpp.util.checkConfig;
 
 % Basic parameters
 overwrite = 0;                  % Whether to overwrite output
@@ -81,7 +77,7 @@ for e=1:nEchoes
             {[],[],[],'session','template'},[],'.nii.gz')];
     end
     fpp.util.copyImageAndJson(inputPaths{e},outputPaths{e},'mri');
-    fpp.bids.jsonChangeValue(fpp.bids.jsonPath(outputPaths{e}),{'Description','RawSources','SpatialRef'},...
+    fpp.bids.jsonChangeValue(outputPaths{e},{'Description','RawSources','SpatialRef'},...
         {'Functional template space.',fpp.bids.removeBidsDir(inputPaths{e}),fpp.bids.removeBidsDir(outputPaths{1})});
 end
 

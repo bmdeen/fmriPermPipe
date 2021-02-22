@@ -1,6 +1,9 @@
 
 % Function to take 3-column regressor format and generate time series,
 % corresponding to boxcar function convolved with HRF.
+%
+% regressor = fpp.func.analysis.constructRegressor(taskRegr,hrfType,numVols,...
+%   tr,upsampledTR,subtractHalfTR)
 
 function regressor = constructRegressor(taskRegr,hrfType,numVols,tr,upsampledTR,subtractHalfTR)
 
@@ -18,7 +21,7 @@ if subtractHalfTR
     onsets = onsets-tr/2;   % Note: this code makes first onset -tr/2
 end
 
-hrf = constructHRF(upsampledTR,hrfType);
+hrf = fpp.func.analysis.constructHRF(upsampledTR,hrfType);
 
 % Upsample sequence vector
 onsetBuffer = tr/upsampledTR;    % Extra time points at start of sequence, to avoid negative onsets from subtractHalfTR

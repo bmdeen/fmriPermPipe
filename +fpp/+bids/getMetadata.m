@@ -1,9 +1,9 @@
 
 % Wrapper for bids-matlab function get_metadata
 %
-% meta = fpp.bids.getMetadata(filename, pattern)
+% meta = fpp.bids.getMetadata(filename)
 
-function meta = getMetadata(filename, pattern)
+function meta = getMetadata(filename)
 
 % Replace initial tilda with home directory, otherwise get_metadata will
 % fail for tilda input
@@ -21,14 +21,10 @@ end
 currentDir = pwd;
 bidsMatlabDir = fileparts(which('bids.query'));
 if isempty(bidsMatlabDir)
-    error('Error: bids-matlab is not sourced.');
+    error('bids-matlab is not sourced.');
 end
 cd([bidsMatlabDir '/private']);
-if nargin == 1
-    meta = get_metadata(filename);
-else
-    meta = get_metadata(filename,pattern);
-end
+meta = get_metadata(filename);
 cd(currentDir);
 
 return

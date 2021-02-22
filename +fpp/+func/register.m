@@ -19,12 +19,8 @@
 
 function register(subjID,funcTemplatePath,inputT1Path,fsSubDir,varargin)
 
-% Load/check config variables.
-configError = fpp.util.checkConfig;
-if ~isempty(configError)
-    fprintf('%s\n',configError);
-    return;
-end
+% Check system configuration
+fpp.util.checkConfig;
 
 % Variable arguments
 overwrite = 0;
@@ -154,7 +150,7 @@ for r=1:length(roiNames)
     fpp.bids.jsonReconstruct(parcPathFunc,roiPath);
     fpp.bids.jsonChangeValue(roiPath,'Description',['Freesurfer-derived ' roiNames{r} ' mask.']);
     if ~strcmp(roiNames{r},'GM')
-        fpp.fsl.fslMaths(roiPath,'-ero',fpp.bids.changeName(roiPath,'desc',[roiNames{r} 'ero1']));
+        fpp.fsl.maths(roiPath,'-ero',fpp.bids.changeName(roiPath,'desc',[roiNames{r} 'ero1']));
     end
 end
 

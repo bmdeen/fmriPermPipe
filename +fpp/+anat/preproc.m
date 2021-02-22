@@ -23,19 +23,16 @@ function preproc(inputT1Paths,inputT2Paths,outputDir,varargin)
 
 %
 % TODO
+% - Alternative values for standardPath and standardName
+% - Rename FNIRT log file to BIDS-compatible
 % - N4 bias correction option when not using T2 images. (e.g., try to use
 %   freesurfer's AntsN4BiasFieldCorrectionFs, to avoid requiring ANTS)
-% - Alternative values for standardPath and standardName
 % - Change naming of run # for xfms to the real run, if BIDS info is
 %   available?
 % - Why isn't T2 to T1 xfm concatenation method working?
 
-% Load/check config variables.
-configError = fpp.util.checkConfig;
-if ~isempty(configError)
-    fprintf('%s\n',configError);
-    return;
-end
+% Check system configuration
+fpp.util.checkConfig;
 
 % Basic parameters
 overwrite = 0;                  % Whether to overwrite output
@@ -89,7 +86,7 @@ for i=1:length(inputT1Paths)
     [~,inputT1Names{i},~] = fpp.util.fileParts(inputT1Paths{i});
     outputT1Paths{i} = [anatPreprocDir '/' fpp.bids.changeName(inputT1Names{i},'','','T1w','.nii.gz')];
     fpp.util.copyImageAndJson(inputT1Paths{i},outputT1Paths{i},'mri');
-    fpp.bids.jsonChangeValue(fpp.bids.jsonPath(outputT1Paths{i}),{'Description','RawSources'},...
+    fpp.bids.jsonChangeValue(outputT1Paths{i},{'Description','RawSources'},...
         {'Raw data copied to derivative directory.',fpp.bids.removeBidsDir(inputT1Paths{i})});
 end
 outputT2Paths = {};
@@ -97,7 +94,7 @@ for i=1:length(inputT2Paths)
     [~,inputT2Names{i},~] = fpp.util.fileParts(inputT2Paths{i});
     outputT2Paths{i} = [anatPreprocDir '/' fpp.bids.changeName(inputT2Names{i},'','','T2w','.nii.gz')];
     fpp.util.copyImageAndJson(inputT2Paths{i},outputT2Paths{i},'mri');
-    fpp.bids.jsonChangeValue(fpp.bids.jsonPath(outputT2Paths{i}),{'Description','RawSources'},...
+    fpp.bids.jsonChangeValue(outputT2Paths{i},{'Description','RawSources'},...
         {'Raw data copied to derivative directory.',fpp.bids.removeBidsDir(inputT2Paths{i})});
 end
 inputT1PathsRaw = outputT1Paths;
@@ -125,7 +122,7 @@ for i=2:length(inputT1Paths)
     {'',['T1wIm' fpp.util.numPad(i,2)],'nativeT1w','image'},'xfm','.mat');
     fpp.fsl.flirt(inputT1Paths{i},inputT1Paths{1},xfmThisRun2FirstRun,outputT1Paths{i},...
         'dof',6,'interp','sinc');
-    fpp.bids.jsonChangeValue(fpp.bids.jsonPath(outputT1Paths{i}),{'Description','Sources'},...
+    fpp.bids.jsonChangeValue(outputT1Paths{i},{'Description','Sources'},...
         {'Raw data, registered to first anatomical with sinc interpolation.',...
         fpp.bids.removeBidsDir(inputT1Paths{i})});
     addCmdT1 = [addCmdT1 '-add ' outputT1Paths{i} ' '];
@@ -137,7 +134,7 @@ for i=2:length(inputT2Paths)
     {'',['T2wIm' fpp.util.numPad(i,2)],'nativeT2w','image'},'xfm','.mat');
     fpp.fsl.flirt(inputT2Paths{i},inputT2Paths{1},xfmThisRun2FirstRun,outputT2Paths{i},...
         'dof',6,'interp','sinc');
-    fpp.bids.jsonChangeValue(fpp.bids.jsonPath(outputT2Paths{i}),{'Description','Sources'},...
+    fpp.bids.jsonChangeValue(outputT2Paths{i},{'Description','Sources'},...
         {'Raw data, registered to first anatomical with sinc interpolation.',...
         fpp.bids.removeBidsDir(inputT2Paths{i})});
     addCmdT2 = [addCmdT2 '-add ' outputT2Paths{i} ' '];
@@ -145,8 +142,8 @@ for i=2:length(inputT2Paths)
 end
 if length(inputT1Paths)>1
     addCmdT1 = [addCmdT1 '-div ' int2str(length(inputT1Paths))];
-    fpp.fsl.fslMaths(inputT1Paths{1},addCmdT1,outputT1Path);
-    fpp.bids.jsonChangeValue(fpp.bids.jsonPath(outputT1Path),{'Description','Sources','RawSources'},...
+    fpp.fsl.maths(inputT1Paths{1},addCmdT1,outputT1Path);
+    fpp.bids.jsonChangeValue(outputT1Path,{'Description','Sources','RawSources'},...
         {'Raw data, averaged across runs.',cellfun(removeBidsDir,outputT1Paths,'UniformOutput',false),...
         cellfun(removeBidsDir,inputT1PathsRaw,'UniformOutput',false)});
 else
@@ -154,8 +151,8 @@ else
 end
 if usingT2 && length(inputT2Paths)>1
     addCmdT2 = [addCmdT2 '-div ' int2str(length(inputT2Paths))];
-    fpp.fsl.fslMaths(inputT2Paths{1},addCmdT2,outputT2Path);
-    fpp.bids.jsonChangeValue(fpp.bids.jsonPath(outputT2Path),{'Description','Sources','RawSources'},...
+    fpp.fsl.maths(inputT2Paths{1},addCmdT2,outputT2Path);
+    fpp.bids.jsonChangeValue(outputT2Path,{'Description','Sources','RawSources'},...
         {'Raw data, averaged across runs.',cellfun(removeBidsDir,outputT2Paths,'UniformOutput',false),...
         cellfun(removeBidsDir,inputT2PathsRaw,'UniformOutput',false)});
 else
@@ -171,14 +168,14 @@ fprintf('%s\n',['Step 2, Rotate to LAS/RAS                      - ' inputNameGen
 inputT1Path = outputT1Path;
 outputT1Path = fpp.bids.changeName(inputT1Path,'space','realignedT1w');
 fpp.util.reorientToStd(inputT1Path,outputT1Path);
-fpp.bids.jsonChangeValue(fpp.bids.jsonPath(outputT1Path),{'Description','SpatialRef'},...
+fpp.bids.jsonChangeValue(outputT1Path,{'Description','SpatialRef'},...
     {'Raw data, averaged and rotated to LAS/RAS alignment.',fpp.bids.removeBidsDir(outputT1Path)});
 pathsToDelete = [pathsToDelete outputT1Path];
 if usingT2
     inputT2Path = outputT2Path;
     outputT2Path = fpp.bids.changeName(inputT2Path,'space','realignedT2w');
     fpp.util.reorientToStd(inputT2Path,outputT2Path);
-    fpp.bids.jsonChangeValue(fpp.bids.jsonPath(outputT2Path),{'Description','SpatialRef'},...
+    fpp.bids.jsonChangeValue(outputT2Path,{'Description','SpatialRef'},...
         {'Raw data, averaged and rotated to LAS/RAS alignment.',fpp.bids.removeBidsDir(outputT2Path)});
     pathsToDelete = [pathsToDelete outputT2Path];
 end
@@ -313,13 +310,13 @@ if usingT2
     
     % Bias-field correct T1 and T2 images
     fpp.util.copyImageAndJson(inputT1Path,outputT1Path,'mri');
-    fpp.bids.jsonChangeValue(fpp.bids.jsonPath(outputT1Path),'Description',...
+    fpp.bids.jsonChangeValue(outputT1Path,'Description',...
         'Anatomical data preprocessed by fmriPermPipe.');
-    fpp.fsl.fslMaths(inputT1Path,['-div ' outputBiasPath],outputT1Path);
+    fpp.fsl.maths(inputT1Path,['-div ' outputBiasPath],outputT1Path);
     fpp.util.copyImageAndJson(inputT2Path,outputT2Path,'mri');
-    fpp.bids.jsonChangeValue(fpp.bids.jsonPath(outputT2Path),'Description',...
+    fpp.bids.jsonChangeValue(outputT2Path,'Description',...
         'Anatomical data preprocessed by fmriPermPipe.');
-    fpp.fsl.fslMaths(inputT2Path,['-div ' outputBiasPath],outputT2Path);
+    fpp.fsl.maths(inputT2Path,['-div ' outputBiasPath],outputT2Path);
     
 else
     % TO ADD HERE: N4 BIAS CORRECTION OPTION
@@ -327,7 +324,7 @@ else
     inputT1Path = outputT1Path;
 	outputT1Path = fpp.bids.changeName(inputT1Path,'desc','preproc');
     fpp.util.copyImageAndJson(inputT1Path,outputT1Path,'mri');
-    fpp.bids.jsonChangeValue(fpp.bids.jsonPath(outputT1Path),'Description',...
+    fpp.bids.jsonChangeValue(outputT1Path,'Description',...
         'Anatomical data preprocessed by fmriPermPipe.');
 end
 

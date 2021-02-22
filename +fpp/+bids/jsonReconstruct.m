@@ -1,14 +1,16 @@
 
-% Function to copy a json metadata file, keeping only specified fields.
-% Derives metadata from all relevant JSON files in hierarchy, and collapses
-% specified fields into single output file. Based on BIDS 1.4.1 spec, with
-% some fields from BIDS derivatives BEP014 included as options.
+% Function to copy a json metadata from one file to another, keeping only 
+% specified fields. Derives metadata from all relevant JSON files in
+% hierarchy, and collapses specified fields into single output file. Based 
+% on BIDS 1.4.1 spec, with some fields from BIDS derivatives BEP014
+% included as options.
 %
-% fpp.bids.jsonReconstruct(inputJsonPath,outputJsonPath,fieldsToKeep)
+% fpp.bids.jsonReconstruct(inputPath,outputPath,fieldsToKeep)
 %
 % Arguments:
-% - inputJsonPath (string): path to json file to copy
-% - outputJsonPath (string): path to output json field
+% - inputPath (string): path to file to copy metadata from (data file, not
+%   .json file)
+% - outputPath (string): path to output file
 % - fieldsToKeep (optional, cell array of strings): JSON fields to copy
 %    OR (string): label for image type, determining which fields to keep.
 %    Options: midprepFMRI, fMRI, Mask, Seg, MRI, Surf, Cifti, Xfm, Fmap,
@@ -17,10 +19,14 @@
 % Dependencies: bids-matlab (required), bids-matlab-tools (recommended for
 % JSONio)
 
-function jsonReconstruct(inputJsonPath,outputJsonPath,fieldsToKeep)
+function jsonReconstruct(inputPath,outputPath,fieldsToKeep)
 
 jsonOpts.indent = '\t';     % Use tab indentation for JSON outputs
 keepAllFields = 0;          % Whether to keep all fields in output JSON file.
+
+if ~exist(inputPath,'file')
+    error('Input file does not exist.');
+end
 
 if ~exist('fieldsToKeep','var') || isempty(fieldsToKeep)
     % Default JSON fields to maintain:
@@ -39,7 +45,7 @@ if ~exist('fieldsToKeep','var') || isempty(fieldsToKeep)
         'VolumeTiming','TaskName','NumberOfVolumesDiscardedByScanner','NumberOfVolumesDiscardedByUser',...
         'DelayTime','AcquisitionDuration','DelayAfterTrigger','Instructions','TaskDescription',...
         'CogAtlasID','CogPOID','IntendedFor','Description','Sources','RawSources',...
-        'SpatialReference','SkullStripped','Resolution','Density','Type','Atlas',...
+        'SpatialRef','SkullStripped','Resolution','Density','Type','Atlas',...
         'Manual','LabelMap','Method','Multiplexed','Software','SoftwareVersion',...
         'Invertible','FromFile','ToFile','FromFileSHA','ToFileSHA','CommandLine',...
         'CoordinateSystem','ReferenceMap','NonstandardReference','ReferenceIndex',...
@@ -92,16 +98,11 @@ elseif ischar(fieldsToKeep)
     end
 end
 
-if length(inputJsonPath)>=5 && ~strcmpi(inputJsonPath(end-4:end),'.json')
-    inputJsonPath = fpp.bids.jsonPath(inputJsonPath);
+outputJsonPath = fpp.bids.jsonPath(outputPath);
+if strcmp(outputJsonPath,outputPath)
+    error('fpp.bids.jsonReconstruct must be run on data file, not json file.');
 end
-if length(outputJsonPath)>=5 && ~strcmpi(outputJsonPath(end-4:end),'.json')
-    outputJsonPath = fpp.bids.jsonPath(outputJsonPath);
-end
-if ~exist(inputJsonPath,'file')
-    return;
-end
-inputJsonData = fpp.bids.getMetadata(inputJsonPath);
+inputJsonData = fpp.bids.getMetadata(inputPath);
 outputJsonData = struct();
 
 if keepAllFields

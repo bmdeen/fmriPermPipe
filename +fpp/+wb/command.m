@@ -167,11 +167,11 @@ elseif cmdInfo.NonstandardInput(cmdInd)
     end
 end
 
-% Return if no input file or no input json file
+% Return if no input file or no input json metadata
 if isempty(inputPath) && ~ismember(cmdType,{'surface-create-sphere',...
         'cifti-create-scalar-series','volume-create'})
     return;
-elseif ~isempty(inputPath) && ~exist(fpp.bids.jsonPath(inputPath{1}))
+elseif ~isempty(inputPath) && ~isempty(fpp.bids.getMetadata(inputPath{1}))
     return;
 end
 
@@ -234,6 +234,8 @@ if ~isempty(inputPath)
     for i=1:length(outputPath)
         fpp.bids.jsonReconstruct(inputPath{1},outputPath{i},fieldsToKeep);
         
+        if strcmp(inputPath,outputPath), continue; end  % Leave Sources/RawSources intact if filename isn't changed
+        
         if length(inputPath)>1
             % For multiple inputs, define cell array of Sources / Raw Sources
             fpp.bids.jsonChangeValue(outputPath{i},'Sources',...
@@ -258,9 +260,8 @@ if ~isempty(inputPath)
     end
 end
 
-% Modify output json metadata where necessary
+% Modify output json metadata where necessary, for first output file
 if isempty(outputPath), return; end
-outputJsonPath = fpp.bids.jsonPath(outputPath{1});
 if cmdInfo.NonstandardJsonDef(cmdInd)
     switch lower(cmdType)
         % Resampling: update SpatialRef, Resolution, and Density based on target
@@ -293,15 +294,15 @@ if cmdInfo.NonstandardJsonDef(cmdInd)
                 useDen = 0;
             end
             if useRes && isfield(jsonDataTemplate,'Resolution')
-                fpp.bids.jsonChangeValue(outputJsonPath,'Resolution',jsonDataTemplate.Resolution);
+                fpp.bids.jsonChangeValue(outputPath{1},'Resolution',jsonDataTemplate.Resolution);
             end
             if useDen && isfield(jsonDataTemplate,'Density')
-                fpp.bids.jsonChangeValue(outputJsonPath,'Density',jsonDataTemplate.Density);
+                fpp.bids.jsonChangeValue(outputPath{1},'Density',jsonDataTemplate.Density);
             end
             if isfield(jsonDataTemplate,'SpatialRef')
-                fpp.bids.jsonChangeValue(outputJsonPath,'SpatialRef',jsonDataTemplate.SpatialRef);
+                fpp.bids.jsonChangeValue(outputPath{1},'SpatialRef',jsonDataTemplate.SpatialRef);
             else
-                fpp.bids.jsonChangeValue(outputJsonPath,'SpatialRef',fpp.bids.removeBidsDir(newTemplate));
+                fpp.bids.jsonChangeValue(outputPath{1},'SpatialRef',fpp.bids.removeBidsDir(newTemplate));
             end
             
             
@@ -310,14 +311,14 @@ if cmdInfo.NonstandardJsonDef(cmdInd)
                 'surface-modify-sphere','surface-set-coordinates',...
                 'surface-smoothing','surface-sphere-project-unproject',...
                 'surface-apply-affine','surface-apply-warpfield'}
-            fpp.bids.jsonChangeValue(outputJsonPath,'SpatialRef',fpp.bids.removeBidsDir(outputPath{1}));
+            fpp.bids.jsonChangeValue(outputPath{1},'SpatialRef',fpp.bids.removeBidsDir(outputPath{1}));
             
             
         % Surface generation: define Density, set SpatialRef to output file
         case 'surface-create-sphere'
             jsonData.SpatialRef = fpp.bids.removeBidsDir(outputPath{1});
             jsonData.Density = [inputPath argText];
-            bids.util.jsonencode(outputJsonPath,jsonData,jsonOpts);
+            bids.util.jsonencode(outputPath{1},jsonData,jsonOpts);
             
             
         % Cifti generation: combine SpatialRef info from volume and surfaces
@@ -345,7 +346,7 @@ if cmdInfo.NonstandardJsonDef(cmdInd)
                 end
             end
             if ~isempty(spatialRefData)
-                fpp.bids.jsonChangeValue(outputJsonPath,'SpatialRef',spatialRefData);
+                fpp.bids.jsonChangeValue(outputPath{1},'SpatialRef',spatialRefData);
             end
             
             
@@ -421,21 +422,21 @@ if cmdInfo.NonstandardJsonDef(cmdInd)
             
         % Affine transform modification and generation
         case {'convert-affine','convert-warpfield'}
-            jsonData = fpp.bids.getMetadata(outputJsonPath);
+            jsonData = fpp.bids.getMetadata(outputPath{1});
             if isfield(jsonData,'CommandLine')
-                fpp.bids.jsonChangeValue(outputJsonPath,'CommandLine',['; ' cmd],1);
+                fpp.bids.jsonChangeValue(outputPath{1},'CommandLine',['; ' cmd],1);
             end
         case 'volume-warpfield-affine-regression'
-            jsonData = fpp.bids.getMetadata(outputJsonPath);
+            jsonData = fpp.bids.getMetadata(outputPath{1});
             if isfield(jsonData,'CommandLine')
-                fpp.bids.jsonChangeValue(outputJsonPath,'CommandLine',['; ' cmd],1);
+                fpp.bids.jsonChangeValue(outputPath{1},'CommandLine',['; ' cmd],1);
             end
             if isfield(jsonData,'Software')
-                fpp.bids.jsonChangeValue(outputJsonPath,'Software','; wb_command -volume-warpfield-affine-regression',1);
+                fpp.bids.jsonChangeValue(outputPath{1},'Software','; wb_command -volume-warpfield-affine-regression',1);
             else
-                fpp.bids.jsonChangeValue(outputJsonPath,'Software','wb_command -volume-warpfield-affine-regression',1);
+                fpp.bids.jsonChangeValue(outputPath{1},'Software','wb_command -volume-warpfield-affine-regression',1);
             end
-            fpp.bids.jsonChangeValue(outputJsonPath,{'Type','Invertible'},{'12-dof affine',true});
+            fpp.bids.jsonChangeValue(outputPath{1},{'Type','Invertible'},{'12-dof affine',true});
         case 'surface-affine-regression'
             jsonData.Type = '12 dof affine';
             jsonData.Software = 'wb_command -surface-affine-regression';
@@ -444,20 +445,20 @@ if cmdInfo.NonstandardJsonDef(cmdInd)
             jsonData.ToFile = fpp.bids.removeBidsDir(allArgs{1});
             jsonData.CommandLine = cmd;
             jsonData.Description = 'Affine transformation file generated by wb_command -surface-affine-regression.';
-            bids.util.jsonencode(outputJsonPath,jsonData,jsonOpts);
+            bids.util.jsonencode(outputPath{1},jsonData,jsonOpts);
             
             
         % Volumetric reorientation: reorient json, define SpatialRef as itself
         case 'volume-reorient'
             inOrientation = fpp.util.getImageOrientation(inputPath{1});
             outOrientation = argsAll{1};
-            fpp.bids.jsonReorient(outputJsonPath,inOrientation,outOrientation);
-            fpp.bids.jsonChangeValue(outputJsonPath,'SpatialRef',fpp.bids.removeBidsDir(outputPath{1}));
+            fpp.bids.jsonReorient(outputPath{1},inOrientation,outOrientation);
+            fpp.bids.jsonChangeValue(outputPath{1},'SpatialRef',fpp.bids.removeBidsDir(outputPath{1}));
         case 'volume-set-space'
             inOrientation = fpp.util.getImageOrientation(inputPath{1});
             outOrientation = fpp.util.getImageOrientation(outputPath{1});
-            fpp.bids.jsonReorient(outputJsonPath,inOrientation,outOrientation);
-            fpp.bids.jsonChangeValue(outputJsonPath,'SpatialRef',fpp.bids.removeBidsDir(outputPath{1}));
+            fpp.bids.jsonReorient(outputPath{1},inOrientation,outOrientation);
+            fpp.bids.jsonChangeValue(outputPath{1},'SpatialRef',fpp.bids.removeBidsDir(outputPath{1}));
             
             
         % Not currently implemented
@@ -474,8 +475,7 @@ end
 % Modify description, if specified
 if ~isempty(outputDescription)
     for i=1:length(outputPath)
-        fpp.bids.jsonChangeValue(fpp.bids.jsonPath(outputPath{i}),...
-            'Description',outputDescription,appendDescription);
+        fpp.bids.jsonChangeValue(outputPath{i},'Description',outputDescription,appendDescription);
     end
 end
 

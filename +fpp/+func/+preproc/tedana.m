@@ -30,6 +30,7 @@ end
 
 % Check output directory
 [outputDir,~,~] = fpp.util.fileParts(outputPath);
+if isempty(outputDir), outputDir = pwd; end
 
 
 % Place output in temporary directory to delete extra results
