@@ -17,14 +17,6 @@ if isempty(fPath)
     filename = [pwd '/' filename];
 end
 
-% Move to bids-matlab private dir, run get_metadata, move back
-currentDir = pwd;
-bidsMatlabDir = fileparts(which('bids.query'));
-if isempty(bidsMatlabDir)
-    error('bids-matlab is not sourced.');
-end
-cd([bidsMatlabDir '/private']);
-meta = get_metadata(filename);
-cd(currentDir);
+meta = bids.internal.get_metadata(filename);
 
 return

@@ -171,7 +171,7 @@ end
 if isempty(inputPath) && ~ismember(cmdType,{'surface-create-sphere',...
         'cifti-create-scalar-series','volume-create'})
     return;
-elseif ~isempty(inputPath) && ~isempty(fpp.bids.getMetadata(inputPath{1}))
+elseif ~isempty(inputPath) && isempty(fpp.bids.getMetadata(inputPath{1}))
     return;
 end
 
@@ -193,7 +193,7 @@ if cmdInfo.NonstandardOutput(cmdInd) && ~cmdInfo.NonstandardInput(cmdInd)
 end
 
 % If output doesn't need JSON file, return
-if strcmp(outputType,{'Zip','Text','Image','n/a'}), return; end
+if sum(strcmp(outputType,{'Zip','Text','Image','n/a'}))>0, return; end
 
 % Determine fields to keep in output json, based on output type
 % Note: most data types use midprepfmri option, which uses a general set of
@@ -232,9 +232,10 @@ switch outputType
 end
 if ~isempty(inputPath)
     for i=1:length(outputPath)
-        fpp.bids.jsonReconstruct(inputPath{1},outputPath{i},fieldsToKeep);
         
-        if strcmp(inputPath,outputPath), continue; end  % Leave Sources/RawSources intact if filename isn't changed
+        if strcmp(inputPath{1},outputPath{i}), continue; end  % Don't reconstruct json if output file has the same name as input
+        
+        fpp.bids.jsonReconstruct(inputPath{1},outputPath{i},fieldsToKeep);
         
         if length(inputPath)>1
             % For multiple inputs, define cell array of Sources / Raw Sources
@@ -307,18 +308,24 @@ if cmdInfo.NonstandardJsonDef(cmdInd)
             
             
         % Surface modification: set SpatialRef to output file
-        case {'surface-flip-lr','surface-flip-normals','surface-match',...
-                'surface-modify-sphere','surface-set-coordinates',...
-                'surface-smoothing','surface-sphere-project-unproject',...
-                'surface-apply-affine','surface-apply-warpfield'}
+        case {'surface-flip-lr','surface-flip-normals'}
             fpp.bids.jsonChangeValue(outputPath{1},'SpatialRef',fpp.bids.removeBidsDir(outputPath{1}));
+            
+        % NOTE: Not currently changing SpatialRef for the following
+        % commands, but this might depend on what exactly is meant by the
+        % SpatialRef field - just surface coords, or their embedding in a
+        % in a specific spatial coordinate frame).
+        case {'surface-modify-sphere','surface-set-coordinates',...
+             'surface-smoothing','surface-sphere-project-unproject',...
+             'surface-apply-affine','surface-apply-warpfield','surface-match'}
+            % Do nothing
             
             
         % Surface generation: define Density, set SpatialRef to output file
         case 'surface-create-sphere'
             jsonData.SpatialRef = fpp.bids.removeBidsDir(outputPath{1});
             jsonData.Density = [inputPath argText];
-            bids.util.jsonencode(outputPath{1},jsonData,jsonOpts);
+            bids.util.jsonencode(fpp.bids.jsonPath(outputPath{1}),jsonData,jsonOpts);
             
             
         % Cifti generation: combine SpatialRef info from volume and surfaces
@@ -359,7 +366,7 @@ if cmdInfo.NonstandardJsonDef(cmdInd)
             volAllInd = find(strcmp('-volume-all',allArgs));
             labelInd = find(strcmp('-label',allArgs));
             for i=1:length(labelInd)    % Remove -label following -volume-all
-                if length(allArgs)<labelInd(i)+2 || strcmp(allArgs{labelInd{i}+2}(1),'-')
+                if length(allArgs)<labelInd(i)+2 || strcmp(allArgs{labelInd(i)+2}(1),'-')
                     labelInd(i) = [];
                     break;
                 end
@@ -368,34 +375,42 @@ if cmdInfo.NonstandardJsonDef(cmdInd)
             volumeInd = find(strcmp('-volume',allArgs));
             flagTypes = [ones(1,length(volAllInd)) 2*ones(1,length(labelInd))...
                 3*ones(1,length(metricInd)) 4*ones(1,length(volumeInd))];
-            allInd = [volAllInd labelInd metricInd volumeInd];
+            allInd = [volAllInd; labelInd; metricInd; volumeInd];
             [allInd,sortInd] = sort(allInd);
             flagTypes = flagTypes(sortInd);
-            allInd = [allInd length(allArgs)];  % Add index of final argument
+            allInd = [allInd; length(allArgs)];  % Add index of final argument
             % Loop through flags, add images to volfiles, lhFiles, rhFiles cell arrays
             for i=1:length(allInd)-1
                 ind = allInd(i);
                 switch flagTypes(i)
                     case 1  % -volume-all
                         volFiles = [volFiles allArgs(ind+2)];
-                        ind2 = find('-roi',allArgs(ind+3:allInd(i+1)-1))+ind+2;
-                        if ~isempty(ind2), volFiles = [volFiles allArgs(ind2+1)]; end
-                        ind2 = find('-label',allArgs(ind+3:allInd(i+1)-1))+ind+2;
-                        if ~isempty(ind2), volFiles = [volFiles allArgs(ind2+1)]; end
+                        if ind+4 <= allInd(i+1)
+                            ind2 = find('-roi',allArgs(ind+3:allInd(i+1)-1))+ind+2;
+                            if ~isempty(ind2), volFiles = [volFiles allArgs(ind2+1)]; end
+                            ind2 = find('-label',allArgs(ind+3:allInd(i+1)-1))+ind+2;
+                            if ~isempty(ind2), volFiles = [volFiles allArgs(ind2+1)]; end
+                        end
                     case {2,3}  % -label, -metric
                         if strcmp(allArgs{ind+1},'CORTEX_LEFT')
                             lhFiles = [lhFiles allArgs(ind+2)];
-                            ind2 = find('-roi',allArgs(ind+3:allInd(i+1)-1))+ind+2;
-                            if ~isempty(ind2), lhlFiles = [lhlFiles allArgs(ind2+1)]; end
+                            if ind+4 <= allInd(i+1)
+                                ind2 = find('-roi',allArgs(ind+3:allInd(i+1)-1))+ind+2;
+                                if ~isempty(ind2), lhFiles = [lhFiles allArgs(ind2+1)]; end
+                            end
                         elseif strcmp(allArgs{ind+1},'CORTEX_RIGHT')
                             rhFiles = [rhFiles allArgs(ind+2)];
-                            ind2 = find('-roi',allArgs(ind+3:allInd(i+1)-1))+ind+2;
-                            if ~isempty(ind2), rhlFiles = [rhlFiles allArgs(ind2+1)]; end
+                            if ind+4 <= allInd(i+1)
+                                ind2 = find('-roi',allArgs(ind+3:allInd(i+1)-1))+ind+2;
+                                if ~isempty(ind2), rhFiles = [rhFiles allArgs(ind2+1)]; end
+                            end
                         end
                     case 4  % -volume
                         volFiles = [volFiles allArgs(ind+2)];
-                        ind2 = find('-roi',allArgs(ind+3:allInd(i+1)-1))+ind+2;
-                        if ~isempty(ind2), volFiles = [volFiles allArgs(ind2+1)]; end
+                        if ind+4 <= allInd(i+1)
+                            ind2 = find('-roi',allArgs(ind+3:allInd(i+1)-1))+ind+2;
+                            if ~isempty(ind2), volFiles = [volFiles allArgs(ind2+1)]; end
+                        end
                 end
             end
             % Load Cifti json data, check for relevant fields
@@ -445,7 +460,7 @@ if cmdInfo.NonstandardJsonDef(cmdInd)
             jsonData.ToFile = fpp.bids.removeBidsDir(allArgs{1});
             jsonData.CommandLine = cmd;
             jsonData.Description = 'Affine transformation file generated by wb_command -surface-affine-regression.';
-            bids.util.jsonencode(outputPath{1},jsonData,jsonOpts);
+            bids.util.jsonencode(fpp.bids.jsonPath(outputPath{1}),jsonData,jsonOpts);
             
             
         % Volumetric reorientation: reorient json, define SpatialRef as itself
@@ -464,7 +479,7 @@ if cmdInfo.NonstandardJsonDef(cmdInd)
         % Not currently implemented
         case 'cifti-create-scalar-series'
             % Generates CIFTI from text.
-            warning('Note: -cifti-create-scalar-series option does not generate JSON metadata.');
+            warning('Note: -cifti-create-scalar-series option does not currently generate JSON metadata.');
         case 'volume-create'
             % Generates volume 
             warning('Note: -volume-create option does not currently generate JSON metadata.');

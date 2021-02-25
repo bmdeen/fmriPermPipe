@@ -34,6 +34,9 @@ if ~isempty(fpp.bids.getMetadata(inputPath))
     if ~isempty(outputDescription)
         fpp.bids.jsonChangeValue(outputJsonPath,'Description',outputDescription,appendDescription);
     end
+    if ~strcmp(inputPath,outputPath)
+        fpp.bids.jsonChangeValue(outputPath,'Sources',fpp.bids.removeBidsDir(inputPath));
+    end
 end
 
 end

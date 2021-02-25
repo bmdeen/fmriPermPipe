@@ -32,6 +32,11 @@ if ~ismember(inputOrientation,orientationOptions) || ~ismember(outputOrientation
     error('ERROR: Orientation inputs are not valid three-letter orientation strings, e.g. ''LAS''');
 end
 
+[~,~,inputExt] = fpp.util.fileParts(inputJsonPath);
+if ~strcmpi(inputExt,'.json')
+    inputJsonPath = fpp.bids.jsonPath(inputJsonPath);
+end
+
 % Load JSON file
 json = bids.util.jsondecode(inputJsonPath);
 

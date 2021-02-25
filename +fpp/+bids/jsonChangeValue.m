@@ -17,7 +17,12 @@
 
 function jsonChangeValue(inputPath,fieldsToChange,newValues,appendValue)
 
-if ~iscell(fieldsToChange), fieldsToChange = {fieldsToChange}; end
+if ~iscell(fieldsToChange)
+    fieldsToChange = {fieldsToChange};
+    if iscell(newValues) && length(newValues)>1     % Cell array of values for a single field
+        newValues = {newValues};
+    end
+end
 if ~iscell(newValues), newValues = {newValues}; end
 if ~exist('appendValue','var') || isempty(appendValue)
     appendValue = 0;    % Whether to append new value to existing value
