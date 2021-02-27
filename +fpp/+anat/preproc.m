@@ -40,10 +40,10 @@ overwrite = 0;                  % Whether to overwrite output
 tmp = dir([fppFuncDir '/../../data']);
 dataDir = tmp(1).folder;
 % standardPath = [getenv('FSLDIR') '/data/standard/MNI152_T1_1mm.nii.gz']; % Alternative: 1mm MNI space
-standardDir = [getenv('FSLDIR') '/data/standard'];
+% standardDir = [getenv('FSLDIR') '/data/standard'];
 standardName = 'MNI152NLin6ASym';
 standardPath = [dataDir '/space-MNI152Nlin6Asym_res-p8_T1w.nii.gz'];
-standardPath2mm = [standardDir '/space-MNI152Nlin6Asym_res-2_T1w.nii.gz'];
+standardPath2mm = [dataDir '/space-MNI152Nlin6Asym_res-2_T1w.nii.gz'];
 standardMask = [dataDir '/space-MNI152Nlin6Asym_res-2_desc-brainDilEdit_mask.nii.gz'];    % Use dilated input to provide an inclusive initial brain mask
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
@@ -263,18 +263,17 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 4: Brain masking (rough, FNIRT-based)
+%%% STEP 4: Nonlinear registration to MNI
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fprintf('%s\n',['Step 4: Rough brain masking                    - ' inputNameGeneric]);
-
+fprintf('%s\n',['Step 4: Nonlinear registration to MNI          - ' inputNameGeneric]);
 % Define output paths
 inputT1Path = outputT1Path;
-outputT1PathStandard = fpp.bids.changeName(inputT1Path,{'space','desc'},{standardName,'nonlinearInit'});
+outputT1PathStandard = fpp.bids.changeName(inputT1Path,{'space','desc'},{standardName,''});
 outputMaskPath = fpp.bids.changeName(inputT1Path,{'desc'},{'nonlinearInitBrain'},'mask');
 individual2StandardXfmLinear = fpp.bids.changeName(inputT1Path,{'from','to','mode','space','desc'},...
-    {'individual',standardName,'image','','linearInit'},'xfm','.mat');
+    {'individual',standardName,'image','',''},'xfm','.mat');
 individual2StandardXfm = fpp.bids.changeName(inputT1Path,{'from','to','mode','space','desc'},...
-    {'individual',standardName,'image','','nonlinearInit'},'xfm','.nii.gz');
+    {'individual',standardName,'image','',''},'xfm','.nii.gz');
 standard2IndividualXfmLinear = fpp.bids.changeName(individual2StandardXfmLinear,{'from','to'},{standardName,'individual'});
 standard2IndividualXfm = fpp.bids.changeName(individual2StandardXfm,{'from','to'},{standardName,'individual'});
 % Compute initial FLIRT/FNIRT 2 standard transforms

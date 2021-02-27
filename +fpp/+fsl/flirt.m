@@ -78,7 +78,7 @@ if ~isempty(fpp.bids.getMetadata(inputPath)) && ~isempty(outputPath)
     fpp.bids.jsonReconstruct(inputPath,outputPath,'midprepfmri');
     refJsonData = fpp.bids.getMetadata(referencePath);
     if isfield(refJsonData,'SpatialRef')
-        spatialRef = volJsonData.SpatialRef;
+        spatialRef = refJsonData.SpatialRef;
     else
         spatialRef = fpp.bids.removeBidsDir(referencePath);
     end

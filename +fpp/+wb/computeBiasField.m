@@ -35,8 +35,10 @@ mkdir(tmpDir);
 
 % Copy files, omitting json sidecars (not needed for internal operations)
 fpp.util.system(['cp ' inputT1Path ' ' tmpDir '/T1w' extT1]);
+inputT1PathOrig = inputT1Path;
 inputT1Path = [tmpDir '/T1w' extT1];
 fpp.util.system(['cp ' inputT2Path ' ' tmpDir '/T2w' extT2]);
+inputT2PathOrig = inputT2Path;
 inputT2Path = [tmpDir '/T2w' extT2];
 fpp.util.system(['cp ' inputMask ' ' tmpDir '/mask' extMask]);
 inputMask = [tmpDir '/mask' extMask];
@@ -83,12 +85,12 @@ fpp.util.system(['cp ' tmpDir '/bias.nii.gz ' outputBiasPath]);
 fpp.util.system(['rm -rf ' tmpDir]);
 
 % Copy / modify json file, if it exists
-if ~isempty(fpp.bids.getMetadata(inputPath))
-    fpp.bids.jsonReconstruct(inputT1Path,outputBiasPath,'mri');
+if ~isempty(fpp.bids.getMetadata(inputT1PathOrig))
+    fpp.bids.jsonReconstruct(inputT1PathOrig,outputBiasPath,'mri');
     fpp.bids.jsonChangeValue(outputBiasPath,'Description',...
         outputDescription,appendDescription);
     fpp.bids.jsonChangeValue(outputBiasPath,'Sources',...
-        {fpp.bids.removeBidsDir(inputT1Path),fpp.bids.removeBidsDir(inputT2Path)});
+        {fpp.bids.removeBidsDir(inputT1PathOrig),fpp.bids.removeBidsDir(inputT2PathOrig)});
 end
 
 end

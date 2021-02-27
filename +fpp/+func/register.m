@@ -141,7 +141,7 @@ for p=1:length(parcs)
     end
 end
 % Generate and erode WM/CSF masks in func template space
-roiNames = {'GM','WM','CSF'};
+roiNames = {'gm','wm','csf'};
 flagStrs = {'--gm','--ctx-wm','--ventricles'};
 parcPathFunc = fpp.bids.changeName(funcTemplatePath,{'desc','echo'},{'aparc+aseg',[]},'dseg','.nii.gz');
 for r=1:length(roiNames)
@@ -149,7 +149,7 @@ for r=1:length(roiNames)
     fpp.util.system(['mri_binarize --i ' parcPathFunc ' --o ' roiPath ' ' flagStrs{r}]);
     fpp.bids.jsonReconstruct(parcPathFunc,roiPath);
     fpp.bids.jsonChangeValue(roiPath,'Description',['Freesurfer-derived ' roiNames{r} ' mask.']);
-    if ~strcmp(roiNames{r},'GM')
+    if ~strcmp(roiNames{r},'gm')
         fpp.fsl.maths(roiPath,'-ero',fpp.bids.changeName(roiPath,'desc',[roiNames{r} 'ero1']));
     end
 end

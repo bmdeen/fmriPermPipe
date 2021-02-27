@@ -2,8 +2,8 @@
 % fpp.anat.postproc(subjID,inputT1Path,fsSubDir,varargin)
 %
 % Script to post-process anatomical data after Freesurfer reconstruction. 
-% Includes gifti conversion, generation of midthickness, inflated, and 
-% vinflated surfaces, registration and resampling to fsLR space, etc.
+% Includes nifti/gifti conversion, brain/gm/wm/csf mask generation, 
+% MSM-based registration to fsLR space, and CIFTI and spec file generation.
 %
 % Arguments:
 % - subjID (string): subject ID
@@ -151,12 +151,12 @@ fpp.wb.command('volume-fill-holes',maskPath,[],maskPath);
 fpp.fsl.maths(maskPath,'-bin',maskPath);
 % Convert vmPFCLarge ROI from MNI to individual, add to FS brain mask
 % Goal: ensure that none of vmPFC gray matter is excluded.
-standard2IndividualXfmInit = fpp.bids.changeName(inputT1Path,{'from','to','mode','space','desc','res'},...
-    {standardName,'individual','image','','nonlinearInit',[]},'xfm','.nii.gz');
+standard2IndividualXfm = fpp.bids.changeName(inputT1Path,{'from','to','mode','space','desc','res'},...
+    {standardName,'individual','image','','',[]},'xfm','.nii.gz');
 vmPFCMaskPathStd = [dataDir '/space-MNI152Nlin6Asym_res-2_desc-vmPFCLarge_mask.nii.gz'];
 vmPFCMaskPath = fpp.bids.changeName(inputT1Path,{'desc','res'},{'vmPFCLarge',[]},'mask','.nii.gz');
 fpp.fsl.moveImage(vmPFCMaskPathStd,inputT1Path,vmPFCMaskPath,[],'warp',...
-    standard2IndividualXfmInit,'rel',1,'interp','nn');
+    standard2IndividualXfm,'rel',1,'interp','nn');
 fpp.fsl.maths(maskPath,['-add ' vmPFCMaskPath ' -bin'],maskPath);
 % Mask brain images
 fpp.fsl.maths(inputT1Path,['-mul ' maskPath],fpp.bids.changeName(inputT1Path,'desc','preprocBrain'));
@@ -169,26 +169,26 @@ fpp.fsl.maths(maskPath,'-dilD',fpp.bids.changeName(maskPath,'desc','brainFSdil1'
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 3: Refine MNI registration
+%%% STEP 3: Process subcortical ROIs
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fprintf('%s\n',['Step 3, Refine MNI registration                - ' subjID]);
-fpp.util.system(['cp ' strrep(standardPath2mmBrain,anatPreprocDir,dataDir) ' ' standardPath2mmBrain]);  % Copy 2mm MNI image
-% ...
+fprintf('%s\n',['Step 3, Process subcortical ROIs               - ' subjID]);
+subCortROIName = 'space-MNI152Nlin6Asym_res-2_desc-subcorticalAtlas_dseg.nii.gz';
+subCortROIIndivPath = fpp.bids.changeName(wmPath,'desc','subcortical');
+subCortROIMNIPath = [anatPreprocDir '/' subCortROIName];
+fpp.util.copyImageAndJson([dataDir '/space-MNI152Nlin6Asym_res-2_desc-brain_T1w.nii.gz'],standardPath2mmBrain);
+fpp.util.copyImageAndJson([dataDir '/' subCortROIName],subCortROIMNIPath);
+fpp.fsl.maths(wmPath,' -uthr 100',subCortROIIndivPath);
+fpp.wb.command('volume-label-import',subCortROIIndivPath,[anatPreprocDir '/desc-freesurfer_lut.txt'],...
+    subCortROIIndivPath,'-drop-unused-labels');
+fpp.wb.command('volume-label-import',subCortROIMNIPath,[anatPreprocDir '/desc-freesurfer_lut.txt'],...
+    subCortROIMNIPath,'-drop-unused-labels');
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 4: Process subcortical ROIs
+%%% STEP 4: Convert surfaces to gifti
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fprintf('%s\n',['Step 4, Process subcortical ROIs               - ' subjID]);
-% ...
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 5: Convert surfaces to gifti
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fprintf('%s\n',['Step 5, Convert surfaces to GIFTI              - ' subjID]);
+fprintf('%s\n',['Step 4, Convert surfaces to GIFTI              - ' subjID]);
 fpp.util.writeCras([mriDir '/brain.finalsurfs.mgz'],crasXfm);   % Make c_ras.mat
 for h=1:2
     % White/pial surfaces
@@ -215,9 +215,9 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 6: Generate midthickness / inflated surfaces
+%%% STEP 5: Generate midthickness / inflated surfaces
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fprintf('%s\n',['Step 6, Generate mid-thickness/inflated surfs  - ' subjID]);
+fprintf('%s\n',['Step 5, Generate mid-thickness/inflated surfs  - ' subjID]);
 for h=1:2
     % Generate mid-thickness surface by averaging white/pial
     fpp.wb.command('surface-average',[],[],midthickPaths{h},['-surf ' fpp.bids.changeName(midthickPaths{h},[],[],'pial')...
@@ -236,9 +236,9 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 7: Convert shape files to gifti
+%%% STEP 6: Convert shape files to gifti
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fprintf('%s\n',['Step 7, Convert shape files to GIFTI           - ' subjID]);
+fprintf('%s\n',['Step 6, Convert shape files to GIFTI           - ' subjID]);
 for h=1:2
     for s=1:length(shapes)
         inputPath = [surfDir '/' hemis{h} '.' shapes{s}];
@@ -272,10 +272,10 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 8: Convert Freesurfer parcellations to gifti
+%%% STEP 7: Convert Freesurfer parcellations to gifti
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 parcs = {'aparc','aparc.a2009s'};
-fprintf('%s\n',['Step 8, Convert parcellations to GIFTI         - ' subjID]);
+fprintf('%s\n',['Step 7, Convert parcellations to GIFTI         - ' subjID]);
 for h=1:2
     for p=1:length(parcs)
         inputPath = [fsSubDir '/label/' hemis{h} '.' parcs{p} '.annot'];
@@ -292,9 +292,9 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 9: Register fsnative to fsLR
+%%% STEP 8: Register fsnative to fsLR
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fprintf('%s\n',['Step 9, Register fsnative to fsLR              - ' subjID]);
+fprintf('%s\n',['Step 8, Register fsnative to fsLR              - ' subjID]);
 fpp.util.system(['cp ' dataDir '/*_space-fs* ' anatPreprocDir '/']);
 fid = fopen([anatPreprocDir '/desc-medialwall_lut.txt'],'wt'); % Write MedialWall LUT
 fprintf(fid,'%s\n','MEDIAL.WALL');  fprintf(fid,'%s\n','1 19 19 19 255');   fclose(fid);
@@ -383,9 +383,9 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 10: Resample to fsLR
+%%% STEP 9: Resample to fsLR
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fprintf('%s\n',['Step 10, Resample to fsLR                      - ' subjID]);
+fprintf('%s\n',['Step 9, Resample to fsLR                      - ' subjID]);
 surfaces = {'white','pial','midthickness'};
 parcs = {'aparc','aparc.a2009s','medialwall'};
 for h=1:2
@@ -436,9 +436,9 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 11: Generate CIFTI metric/label files
+%%% STEP 10: Generate CIFTI metric/label files
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fprintf('%s\n',['Step 11, Generate CIFTI metric/label files     - ' subjID]);
+fprintf('%s\n',['Step 10, Generate CIFTI metric/label files     - ' subjID]);
 spaces = {'individual','fsLR'};
 densities = {'native','32k'};
 metrics = {'sulc','thickness','curv','distortion','distortion','mask'};    % Metric files to convert to CIFTI
@@ -488,9 +488,9 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 11.5, Copy/resample HCP1200 atlas data
+%%% STEP 10.5, Copy/resample HCP1200 atlas data
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fprintf('%s\n',['Step 11.5, Copy/resample HCP1200 atlas data    - ' subjID]);
+fprintf('%s\n',['Step 10.5, Copy/resample HCP1200 atlas data    - ' subjID]);
 hcpAtlasDir = [dataDir '/HCP_S1200_Atlas'];
 if exist(hcpAtlasDir,'dir')
     hcpDirExists = 1;
@@ -584,11 +584,12 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 12: Generate spec files
+%%% STEP 11: Generate spec files
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fprintf('%s\n',['Step 12, Generate spec files                   - ' subjID]);
 volumeFiles = {inputT1Path,inputT1Path,standardPath2mmBrain};     % Add MNI-registered anatomical volumes for third space
-volumeFiles2 = {inputT2Path,inputT2Path,[]};    % Add MNI-registered anatomical volumes for third space
+volumeFiles2 = {inputT2Path,inputT2Path,[]};
+subCortROIFiles = {subCortROIIndivPath,subCortROIIndivPath,subCortROIMNIPath};
 surfaceSpaces = {'individual','individual','fsLR'};
 surfaceDensities = {'native','32k','32k'};
 surfaceSubjIDs = {subjID,subjID,[]};
@@ -616,6 +617,9 @@ for s=1:length(surfaceSpaces)
     end
     if ~isempty(volumeFiles2{s})
         fpp.wb.command('add-to-spec-file',specPath,'INVALID',volumeFiles2{s});
+    end
+    if ~isempty(subCortROIFiles{s})
+        fpp.wb.command('add-to-spec-file',specPath,'INVALID',subCortROIFiles{s});
     end
     % Add surfaces
     for h=1:2
@@ -674,23 +678,18 @@ end
 
 
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 13: Generate GM/WM/CSF masks
+%%% STEP 12: Generate GM/WM/CSF masks
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% TODO HERE:
-% - Generate GM/WM/CSF masks
-
-
-
-%%% CLEANUP HERE
-% - Delete unneeded transforms
-% - sphereRegFsLRInitPaths{h}
-% - sphereRegFsLRInitAffinePaths{h}
-% - sphereRegFsLRInitAffineXfms{h}
-% - fpp.bids.changeName(maskPaths{h},'desc','medialwall') - medial wall metric file
-
-
-
+fprintf('%s\n',['Step 12, Generate gm/wm/csf masks              - ' subjID]);
+roiNames = {'gm','wm','csf'};
+flagStrs = {'--gm','--ctx-wm','--ventricles'};
+parcVolPath = fpp.bids.changeName(wmPath,'desc','aparc+aseg');
+for r=1:length(roiNames)
+    roiPath = fpp.bids.changeName(parcVolPath,'desc',roiNames{r},'mask');
+    fpp.util.system(['mri_binarize --i ' parcVolPath ' --o ' roiPath ' ' flagStrs{r}]);
+    fpp.bids.jsonReconstruct(parcVolPath,roiPath);
+    fpp.bids.jsonChangeValue(roiPath,'Description',['Freesurfer-derived ' roiNames{r} ' mask.']);
+end
 
 end

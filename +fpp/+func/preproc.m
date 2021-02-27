@@ -3,8 +3,8 @@
 % 
 % Preprocesses a single (multi-echo) fMRI dataset, including including
 % motion parameter estimation, despiking, slice timing correction, one-shot
-% motion and distoration correction and functional template registration,
-% TEDANA multi-echo ICA denoising and optimal echo combination, intensity
+% motion and distoration correction and template registration,TEDANA 
+% multi-echo ICA denoising and optimal echo combination, intensity
 % normalization, and optional spatial/temporal filtering. Should be run
 % after anatomical scripts, func.defineTemplate, and func.register.
 % 
@@ -68,25 +68,13 @@
 
 function preproc(inputPaths,outputDir,varargin)
 
-% SpatialReference info:
-%   Standard spaces:
-%   freesurfer, fsLR, MNI152NLin6ASym (FSL/HCP), MNI152NLin2009cAsym
-%   (fMRIPrep)
-%   Individual spaces: fsnative, individual, native, session, task
-%
-%
-%
 % TODO IMMEDIATELY:
 % - Make description text augment with each step added (w/ details of
 %   processing done), add this as an input to functions. Have displayed
 %   number augment automatically as well. Need to edit
 %   oneShotMotionDistortionCorrect as well.
-% - Add option to delete midprep images. Also to delete internal files,
-%   e.g. topup stuff, motion directory.
 % - Add JSON files for mocotarget, undistorted mocotarget, func template
 % - Add JSON files for additional TEDANA/ts2map outputs
-%
-% TODO NEXT:
 % - At the end of the script, resample to several spaces if desired:
 %   - 2mm-res individual space
 %   - 2mm-res MNI152Nlin6Asym space
@@ -94,31 +82,43 @@ function preproc(inputPaths,outputDir,varargin)
 %   - CIFTI: 32k fsLR surface, 2mm MNI152Nlin6Asym subcortical space
 % - Consider running steps 8-10 on optcomb (non-TEDANA) output as well
 % - Shift field map preproc to separate function
+% - Save artifact time point regressors in BIDS format, outliers.tsv
+% - Save desc-confounds_regressors.tsv file, with wm/csf mean signal, 
+%   global signal, motion params, trans/rot, DVARS, FramewiseDisplacement
+%
+% TODO NEXT:
+% - Add spatial smoothing (susan- or wb-command-based)
 % - Add temporal filtering (compare matlab/FSL)
-% - Add spatial smoothing (susan-based, with brain mask)
-% - Add additional confounds - global signal, DVARS, trans/rot,
-% FramewiseDisplacement, aCompCorr, NonSteadyStateOutlier00,
-% ArtifactTimePoint00 - to desc-confounds_regressors.tsv file
-% - Potential BIDS confound TSV files:
-% -- desc-confounds_regressors.tsv - all regressors!
-% -- motion.tsv - just motion regressors
-% -- physreg.tsv - physiological regressors
-% -- outliers.tsv
-% -- mixing.tsv / components.tsv
-% - Save artifact time point regressors in BIDS format (time points to remove)
-% - Extract artifact time points from 3dDespike
-% - Method to deal with disdaqs, taking into account BIDS info, adding them
-%   as artifact time points. Based on NumberOfVolumesDiscardedByUser
-%   and NumberOfVolumesDiscardedByScanner json fields.
-% - If deleteMidprep==1, remove "Sources" field of final output
+% - If deleteMidprep==1, remove "Sources" field of final outputs
 % - Add suffix option for desc
 %
 % TODO EVENTUALLY:
+% - Generate figures on preproc results
+% - Method to deal with disdaqs, taking into account BIDS info, adding them
+%   as artifact time points, and NonSteadyStateOutlier00, in confound
+%   regressors. Based on NumberOfVolumesDiscardedByUser
+%   and NumberOfVolumesDiscardedByScanner json fields.
 % - Add functionality for multiple spin echo field maps IntendedFor one
 %   functional dataset (averaging maps together first)?
+% - Extract artifact time points from 3dDespike?
 % - Add physiological regressors!
-% - Track versions of all software used in json descriptions.
 % 
+%
+%
+% BIDS reference info:
+%
+% SpatialReference options:
+%   Standard spaces:
+%   fsaverage, fsLR, MNI152NLin6ASym (FSL/HCP), MNI152NLin2009cAsym
+%   (fMRIPrep)
+%   Individual spaces: fsnative, individual, session, task
+%
+% Potential BIDS confound TSV files:
+% - desc-confounds_regressors.tsv - all regressors!
+% - motion.tsv - just motion regressors
+% - physreg.tsv - physiological regressors
+% - outliers.tsv - artifact TPs (alt: ArtifactTimePoint00 in regressors.tsv)
+% - mixing.tsv / components.tsv
 
 % Check system configuration
 fpp.util.checkConfig;
