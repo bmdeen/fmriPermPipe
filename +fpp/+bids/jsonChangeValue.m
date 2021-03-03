@@ -41,9 +41,9 @@ for f=1:length(fieldsToChange)
     if isempty(newValues{f}) && isfield(jsonData,fieldsToChange{f})
         jsonData = rmfield(jsonData,fieldsToChange{f});
     elseif appendValue && isfield(jsonData,fieldsToChange{f})
-        eval(['jsonData.' fieldsToChange{f} ' = [jsonData.' fieldsToChange{f} ' newValues{f}];']);
+        jsonData.(fieldsToChange{f}) = [jsonData.(fieldsToChange{f}) newValues{f}];
     else
-        eval(['jsonData.' fieldsToChange{f} ' = newValues{f};']);
+        jsonData.(fieldsToChange{f}) = newValues{f};
     end
 end
 

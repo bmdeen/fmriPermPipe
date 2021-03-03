@@ -20,11 +20,13 @@ end
 
 artifactTPs = [];
 
+% Compute total translation/rotation
 moDiff = zeros(size(motionParams));
 moDiff(2:end,:) = diff(motionParams);
 trans = sqrt(sum(moDiff(:,4:6).^2,2));
 rot = acos((cos(moDiff(:,1)).*cos(moDiff(:,2)) + cos(moDiff(:,1)).*cos(moDiff(:,3)) + ...
     cos(moDiff(:,2)).*cos(moDiff(:,3)) + sin(moDiff(:,1)).*sin(moDiff(:,2)).*sin(moDiff(:,3)) - 1)/2)*180/pi;
+
 % Remove high-movement time points
 artifactTPs = find(trans>transCutoff | rot>rotCutoff);
 artifactTPs = sort(union(artifactTPs,artifactTPs-1));   % Include time points before and after a movement

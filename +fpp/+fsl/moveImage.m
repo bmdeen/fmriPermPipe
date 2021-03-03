@@ -100,7 +100,7 @@ end
 fpp.util.system(cmd);
 
 % Write json output files
-if ~isempty(fpp.bids.getMetadata(inputPath)) && exist('outputPath','var')
+if ~isempty(fieldnames(fpp.bids.getMetadata(inputPath))) && exist('outputPath','var')
     fpp.bids.jsonReconstruct(inputPath,outputPath);
     refJsonData = fpp.bids.getMetadata(referencePath);
     if isfield(refJsonData,'SpatialRef')

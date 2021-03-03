@@ -68,7 +68,7 @@ if ~isempty(jout)
     bids.util.jsonencode(fpp.bids.jsonPath(jout),jsonData,jsonOpts);
 end
 % Warped output image
-if ~isempty(fpp.bids.getMetadata(inputPath)) && ~isempty(iout)
+if ~isempty(fieldnames(fpp.bids.getMetadata(inputPath))) && ~isempty(iout)
     outputPath = iout;
     fpp.bids.jsonReconstruct(inputPath,outputPath,'midprepfmri');
     refJsonData = fpp.bids.getMetadata(referencePath);

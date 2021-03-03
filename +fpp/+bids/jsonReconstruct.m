@@ -111,7 +111,7 @@ else
     for f=1:length(fieldsToKeep)
         thisField = fieldsToKeep{f};
         if isfield(inputJsonData,thisField)
-            eval(['outputJsonData.' thisField ' = inputJsonData.' thisField ';']);
+            outputJsonData.(thisField) = inputJsonData.(thisField);
         end
     end
 end

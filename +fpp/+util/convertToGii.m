@@ -75,7 +75,7 @@ end
 % Generate .json metadata, if specified
 if exist('fieldsToChange','var') && ~isempty(fieldsToChange) && ...
         exist('newValues','var') && ~isempty(newValues)
-    if ~isempty(fpp.bids.getMetadata(inputPath))
+    if ~isempty(fieldnames(fpp.bids.getMetadata(inputPath)))
         fpp.bids.jsonReconstruct(inputPath,outputPath);
         fpp.bids.jsonChangeValue(outputPath,fieldsToChange,newValues);
     else
@@ -84,7 +84,7 @@ if exist('fieldsToChange','var') && ~isempty(fieldsToChange) && ...
         if ~iscell(fieldsToChange), fieldsToChange = {fieldsToChange}; end
         if ~iscell(newValues), newValues = {newValues}; end
         for f=1:length(fieldsToChange)
-            eval(['jsonData.' fieldsToChange{f} ' = newValues{f};']);
+            jsonData.(fieldsToChange{f}) = newValues{f};
         end
         bids.util.jsonencode(outputJsonPath,jsonData,jsonOpts);
     end

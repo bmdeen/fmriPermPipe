@@ -30,7 +30,7 @@ if ismember(lower(argName),lower({'expt','inputSuffix','outputSuffix','funcTempl
         'refmask','inmask','minmet','miter','subsamp','warpres','infwhm','reffwhm',...
         'regmod','jacrange','intmod','biasres','numprec','interp','warp','postmat',...
         'premat','midmat','mask','warp1','warp2','jacobian','confoundPath','outlierPath',...
-        'analysisDir'}))
+        'analysisDir','fieldMapParamPath','topupWarpPath','topupJacobianPath','spinEchoPath'}))
     if ischar(argVal)
         argGood = 1;
     else
@@ -172,7 +172,7 @@ elseif ismember(lower(argName),lower({'customNuisRegr'}))
 
 % Cell array of strings
 elseif ismember(lower(argName),lower({'spinEchoPaths','spinEchoPhaseEncodeDirections',...
-        'condNames','confoundNames','contrastNames'}))
+        'condNames','confoundNames','contrastNames','phaseEncodeDirections'}))
     if iscellstr(argVal)
         argGood = 1;
     else

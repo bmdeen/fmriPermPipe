@@ -5,6 +5,8 @@
 
 function meta = getMetadata(filename)
 
+meta = struct();
+
 % Replace initial tilda with home directory, otherwise get_metadata will
 % fail for tilda input
 if strcmp(filename(1:2),'~/')
@@ -16,6 +18,9 @@ end
 if isempty(fPath)
     filename = [pwd '/' filename];
 end
+
+% Don't check metadata for BIDS-invalid filenames
+if ~fpp.bids.validFilename(filename), return; end
 
 meta = bids.internal.get_metadata(filename);
 

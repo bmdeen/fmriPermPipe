@@ -36,7 +36,7 @@ end
 fpp.util.system(['rm -rf ' tmpDir]);
 
 % Convert orientation of accompanying JSON file if it exist
-if ~isempty(fpp.bids.getMetadata(inputPath))
+if ~isempty(fieldnames(fpp.bids.getMetadata(inputPath)))
     fpp.bids.jsonReconstruct(inputPath,outputPath,'keepall');
     if exist('outputOrientation','var') && ~strcmp(inputOrientation,outputOrientation)
         fpp.bids.jsonReorient(outputPath,inputOrientation,outputOrientation);

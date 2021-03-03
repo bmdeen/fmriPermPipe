@@ -30,10 +30,8 @@ names=fieldnames(st);
 % Convert row to column vectors
 for i=1:length(names)
     thisField = getfield(st,names{i});
-    if isvector(thisField) && size(thisField,1)<size(thisField,2)
-        eval(['st.' names{i} '=st.' names{i} ''';']);
-    elseif iscell(thisField) && size(thisField,1)<size(thisField,2)
-        eval(['st.' names{i} '=st.' names{i} ''';']);
+    if size(thisField,1)<size(thisField,2)
+        st.(names{i}) = st.(names{i})';
     end
 end
 rows=size(getfield(st,names{1}),1);

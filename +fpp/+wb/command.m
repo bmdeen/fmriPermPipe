@@ -171,7 +171,7 @@ end
 if isempty(inputPath) && ~ismember(cmdType,{'surface-create-sphere',...
         'cifti-create-scalar-series','volume-create'})
     return;
-elseif ~isempty(inputPath) && isempty(fpp.bids.getMetadata(inputPath{1}))
+elseif ~isempty(inputPath) && ~isempty(fieldnames(fpp.bids.getMetadata(inputPath{1})))
     return;
 end
 

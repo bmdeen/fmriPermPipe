@@ -11,6 +11,7 @@
 %   + TR - Repetition time (s)
 %   + TE - Echo time (ms), in vector form for multi-echo data
 %   + Vols - # of volumes in 4D dataset
+%   + Dims - 3D or 4D image dimensions
 %   + PEDir - Phase-encode direction, BIDS format (e.g. "j-")
 %   + PEDirStr - Phase-encode direction, orientation string format (e.g.
 %       "AP")
@@ -69,22 +70,7 @@ switch lower(propertyName)
         end
     case 'pedirstr'
         if exist('jsonData','var') && isfield(jsonData,'PhaseEncodingDirection')
-            imageOrientation = fpp.util.getImageOrientation(inputPath);
-            orientationLabels = {'L','R','A','P','S','I'};
-            orientationLabelsInverted = {'R','L','P','A','I','S'};
-            switch jsonData.PhaseEncodingDirection(1)
-                case 'i'
-                    peDir = 1;
-                case 'j'
-                    peDir = 2;
-                case 'k'
-                    peDir = 3;
-            end
-            propertyValue = [orientationLabelsInverted{strcmp(imageOrientation(peDir),orientationLabels)} ...
-                imageOrientation(peDir)];
-            if length(jsonData.PhaseEncodingDirection)>1
-                propertyValue = fliplr(propertyValue);
-            end
+            propertyValue = fpp.util.convertBidsPEDirToStr(inputPath,jsonData.PhaseEncodingDirection);
         end
     case 'sedir'
         if exist('jsonData','var') && isfield(jsonData,'SliceEncodingDirection')
@@ -132,4 +118,14 @@ switch lower(propertyName)
     case 'vols'
         [~,vols] = fpp.util.system(['fslval ' inputPath ' dim4']);
         propertyValue = str2num(strtrim(vols));
+    case 'dims'
+        [~,dim1] = fpp.util.system(['fslval ' inputPath ' dim1']);
+        propertyValue(1) = str2num(strtrim(dim1));
+        [~,dim2] = fpp.util.system(['fslval ' inputPath ' dim2']);
+        propertyValue(2) = str2num(strtrim(dim2));
+        [~,dim3] = fpp.util.system(['fslval ' inputPath ' dim3']);
+        propertyValue(3) = str2num(strtrim(dim3));
+        [~,vols] = fpp.util.system(['fslval ' inputPath ' dim4']);
+        vols = str2num(strtrim(vols));
+        if ~isempty(vols) && vols>1, propertyValue(4) = vols; end
 end

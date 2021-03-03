@@ -51,7 +51,7 @@ end
 fpp.util.system(cmd);
 
 % Write json output files
-if ~isempty(fpp.bids.getMetadata(inputWarp))
+if ~isempty(fieldnames(fpp.bids.getMetadata(inputWarp)))
     fpp.bids.jsonReconstruct(inputWarp,outputWarp,'xfm');
     jsonData = fpp.bids.getMetadata(fpp.bids.jsonPath(inputWarp));
     fpp.bids.jsonChangeValue(outputWarp,{'FromFile','ToFile','CommandLine'},...

@@ -69,11 +69,11 @@ end
 % strings.
 scanlogFields = setdiff(fieldnames(scanlog),'series');
 for f=1:length(scanlogFields)
-    if ~iscell(eval(['scanlog.' scanlogFields{f}]))
-        eval(['scanlog.' scanlogFields{f} '=num2cell(scanlog.' scanlogFields{f} ');']);
+    if ~iscell(scanlog.(scanlogFields{f}))
+        scanlog.(scanlogFields{f}) = num2cell(scanlog.(scanlogFields{f}));
     end
     for i=1:length(scanlog.series)
-        value = eval(['scanlog.' scanlogFields{f} '{' int2str(i) '}']);
+        value = scanlog.(scanlogFields{f}){i};
         if isnumeric(value)
             if mod(value,1)==0  % value is an integer
                 if value<100
@@ -84,7 +84,7 @@ for f=1:length(scanlogFields)
             else
                 value = num2str(value);
             end
-            eval(['scanlog.' scanlogFields{f} '{' int2str(i) '}=value;']);
+            scanlog.(scanlogFields{f}){i} = value;
         end
     end
 end

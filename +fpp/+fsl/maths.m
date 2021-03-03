@@ -27,7 +27,7 @@ if exist('odt','var') && ~isempty(odt)
 end
 fpp.util.system(cmdFull);
 
-if ~isempty(fpp.bids.getMetadata(inputPath))
+if ~isempty(fieldnames(fpp.bids.getMetadata(inputPath)))
     if ~strcmp(inputPath,outputPath)
         fpp.bids.jsonReconstruct(inputPath,outputPath);
     end
