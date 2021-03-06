@@ -12,21 +12,28 @@
 %   direction matched to inputPath
 % - topupWarpPath (string): path to topup-based undistortion warp
 % - topupJacobianPath (string): path to topup-based warp jacobian
+% - xfmFunc2SpinEcho (string, optional): path to affine xfm from inputPath
+%   to spinEchoPath
+% - xfmSpinEcho2Func (string, optional): path to affine xfm from
+%   spinEchoPath to inputpath
 %
 
 function [xfmFunc2SpinEcho,xfmSpinEcho2Func] = undistort(inputPath,outputPath,...
-    spinEchoPath,topupWarpPath,topupJacobianPath)
+    spinEchoPath,topupWarpPath,topupJacobianPath,xfmFunc2SpinEcho,xfmSpinEcho2Func)
 
 topupJacobian2FuncPath = fpp.bids.changeName(inputPath,{'desc','echo'},{'UndistortionWarp',[]},'jacobian','.nii.gz');
 
 % Register input func volume to spin echo image
-xfmFunc2SpinEcho = fpp.bids.changeName(inputPath,{'desc','from','to','mode','echo'},...
-    {'','native','SpinEcho','image',[]},'xfm','.mat');
-xfmSpinEcho2Func = fpp.bids.changeName(inputPath,{'desc','from','to','mode','echo'},...
-    {'','SpinEcho','native','image',[]},'xfm','.mat');
-fpp.fsl.flirt(inputPath,spinEchoPath,xfmFunc2SpinEcho,[],'cost','corratio',...
-    'dof',6,'searchrx',[-90 90],'searchry',[-90 90],'searchrz',[-90 90]);
-fpp.fsl.invertXfm(xfmFunc2SpinEcho,xfmSpinEcho2Func);
+if ~exist('xfmFunc2SpinEcho','var') || isempty(xfmFunc2SpinEcho) ||...
+        ~exist('xfmSpinEcho2Func','var') || isempty(xfmSpinEcho2Func)
+    xfmFunc2SpinEcho = fpp.bids.changeName(inputPath,{'desc','from','to','mode','echo'},...
+        {'','native','SpinEcho','image',[]},'xfm','.mat');
+    xfmSpinEcho2Func = fpp.bids.changeName(inputPath,{'desc','from','to','mode','echo'},...
+        {'','SpinEcho','native','image',[]},'xfm','.mat');
+    fpp.fsl.flirt(inputPath,spinEchoPath,xfmFunc2SpinEcho,[],'cost','corratio',...
+        'dof',6,'searchrx',[-90 90],'searchry',[-90 90],'searchrz',[-90 90]);
+    fpp.fsl.invertXfm(xfmFunc2SpinEcho,xfmSpinEcho2Func);
+end
 
 % Undistort, by applying warp and multiplying by Jacobian.
 fpp.fsl.moveImage(inputPath,inputPath,outputPath,xfmFunc2SpinEcho,...
@@ -34,6 +41,9 @@ fpp.fsl.moveImage(inputPath,inputPath,outputPath,xfmFunc2SpinEcho,...
 fpp.fsl.moveImage(topupJacobianPath,inputPath,topupJacobian2FuncPath,xfmSpinEcho2Func);
 fpp.fsl.maths(outputPath,['-mul ' topupJacobian2FuncPath],outputPath);
 fpp.util.system(['rm -rf ' topupJacobian2FuncPath]);
+if exist(fpp.bids.jsonPath(topupJacobian2FuncPath),'file')
+    fpp.util.system(['rm -rf ' fpp.bids.jsonPath(topupJacobian2FuncPath)]);
+end
 
 % Generate output JSON file
 fpp.bids.jsonReconstruct(inputPath,outputPath,'midprepfmri');

@@ -71,14 +71,17 @@ function preproc(inputPaths,outputDir,varargin)
 %   - CIFTI: 32k fsLR surface, 2mm individual subcortical
 %   - CIFTI: 32k fsLR surface, 2mm MNI152Nlin6Asym subcortical space
 % - Run steps 8-10 on optcomb (non-TEDANA) output as well
-% - Save desc-confounds_regressors.tsv file, with wm/csf mean signal, 
-%   global signal, motion params, trans/rot, DVARS, FramewiseDisplacement
 %
 % TODO NEXT:
 % - Add spatial smoothing (susan- or wb-command-based)
 % - Add temporal filtering (compare matlab/FSL)
 % - If deleteMidprep==1, remove "Sources" field of final outputs
-% - Add suffix option for desc
+% - Add suffix option for desc. Need to edit inputNameGeneric, and edit
+%   desc of output TEDANA folder (defitions both within preproc script, and
+%   tedana script - new tedanaDir optional argument for tedana script?).
+%   Also need to edit any other name that has desc removed - e.g. confounds
+%   file (fpp.func.preproc.estimateHeadMotion and preproc step 1); xfm
+%   matrices (xfmMocoTarget2FuncTemplate and inverse in step 5)
 %
 % TODO EVENTUALLY:
 % - Generate figures on preproc results
@@ -86,16 +89,12 @@ function preproc(inputPaths,outputDir,varargin)
 %   as artifact time points, and NonSteadyStateOutlier00, in confound
 %   regressors. Based on NumberOfVolumesDiscardedByUser
 %   and NumberOfVolumesDiscardedByScanner json fields.
-% - Add functionality for multiple spin echo field maps IntendedFor one
-%   functional dataset (averaging maps together first)?
-% - Extract artifact time points from 3dDespike?
-% - Add physiological regressors!
 % 
 %
 %
 % BIDS reference info:
 %
-% SpatialReference options:
+% SpatialRef options:
 %   Standard spaces:
 %   fsaverage, fsLR, MNI152NLin6ASym (FSL/HCP), MNI152NLin2009cAsym
 %   (fMRIPrep)
@@ -161,7 +160,8 @@ varArgList = {'overwrite','funcTemplatePath','funcTemplateSpace','fwhm',...
     'tempFilt','teVals','transCutoff','sliceTimes','useTaskTemplate',...
     'rotCutoff','tptsAfter','stdCutoff','disdaqs','genTSNR','plotResults',...
     'faValue','smThresh','useSTC','useTedana','echoForMoCorr','undistort',...
-    'useDespike','topupWarpPath','topupJacobianPath','spinEchoPath'};
+    'useDespike','topupWarpPath','topupJacobianPath','spinEchoPath',...
+    'deleteMidprep'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
@@ -238,8 +238,8 @@ if ~exist(funcTemplatePath,'file')
     error(['Registration target ' funcTemplatePath ' does not exist. Run fpp.func.defineTemplate.']);
 end
 maskPath = fpp.bids.changeName(funcTemplatePath,{'desc','echo'},{'brain',[]},'mask','.nii.gz');
-wmPath = fpp.bids.changeName(funcTemplatePath,{'desc','echo'},{'wm',[]},'mask','.nii.gz');
-csfPath = fpp.bids.changeName(funcTemplatePath,{'desc','echo'},{'csf',[]},'mask','.nii.gz');
+wmPath = fpp.bids.changeName(funcTemplatePath,{'desc','echo'},{'wmero1',[]},'mask','.nii.gz');
+csfPath = fpp.bids.changeName(funcTemplatePath,{'desc','echo'},{'csfero1',[]},'mask','.nii.gz');
 if ~exist(maskPath,'file')
     error(['Brain mask ' maskPath ' does not exist. Run fpp.func.register.']);
 end
@@ -251,15 +251,21 @@ if exist(finalOutputPath,'file') && ~overwrite
     return;
 end
 
+% If overwriting, delete existing TEDANA output directory
+tedanaDir = [funcPreprocDir '/' inputNameGeneric '_tedana'];
+if exist(tedanaDir,'dir') && overwrite
+    fpp.util.system(['rm -rf ' tedanaDir]);
+end
+
 % Generate output directories
 if ~exist(funcPreprocDir,'dir'), mkdir(funcPreprocDir); end
 
 % Copy raw functional data and metadata, convert to .nii.gz if necessary
 for e=1:nEchoes
     [~,inputNames{e},~] = fpp.util.fileParts(inputPaths{e});
-    outputPaths{e} = [funcPreprocDir '/' inputNames{e} '.nii.gz'];
+    outputPaths{e} = [funcPreprocDir '/' fpp.bids.changeName(inputNames{e},'desc','midprep0raw') '.nii.gz'];
     fpp.util.copyImageAndJson(inputPaths{e},outputPaths{e},'midprepfmri');
-    fpp.bids.jsonChangeValue(outputPaths{e},{'Description','SkullStripped','RawSources','SpatialReference'},...
+    fpp.bids.jsonChangeValue(outputPaths{e},{'Description','SkullStripped','RawSources','SpatialRef'},...
         {'Raw data copied to derivative directory.',false,fpp.bids.removeBidsDir(inputPaths{e}),'native'});
 end
 inputPathsRaw = outputPaths;
@@ -289,7 +295,7 @@ end
 fprintf('%s\n',['Step 1, Estimate motion parameters             - ' inputNameGeneric]);
 steps{end+1} = 'motion parameter estimation (FSL''s mcflirt)';
 inputPaths = outputPaths;
-mcDir = [funcPreprocDir '/' strrep(fpp.bids.changeName(inputName,'echo',int2str(echoForMoCorr)),'_bold','') '_motion'];
+mcDir = [funcPreprocDir '/' inputNameGeneric '_motion'];
 if ~exist(mcDir,'dir'), mkdir(mcDir); end
 moCorrTargetVolNum = ceil(vols/2);   % Example func volume #, indexed by 0
 motionParams = fpp.func.preproc.estimateHeadMotion(inputPaths{echoForMoCorr},mcDir,moCorrTargetVolNum);
@@ -301,10 +307,10 @@ if ismember(moCorrTargetVolNum,artifactTPs)
     motionParams = fpp.func.preproc.estimateHeadMotion(inputPaths{echoForMoCorr},mcDir,moCorrTargetVolNum);
     artifactTPs = fpp.func.preproc.defineMotionArtifactTimePoints(motionParams,transCutoff,rotCutoff,tptsAfter);
 end
-outlierPath = fpp.bids.changeName(inputPaths{1},'echo','','outliers','.tsv');
+outlierPath = fpp.bids.changeName(inputPaths{1},{'desc','echo'},{[],[]},'outliers','.tsv');
 outlierTSV = fpp.func.preproc.outlierTSV(artifactTPs,vols);
 bids.util.tsvwrite(outlierPath,outlierTSV);
-confoundPath = fpp.bids.changeName(inputPaths{1},'echo',[],'confounds','.tsv');
+confoundPath = fpp.bids.changeName(inputPaths{1},{'desc','echo'},{[],[]},'confounds','.tsv');
 pathsToDelete = [pathsToDelete mcDir];
 
 
@@ -317,7 +323,7 @@ if useDespike
     steps{end+1} = 'despiking (AFNI 3dDespike)';
     for e=1:nEchoes
         outputPaths{e} = fpp.bids.changeName(outputPaths{e},'desc','midprep1despike');
-        if exist(outputPaths{e},'file'), continue; end      %%% TEMPORARY DEBUGGING HACK
+%         if exist(outputPaths{e},'file'), continue; end      %%% TEMPORARY DEBUGGING HACK
         fpp.func.preproc.despike(inputPaths{e},outputPaths{e});
         fpp.bids.jsonChangeValue(outputPaths{e},{'Description','Sources'},...
             {fpp.func.preproc.description(midprepIntro,steps),fpp.bids.removeBidsDir(inputPaths{e})});
@@ -360,7 +366,7 @@ if undistort
     mocoTargetUndistortedPath = fpp.bids.changeName(outputPaths{echoForMoCorr},'desc','MocoTargetVolUndistorted');
     [xfmMocoTarget2SpinEcho,xfmSpinEcho2MocoTarget] = fpp.func.preproc.undistort(mocoTargetPath,mocoTargetUndistortedPath,...
         spinEchoPath,topupWarpPath,topupJacobianPath);
-    fpp.bids.jsonChangeValue(mocoTargetPath,'Description','Target volume for motion correction, undistorted.');
+    fpp.bids.jsonChangeValue(mocoTargetUndistortedPath,'Description','Target volume for motion correction, undistorted.');
 end
 
 
@@ -383,7 +389,7 @@ xfmMocoTarget2FuncTemplate = fpp.bids.changeName(mocoTargetPath,{'desc','from','
     {'','native','session','image',[]},'xfm','.mat');
 xfmFuncTemplate2MocoTarget = fpp.bids.changeName(mocoTargetPath,{'desc','from','to','mode','echo'},...
     {'','session','native','image',[]},'xfm','.mat');
-fpp.fsl.flirt(mocoTargetPath,funcTemplatePathRegTarget,xfmMocoTarget2FuncTemplate,[],'cost','corratio',...
+fpp.fsl.flirt(mocoTargetToRegisterPath,funcTemplatePathRegTarget,xfmMocoTarget2FuncTemplate,[],'cost','corratio',...
     'dof',6,'searchrx',[-180 180],'searchry',[-180 180],'searchrz',[-180 180]);
 fpp.fsl.invertXfm(xfmMocoTarget2FuncTemplate,xfmFuncTemplate2MocoTarget);
 
@@ -399,11 +405,11 @@ inputPaths = outputPaths;
 for e=1:nEchoes
     outputPaths{e} = fpp.bids.changeName(outputPaths{e},{'desc','space'},{'midprep3moco',funcTemplateSpace});
 end
-if ~exist(outputPaths{end},'file')      % TEMPORARY DEBUGGING HACK
+% if ~exist(outputPaths{end},'file')      % TEMPORARY DEBUGGING HACK
 fpp.func.preproc.oneShotMotionDistortionCorrect(inputPaths,outputPaths,funcTemplatePath,...
     funcTemplateSpace,mcDir,topupWarpPath,topupJacobianPath,xfmMocoTarget2FuncTemplate,...
     xfmSpinEcho2MocoTarget,xfmMocoTarget2SpinEcho,echoForMoCorr);
-end
+% end
 for e=1:nEchoes
     fpp.bids.jsonChangeValue(outputPaths{e},'Description',fpp.func.preproc.description(midprepIntro,steps));
 end
@@ -416,7 +422,9 @@ pathsToDelete = [pathsToDelete outputPaths];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if useTedana
     fprintf('%s\n',['Step 7, TEDANA Multi-echo ICA denoise          - ' inputNameGeneric]);
+    stepsAlt = steps;
     steps{end+1} = 'multi-echo ICA denoising (tedana)';
+    stepsAlt{end+1} = 'optimal multi-echo combination (tedana''s t2smap)';  % For optcomb output
     inputPaths = outputPaths;
     outputPath = fpp.bids.changeName(inputPaths{1},{'echo','desc'},{[],'midprep4tedana'});
     %if ~exist(outputPath,'file') %%% TEMPORARY DEBUGGING HACK
@@ -435,6 +443,13 @@ end
 if useTedana, pathsToDelete = [pathsToDelete outputPath]; end
 fpp.bids.jsonChangeValue(outputPath,{'Description','SkullStripped'},...
     {fpp.func.preproc.description(midprepIntro,steps),true});
+if useTedana
+    fpp.bids.jsonChangeValue(fpp.bids.changeName(outputPath,'desc','midprep4optcomb'),{'Description','SkullStripped'},...
+        {fpp.func.preproc.description(midprepIntro,stepsAlt),true});
+end
+% TO ADD HERE: if running tedana, modify midprep4optcomp json file to
+% incorporate info about optimal ME combination step. Need to split steps
+% into an array of arrays.
 
 
 
@@ -492,7 +507,7 @@ pathsToDelete = [pathsToDelete outputPath];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% STEP 9: Extract nuisance signals
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fprintf('%s\n',['Step 9, Extract nuisance signals              - ' inputNameGeneric]);
+fprintf('%s\n',['Step 9, Extract nuisance signals               - ' inputNameGeneric]);
 confoundTSV = bids.util.tsvread(confoundPath);
 dataMat = fpp.util.readDataMatrix(outputPath);
 maskMat = fpp.util.readDataMatrix(maskPath);
@@ -557,21 +572,22 @@ fpp.bids.jsonChangeValue(outputPath,'Description',fpp.func.preproc.description(p
 fprintf('%s\n',['Step 12, Compute tSNR                          - ' inputNameGeneric]);
 % Multi-echo combine raw input data for tSNR comparison
 if multiEcho
-    inputPathRaw = fpp.bids.changeName(inputPathsRaw{1},{'echo','desc'},{[],'rawOptcomb'});
+    inputPathRaw = fpp.bids.changeName(inputPathsRaw{1},{'echo','desc','space'},{[],'rawoptcomb','native'});
     outputDescription = 'Raw data, optimally combined across echoes using tedana.';
     fpp.func.preproc.tedana(inputPathsRaw,inputPathRaw,maskPath,outputDescription,0);
 else
     inputPathRaw = inputPathsRaw{1};
 end
+% Undistort raw data
+fpp.func.preproc.undistort(inputPathRaw,inputPathRaw,spinEchoPath,topupWarpPath,...
+    topupJacobianPath,xfmMocoTarget2SpinEcho,xfmSpinEcho2MocoTarget);
 % Register raw data to funcTemplate
 inputPathRaw2FuncTemplate = fpp.bids.changeName(inputPathRaw,'space',funcTemplateSpace);
 fpp.fsl.moveImage(inputPathRaw,funcTemplatePath,inputPathRaw2FuncTemplate,xfmMocoTarget2FuncTemplate);
 fpp.bids.jsonReconstruct(inputPathRaw,inputPathRaw2FuncTemplate,'fmri');
-% fpp.bids.jsonChangeValue(inputPathRaw2FuncTemplate,{'Description','Sources','SpatialReference'},...
-%     {'Raw data, optimally combined across echoes, registered to functional template.',...
-%     fpp.bids.removeBidsDir(inputPathRaw),fpp.bids.removeBidsDir(funcTemplatePath)});
 fpp.bids.jsonChangeValue(inputPathRaw2FuncTemplate,'Description',...
-    'Raw data, optimally combined across echoes, registered to functional template.');
+    'Raw data, optimally combined across echoes, undistorted, and registered to functional template.');
+pathsToDelete = [pathsToDelete inputPathRaw];
 % Compute tSNR maps
 if genTSNR
     fpp.util.tsnrMap(inputPathRaw2FuncTemplate);

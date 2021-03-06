@@ -28,13 +28,18 @@ if ~exist('teVals','var') || isempty(teVals)
     teVals = fpp.util.checkMRIProperty('TE',inputPaths{1});
 end
 
-% Check output directory
-[outputDir,~,~] = fpp.util.fileParts(outputPath);
+% Check output directory, add _bold.nii.gz if missing
+[outputDir,outputName,outputExt] = fpp.util.fileParts(outputPath);
 if isempty(outputDir), outputDir = pwd; end
-
+if ~strcmp(outputName(end-4:end),'_bold')
+    outputName = [outputName '_bold'];
+end
+outputExt = '.nii.gz';
+outputPath = [outputDir '/' outputName outputExt];
+[~,inputName,~] = fpp.util.fileParts(inputPaths{1});
 
 % Place output in temporary directory to delete extra results
-outputDir = [outputDir '/tedanaTmp'];
+outputDir = [outputDir '/tedanaTmp' inputName];
 mkdir(outputDir);
 
 % Define wrapper function for fpp.bids.removeBidsDir (for cellfun functionality)
@@ -52,9 +57,14 @@ if useTedana
     fpp.util.system(['tedana -d ' inputPathStr{1} ' -e ' sprintf('%f ',teVals) ' --out-dir ' ...
         outputDir ' --mask ' maskPath ' --verbose']);
     
+    % Create output directory
+    outputDirTedana = strrep(fpp.bids.changeName(outputPath,{'space','desc'},{[],[]}),'_bold.nii.gz','_tedana');
+    fpp.util.system(['mv ' outputDir '/figures ' outputDirTedana]);
+    outputPathTedana = [outputDirTedana '/' outputName outputExt];
+    
     % Rename main outputs
-    fpp.util.system(['mv ' outputDir '/t2svG.nii.gz ' strrep(outputPath,'_bold.nii.gz','_T2star.nii.gz')]);
-    fpp.util.system(['mv ' outputDir '/s0vG.nii.gz ' strrep(outputPath,'_bold.nii.gz','_S0map.nii.gz')]);
+    fpp.util.system(['mv ' outputDir '/t2svG.nii.gz ' strrep(outputPathTedana,'_bold.nii.gz','_T2star.nii.gz')]);
+    fpp.util.system(['mv ' outputDir '/s0vG.nii.gz ' strrep(outputPathTedana,'_bold.nii.gz','_S0map.nii.gz')]);
     fpp.util.system(['mv ' outputDir '/dn_ts_OC.nii.gz ' outputPath]);
     fpp.util.system(['mv ' outputDir '/ts_OC.nii.gz ' fpp.bids.changeName(outputPath,'desc','midprep4optcomb')]);
     
@@ -62,27 +72,28 @@ if useTedana
     fpp.bids.jsonReconstruct(inputPaths{1},outputPath,'midprepfmri');
     fpp.bids.jsonChangeValue(outputPath,{'Description','Sources','EchoTime','EchoNumber'},...
         {outputDescription,cellfun(removeBidsDir,inputPaths,'UniformOutput',false),teVals/1000,[]});
+    % Define non-denoised json file
+    fpp.bids.jsonReconstruct(inputPaths{1},fpp.bids.changeName(outputPath,'desc','midprep4optcomb'),'midprepfmri');
+    fpp.bids.jsonChangeValue(fpp.bids.changeName(outputPath,'desc','midprep4optcomb'),{'Sources','EchoTime','EchoNumber'},...
+        {cellfun(removeBidsDir,inputPaths,'UniformOutput',false),teVals/1000,[]});
     
     % Rename component analysis results outputs
-    fpp.util.system(['mv ' outputDir '/tedana_*.tsv ' fpp.bids.changeName(outputPath,'desc','tedanaICA','log','.tsv')]);
-    figureDir = strrep(fpp.bids.changeName(outputPath,{'space','desc'},{[],[]}),'_bold.nii.gz','_images');
-    if exist(figureDir,'dir'), fpp.util.system(['rm -rf ' figureDir]); end
-    fpp.util.system(['mv ' outputDir '/figures ' figureDir]);
-    fpp.util.system(['mv ' outputDir '/betas_OC.nii.gz ' fpp.bids.changeName(outputPath,'desc','tedanaICA','betas')]);
-    fpp.util.system(['mv ' outputDir '/feats_OC2.nii.gz ' fpp.bids.changeName(outputPath,'desc','tedanaICAzscore','components')]);
+    fpp.util.system(['mv ' outputDir '/tedana_*.tsv ' fpp.bids.changeName(outputPathTedana,'desc','tedanaICA','log','.tsv')]);
+    fpp.util.system(['mv ' outputDir '/betas_OC.nii.gz ' fpp.bids.changeName(outputPathTedana,'desc','tedanaICA','betas')]);
+    fpp.util.system(['mv ' outputDir '/feats_OC2.nii.gz ' fpp.bids.changeName(outputPathTedana,'desc','tedanaICAzscore','components')]);
     methods = {'PCA','ICA'}; suffices = {'components','decomposition','mixing'};
     componentExts = {'.nii.gz','.json','.tsv'};
     for m=1:2
         for s=1:3
             fpp.util.system(['mv ' outputDir '/' lower(methods{m}) '_' suffices{s} componentExts{s} ' ' ...
-                fpp.bids.changeName(outputPath,'desc',['tedana' methods{m}],suffices{s},componentExts{s})]);
+                fpp.bids.changeName(outputPathTedana,'desc',['tedana' methods{m}],suffices{s},componentExts{s})]);
         end
     end
     
     % Save rejected component mixing matrix (output data time series are orthogonal to these components)
-    mixPath = fpp.bids.changeName(outputPath,'desc','tedanaICA','mixing','.tsv');
-    mixPathOut = fpp.bids.changeName(outputPath,'desc','tedanaICARejected','mixing','.tsv');
-    decompPath = fpp.bids.changeName(outputPath,'desc','tedanaICA','decomposition','.json');
+    mixPath = fpp.bids.changeName(outputPathTedana,'desc','tedanaICA','mixing','.tsv');
+    mixPathOut = fpp.bids.changeName(outputPathTedana,'desc','tedanaICARejected','mixing','.tsv');
+    decompPath = fpp.bids.changeName(outputPathTedana,'desc','tedanaICA','decomposition','.json');
     mixTSV = bids.util.tsvread(mixPath);
     decompJson = bids.util.jsondecode(decompPath);
     if isfield(decompJson,'ica_000')
@@ -119,8 +130,7 @@ else
     % Define main json file
     fpp.bids.jsonReconstruct(inputPaths{1},outputPath,'midprepfmri');
     fpp.bids.jsonChangeValue(outputPath,{'Description','Sources','EchoTime','EchoNumber'},...
-        {'Partially preprocessed data generated by fmriPermPipe, saved after multi-echo combination step.',...
-        cellfun(removeBidsDir,inputPaths,'UniformOutput',false),teVals/1000,[]});
+        {outputDescription,cellfun(removeBidsDir,inputPaths,'UniformOutput',false),teVals/1000,[]});
     
 end
 

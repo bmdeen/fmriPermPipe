@@ -14,7 +14,7 @@ if ~exist('moCorrTargetVolNum','var')
 end
 [~,inputName,inputExt] = fpp.util.fileParts(inputPath);
 mcBase = [outputDir '/' strrep(inputName,'_bold','') '_motion'];
-confoundFile = [outputDir '/../' fpp.bids.changeName([inputName inputExt],'echo',[],'confounds','.tsv')];
+confoundFile = [outputDir '/../' fpp.bids.changeName([inputName inputExt],{'desc','echo'},{[],[]},'confounds','.tsv')];
 if exist(confoundFile,'file')
     tsvData = bids.util.tsvread(confoundFile);
 end
@@ -56,7 +56,7 @@ fpp.bids.tsvWrite(confoundFile,tsvData);
 matFiles = dir([mcBase '.mat/MAT_*']);
 for f=1:length(matFiles)
     fpp.util.system(['mv ' mcBase '.mat/' matFiles(f).name ' ' outputDir '/' ...
-        fpp.bids.changeName(inputName,{'from','to','mode'},{['native' ...
+        fpp.bids.changeName(inputName,{'desc','from','to','mode'},{[],['native' ...
         matFiles(f).name(5:end)],'native','image'},'xfm','.mat')]);
 end
 fpp.util.system(['rm -rf ' mcBase '.nii.gz ' mcBase '.mat ' mcBase '.par']);
