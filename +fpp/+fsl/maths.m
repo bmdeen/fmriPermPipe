@@ -10,7 +10,7 @@
 % - outputDescription (optional): new value for JSON Description field
 % - appendDescription (boolean, optional): whether to append
 %       outputDescription to existing description
-% - odt (string): data type (default: float)
+% - odt (string,optional): data type (default: float)
 
 function maths(inputPath,cmd,outputPath,outputDescription,appendDescription,odt)
 

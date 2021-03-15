@@ -40,8 +40,10 @@
 % - tempFilt (boolean; default=0): whether to perform high-pass temporal
 %       filtering.
 % - filtCutoff (scalar in (0,Inf); default=.01: highpass filter cutoff (Hz)
-% - filtOrder (integer in (0,Inf); default=60): Hanning-window FIR filter
+% - filtOrder (integer in (0,Inf); default=60): Hamming-window FIR filter
 %       order.
+% - filtType (string): high, low, or bandpass (default: high if filtCutoff
+%       has one element, bandpass if it has two)
 % - genTSNR (boolean; default=0): whether to generate TSNR maps.
 % - plotResults (boolean; default=1): whether to display result plots.
 % - useSTC (boolean; default=1): whether to correct for slice timing.
@@ -145,6 +147,7 @@ echoForMoCorr = [];             % Which echo to use to estimate motion parameter
 tempFilt = 0;                   % Whether to perform temporal filtering
 filtCutoff = .01;               % Highpass filter cutoff (Hz)
 filtOrder = 60;                 % Hanning-window FIR filter order
+filtType = [];                  % Filter type (high, low, bandpass, or bandstop)
 
 % Data generation parameters
 genTSNR = 1;                    % Whether to generate TSNR maps
@@ -414,6 +417,9 @@ for e=1:nEchoes
     fpp.bids.jsonChangeValue(outputPaths{e},'Description',fpp.func.preproc.description(midprepIntro,steps));
 end
 pathsToDelete = [pathsToDelete outputPaths];
+% Remove voxels with zero value at any time point after registration from brain mask
+maskNonZeroPath = fpp.bids.changeName(outputPaths{1},{'echo','desc'},{[],'brainNonZero'},'mask');
+fpp.fsl.maths(outputPaths{end},['-Tmin -bin -mul ' maskPath],maskNonZeroPath);
 
 
 
@@ -423,61 +429,58 @@ pathsToDelete = [pathsToDelete outputPaths];
 if useTedana
     fprintf('%s\n',['Step 7, TEDANA Multi-echo ICA denoise          - ' inputNameGeneric]);
     stepsAlt = steps;
-    steps{end+1} = 'multi-echo ICA denoising (tedana)';
-    stepsAlt{end+1} = 'optimal multi-echo combination (tedana''s t2smap)';  % For optcomb output
+    steps(end+1:end+2) = {'brain masking (Freesurfer-based)','multi-echo ICA denoising (tedana)'};
+    stepsAlt(end+1:end+2) = {'brain masking (Freesurfer-based)','optimal multi-echo combination (tedana''s t2smap)'};  % For optcomb output
     inputPaths = outputPaths;
     outputPath = fpp.bids.changeName(inputPaths{1},{'echo','desc'},{[],'midprep4tedana'});
     %if ~exist(outputPath,'file') %%% TEMPORARY DEBUGGING HACK
-    fpp.func.preproc.tedana(inputPaths,outputPath,maskPath,[],1,teVals);
+    fpp.func.preproc.tedana(inputPaths,outputPath,maskNonZeroPath,[],1,teVals);
     %end
 elseif multiEcho
     fprintf('%s\n',['Step 7, Multi-echo combine                     - ' inputNameGeneric]);
     steps{end+1} = 'optimal multi-echo combination (tedana''s t2smap)';
     inputPaths = outputPaths;
     outputPath = fpp.bids.changeName(inputPaths{1},{'echo','desc'},{[],'midprep4optcomb'});
-    fpp.func.preproc.tedana(inputPaths,outputPath,maskPath,[],0,teVals);
+    fpp.func.preproc.tedana(inputPaths,outputPath,maskNonZeroPath,[],0,teVals);
 else
-    outputPath = outputPaths{1};
-    % Apply mask at this point!
+    inputPath = outputPaths{1};
+    outputPath = fpp.bids.changeName(inputPath,'desc','midprep4mask');
+    steps{end+1} = 'brain masking (Freesurfer-based)';
+    fpp.fsl.maths(inputPath,['-mul ' maskNonZeroPath],outputPath);
 end
-if useTedana, pathsToDelete = [pathsToDelete outputPath]; end
+pathsToDelete = [pathsToDelete outputPath];
 fpp.bids.jsonChangeValue(outputPath,{'Description','SkullStripped'},...
     {fpp.func.preproc.description(midprepIntro,steps),true});
 if useTedana
     fpp.bids.jsonChangeValue(fpp.bids.changeName(outputPath,'desc','midprep4optcomb'),{'Description','SkullStripped'},...
         {fpp.func.preproc.description(midprepIntro,stepsAlt),true});
 end
-% TO ADD HERE: if running tedana, modify midprep4optcomp json file to
-% incorporate info about optimal ME combination step. Need to split steps
-% into an array of arrays.
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% STEP 7.5: Temporal filter
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fprintf('%s\n',['Step 7.5, Temporal filter                      - ' inputNameGeneric]);
-if useTedana && tempFilt
-    warning('Temporal filtering is not recommended in additional to ME-ICA denoising.');
-end
 if tempFilt
-    warning('Temporal filtering is not currently implemented!');
-    tempFilt = 0;
-end
-if tempFilt
-    steps{end+1} = 'temporal filtering';
+    fprintf('%s\n',['Step 7.5, Temporal filter                      - ' inputNameGeneric]);
+    if useTedana
+        warning('Temporal filtering is not recommended in additional to ME-ICA denoising.');
+    end
+    switch filtType
+        case 'high'
+            filtTypeStr = 'highpass';
+            filtCutoffStr = [num2str(filtCutoff) 'Hz'];
+        case 'low'
+            filtTypeStr = 'lowpass';
+            filtCutoffStr = [num2str(filtCutoff) 'Hz'];
+        case 'bandpass'
+            filtTypeStr = 'bandpass';
+            filtCutoffStr = [num2str(filtCutoff(1)) '-' num2str(filtCutoff(1)) 'Hz'];
+    end
+    steps{end+1} = [filtTypeStr ' temporal filtering (' filtCutoffStr ', using MATLAB''s fir1 and filtfilt)'];
     inputPath = outputPath;
     outputPath = fpp.bids.changeName(inputPath,'desc',{[],'midprep5tempfilt'});
-    
-    % TEMPORAL FILTERING HERE!!!
-    % Compare FSL/matlab-based methods
-    
-    
-    
-    
-    
-    
-    
+    fpp.util.mriFilter(inputPath,outputPath,filtCutoff,filtType,filtOrder,tr);
     fpp.bids.jsonReconstruct(inputPath,outputPath,'midprepfmri');
     fpp.bids.jsonChangeValue(outputPath,{'Description','Sources'},...
         {fpp.func.preproc.description(midprepIntro,steps),fpp.bids.removeBidsDir(inputPath)});
@@ -494,7 +497,7 @@ steps{end+1} = 'intensity normalization';
 inputPath = outputPath;
 outputPath = fpp.bids.changeName(inputPath,'desc','midprep6intnorm');
 % Normalize image median (also called "grand mean scaling" in SPM)
-[~,funcMedian] = fpp.util.system(['fslstats ' inputPath ' -k ' maskPath ' -p 50']);
+[~,funcMedian] = fpp.util.system(['fslstats ' inputPath ' -k ' maskNonZeroPath ' -p 50']);
 funcMedian = str2num(strtrim(funcMedian));
 fpp.fsl.maths(inputPath,['-mul ' num2str(newMedian/funcMedian)],outputPath);
 fpp.bids.jsonReconstruct(inputPath,outputPath,'midprepfmri');
@@ -510,7 +513,7 @@ pathsToDelete = [pathsToDelete outputPath];
 fprintf('%s\n',['Step 9, Extract nuisance signals               - ' inputNameGeneric]);
 confoundTSV = bids.util.tsvread(confoundPath);
 dataMat = fpp.util.readDataMatrix(outputPath);
-maskMat = fpp.util.readDataMatrix(maskPath);
+maskMat = fpp.util.readDataMatrix(maskNonZeroPath);
 wmMat = fpp.util.readDataMatrix(wmPath);
 csfMat = fpp.util.readDataMatrix(csfPath);
 confoundTSV.global_signal = sum(dataMat.*maskMat)';
@@ -530,8 +533,8 @@ fprintf('%s\n',['Step 10, Resample to cortical surface          - ' inputNameGen
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% STEP 11: Spatially smooth
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fprintf('%s\n',['Step 11, Spatially smooth                      - ' inputNameGeneric]);
 if fwhm>0
+    fprintf('%s\n',['Step 11, Spatially smooth                      - ' inputNameGeneric]);
     steps{end+1} = 'spatial smoothing';
     inputPath = outputPath;
     outputPath = fpp.bids.changeName(inputPath,'desc',{[],'midprep7smooth'});
@@ -574,7 +577,7 @@ fprintf('%s\n',['Step 12, Compute tSNR                          - ' inputNameGen
 if multiEcho
     inputPathRaw = fpp.bids.changeName(inputPathsRaw{1},{'echo','desc','space'},{[],'rawoptcomb','native'});
     outputDescription = 'Raw data, optimally combined across echoes using tedana.';
-    fpp.func.preproc.tedana(inputPathsRaw,inputPathRaw,maskPath,outputDescription,0);
+    fpp.func.preproc.tedana(inputPathsRaw,inputPathRaw,maskNonZeroPath,outputDescription,0);
 else
     inputPathRaw = inputPathsRaw{1};
 end

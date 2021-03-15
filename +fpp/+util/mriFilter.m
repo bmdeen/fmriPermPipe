@@ -1,32 +1,38 @@
 
-% Function to filter fMRI dataset, using a Hamming-window based FIR filter
-% and MATLAB's filtfilt.
+% Function to filter fMRI dataset (NIFTI or CIFTI), using a Hamming-window
+% based FIR filter and MATLAB's filtfilt.
 %
-% inputPath (string): path to input image
-% outputPath (string): path to output image
-% filtCutoff (one or two element vector): cutoff frequency(s) in Hz
-% tr (scalar): repetition time in seconds
-% type (string, optional): low, high, bandpass, or bandstop (default: low
-%   for one frequency, bandpass for two)
-% filtOrder (scalar, optional): FIR filter order (default: 60)
+% fpp.util.mriFilter(inputPath,outputPath,filtCutoff,filtType,filtOrder,tr)
+%
+% Arguments:
+% - inputPath (string): path to input image
+% - outputPath (string): path to output image
+% - filtCutoff (one or two element vector): cutoff frequencies in Hz
+% - filtType (string, optional): high, low, bandpass, or bandstop (default: 
+%   high for one frequency, bandpass for two)
+% - filtOrder (scalar, optional): FIR filter order (default: 60)
+% - tr (scalar, optional): repetition time in seconds (default: determine
+%   from data)
 
-function mriFilter(inputPath,outputPath,filtCutoff,tr,type,filtOrder)
+function mriFilter(inputPath,outputPath,filtCutoff,filtType,filtOrder,tr)
 
-if ~exist('type','var')
-    type = [];
+if ~exist('tr','var') || isempty(tr)
+    tr = fpp.util.checkMRIProperty('tr',inputPath);
+    if isempty(tr)
+        error('TR of input data could not be determined.');
+    end
 end
-if ~exist('filtOrder','var')
+if ~exist('filtType','var') || isempty(filtType)
+    filtType = [];
+end
+if ~exist('filtOrder','var') || isempty(filtOrder)
     filtOrder = 60;
 end
 
-inputData = fpp.util.mriRead(inputPath);
-outputData = inputData;
-
-dims = size(inputData.vol);
-inputMat = reshape(inputData.vol,[prod(dims(1:3)) dims(4)])';
-outputMat = fpp.util.firFilter(inputMat,filtCutoff,1/tr,type,filtOrder) + repmat(mean(inputMat),[size(inputMat,1) 1]);
-
-outputData.vol = reshape(outputMat',dims);
-fpp.util.mriWrite(outputData,outputPath);
+[inputMat,hdr] = fpp.util.readDataMatrix(inputPath);
+inputMat = inputMat';
+outputMat = fpp.util.firFilter(inputMat,1/tr,filtCutoff,filtType,filtOrder) + repmat(mean(inputMat),[size(inputMat,1) 1]);
+outputMat = outputMat';
+fpp.util.writeDataMatrix(outputMat,hdr,outputPath);
 
 end
