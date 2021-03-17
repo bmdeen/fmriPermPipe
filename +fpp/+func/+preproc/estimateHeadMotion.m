@@ -44,7 +44,7 @@ tsvData.rot_total = acos((cos(moDiff(:,1)).*cos(moDiff(:,2)) + cos(moDiff(:,1)).
 % Add FramewiseDisplacement
 moDiffMM = moDiff;
 moDiffMM(:,1:3) = 50*moDiffMM(:,1:3);   % Distance on 50mm-radius sphere, roughly the radius of cortex
-tsvData.framewise_displacement = mean(abs(moDiffMM),2);
+tsvData.framewise_displacement = sum(abs(moDiffMM),2);
 
 % Add DVARS
 [tsvData.dvars,tsvData.dvars_std] = fpp.func.preproc.dvars(inputPath);
