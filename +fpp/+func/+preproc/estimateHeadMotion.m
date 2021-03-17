@@ -26,25 +26,25 @@ fpp.util.system(['mcflirt -in ' inputPath ' -out ' mcBase ...
 % Load motion parameters
 motionParams = load([mcBase '.par']);
 
-% Add motion params to confounds.tsv data
-tsvData.trans_x = motionParams(:,1);
-tsvData.trans_y = motionParams(:,2);
-tsvData.trans_z = motionParams(:,3);
-tsvData.rot_x = motionParams(:,4);
-tsvData.rot_y = motionParams(:,5);
-tsvData.rot_z = motionParams(:,6);
+% Add motion params to confounds.tsv data (rotation in degrees)
+tsvData.rot_x = motionParams(:,1)*180/pi;
+tsvData.rot_y = motionParams(:,2)*180/pi;
+tsvData.rot_z = motionParams(:,3)*180/pi;
+tsvData.trans_x = motionParams(:,4);
+tsvData.trans_y = motionParams(:,5);
+tsvData.trans_z = motionParams(:,6);
 
-% Add mean translation/rotation
+% Add mean translation/rotation in mm/degrees
 moDiff = zeros(size(motionParams));
 moDiff(2:end,:) = diff(motionParams);
-trans = sqrt(sum(moDiff(:,4:6).^2,2));
-rot = acos((cos(moDiff(:,1)).*cos(moDiff(:,2)) + cos(moDiff(:,1)).*cos(moDiff(:,3)) + ...
+tsvData.trans_total = sqrt(sum(moDiff(:,4:6).^2,2));
+tsvData.rot_total = acos((cos(moDiff(:,1)).*cos(moDiff(:,2)) + cos(moDiff(:,1)).*cos(moDiff(:,3)) + ...
     cos(moDiff(:,2)).*cos(moDiff(:,3)) + sin(moDiff(:,1)).*sin(moDiff(:,2)).*sin(moDiff(:,3)) - 1)/2)*180/pi;
-tsvData.trans_total = trans;
-tsvData.rot_total = rot;
 
 % Add FramewiseDisplacement
-tsvData.framewise_displacement = mean(abs(motionParams),2);
+moDiffMM = moDiff;
+moDiffMM(:,1:3) = 50*moDiffMM(:,1:3);   % Distance on 50mm-radius sphere, roughly the radius of cortex
+tsvData.framewise_displacement = mean(abs(moDiffMM),2);
 
 % Add DVARS
 [tsvData.dvars,tsvData.dvars_std] = fpp.func.preproc.dvars(inputPath);
