@@ -45,8 +45,11 @@ else
     inputName = '';
     inputExtension = '.nii.gz';
 end
-if ~exist('newExtension','var') || ~ischar(newExtension) || ~strcmp(newExtension(1),'.')
+if ~exist('newExtension','var') || ~ischar(newExtension)
     newExtension = inputExtension;
+end
+if ~isempty(newExtension) && ~strcmp(newExtension(1),'.')
+    newExtension = ['.' newExtension];
 end
 
 % Potential key names, in order of precedence in filename. "Key index"

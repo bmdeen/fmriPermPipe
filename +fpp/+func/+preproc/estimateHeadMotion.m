@@ -41,7 +41,7 @@ tsvData.trans_total = sqrt(sum(moDiff(:,4:6).^2,2));
 tsvData.rot_total = acos((cos(moDiff(:,1)).*cos(moDiff(:,2)) + cos(moDiff(:,1)).*cos(moDiff(:,3)) + ...
     cos(moDiff(:,2)).*cos(moDiff(:,3)) + sin(moDiff(:,1)).*sin(moDiff(:,2)).*sin(moDiff(:,3)) - 1)/2)*180/pi;
 
-% Add FramewiseDisplacement
+% Add Framewise Displacement
 moDiffMM = moDiff;
 moDiffMM(:,1:3) = 50*moDiffMM(:,1:3);   % Distance on 50mm-radius sphere, roughly the radius of cortex
 tsvData.framewise_displacement = sum(abs(moDiffMM),2);

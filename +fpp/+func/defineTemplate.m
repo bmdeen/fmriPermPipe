@@ -7,6 +7,19 @@
 % - inputPath (string): path to input bold/sbref image (any one echo)
 % - outputDir (string): output directory (BIDS subject/session level).
 %    Outputs will be written to outputDir/func
+%
+% Variable arguments:
+% - overwrite (boolean; default=0): whether to overwrite files that have
+%       already been written by this function.
+% - useTaskTemplate (boolean): whether to use a task-specific template
+% - undistort (boolean): Whether to distortion-correct functional data
+%       using blip-up/blip-down method
+% - spinEchoPath (string): path to spin echo image matched in phase-encode
+%       direction to input fMRI data
+% - topupWarpPath (string): path to undistortion warp image produced by
+%       topup
+% - topupJacobianPath (string): path to undistortion warp jacobian image
+%       produced by topup
 
 function defineTemplate(inputPath,outputDir,varargin)
 
@@ -17,8 +30,15 @@ fpp.util.checkConfig;
 overwrite = 0;                  % Whether to overwrite output
 useTaskTemplate = 0;            % Use a task/acq-specific functional template, rather than a session template
 
+% Undistortion parameters
+undistort = 1;                  % Whether to distortion-correct functional template using blip-up/blip-down method
+spinEchoPath = '';              % Spin echo path with PE dir matched to functional, if not using default (determined from json metadata)
+topupWarpPath = '';             % Undistortion warp path, if not using default (determined from json metadata)
+topupJacobianPath = '';         % Undistortion warp jacobian path, if not using default (determined from json metadata)
+
 % Edit variable arguments.  Note: optInputs checks for proper input.
-varArgList = {'overwrite','useTaskTemplate'};
+varArgList = {'overwrite','useTaskTemplate','undistort','spinEchoPath',...
+    'topupWarpPath','topupJacobianPath'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
@@ -35,18 +55,26 @@ end
 if isempty(inputDir), inputDir = pwd; end
 if strcmp(outputDir(end),'/'), outputDir = outputDir(1:end-1); end
 funcPreprocDir = [outputDir '/func'];
+fmapPreprocDir = [outputDir '/fmap'];
 if ~exist(funcPreprocDir,'dir') mkdir(funcPreprocDir); end
 
 % Check if output exists.
 if useTaskTemplate
+    funcTemplateSpace = 'task';
     finalOutputPath = fpp.bids.changeName([funcPreprocDir '/' inputName '.nii.gz'],...
-        {'run','space','desc'},{[],[],'task','template'});
+        {'run','space','desc'},{[],[],funcTemplateSpace,'template'});
 else
+    funcTemplateSpace = 'session';
     finalOutputPath = fpp.bids.changeName([funcPreprocDir '/' inputName '.nii.gz'],...
-        {'task','run','space','desc'},{[],[],'session','template'});
+        {'task','run','space','desc'},{[],[],funcTemplateSpace,'template'});
 end
 if exist(finalOutputPath,'file') && ~overwrite
     return;
+end
+
+% Define undistortion warp files, if undistorting
+if undistort && (isempty(spinEchoPath) || isempty(topupWarpPath) ||  isempty(topupJacobianPath))
+    [spinEchoPath,topupWarpPath,topupJacobianPath] = fpp.func.preproc.checkSpinEcho(inputPath,fmapPreprocDir);
 end
 
 % Check if data is multi-echo
@@ -83,10 +111,33 @@ end
 
 % For 4D bold images, extract middle image
 for e=1:nEchoes
-    vols = fpp.util.checkMRIProperty('vols',inputPaths{e});
+    vols = fpp.util.checkMRIProperty('vols',outputPaths{e});
     if vols>1
-        fpp.util.system(['fslroi ' inputPaths{e} ' ' inputPaths{e} ' ' int2str(ceil(vols/2)) ' 1']);
+        fpp.util.system(['fslroi ' outputPaths{e} ' ' outputPaths{e} ' ' int2str(ceil(vols/2)) ' 1']);
     end
 end
+
+% Undistort functional template
+if undistort
+    xfmFunc2SpinEcho = fpp.bids.changeName(outputPaths{1},{'desc','from','to','mode','echo'},...
+        {'',funcTemplateSpace,'SpinEcho','image',[]},'xfm','.mat');
+    xfmSpinEcho2Func = fpp.bids.changeName(outputPaths{1},{'desc','from','to','mode','echo'},...
+        {'','SpinEcho',funcTemplateSpace,'image',[]},'xfm','.mat');
+    fpp.fsl.flirt(outputPaths{1},spinEchoPath,xfmFunc2SpinEcho,[],'cost','corratio',...
+        'dof',6,'searchrx',[-90 90],'searchry',[-90 90],'searchrz',[-90 90]);
+    fpp.fsl.invertXfm(xfmFunc2SpinEcho,xfmSpinEcho2Func);
+    for e=1:nEchoes
+        fpp.func.preproc.undistort(outputPaths{e},outputPaths{e},spinEchoPath,...
+            topupWarpPath,topupJacobianPath,xfmFunc2SpinEcho,xfmSpinEcho2Func);
+    end
+    fpp.util.system(['rm -rf ' xfmFunc2SpinEcho ' ' xfmSpinEcho2Func]);
+    if exist(fpp.bids.jsonPath(xfmFunc2SpinEcho))
+        fpp.util.system(['rm -rf ' fpp.bids.jsonPath(xfmFunc2SpinEcho)]);
+    end
+    if exist(fpp.bids.jsonPath(xfmSpinEcho2Func))
+        fpp.util.system(['rm -rf ' fpp.bids.jsonPath(xfmSpinEcho2Func)]);
+    end
+end
+
 
 end

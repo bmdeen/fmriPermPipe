@@ -54,6 +54,8 @@
 % - funcTemplateSpace (string): space of functional template, needed if
 %       using non-standard funcTemplatePath that lacks a BIDS space entity
 % - useTaskTemplate (boolean): whether to use a task-specific template
+% - undistort (boolean): Whether to distortion-correct functional data
+%       using blip-up/blip-down method
 % - spinEchoPath (string): path to spin echo image matched in phase-encode
 %       direction to input fMRI data
 % - topupWarpPath (string): path to undistortion warp image produced by
@@ -76,7 +78,6 @@ function preproc(inputPaths,outputDir,varargin)
 %
 % TODO NEXT:
 % - Add spatial smoothing (susan- or wb-command-based)
-% - Add temporal filtering (compare matlab/FSL)
 % - If deleteMidprep==1, remove "Sources" field of final outputs
 % - Add suffix option for desc. Need to edit inputNameGeneric, and edit
 %   desc of output TEDANA folder (defitions both within preproc script, and
@@ -121,16 +122,18 @@ smThresh = [];                  % SUSAN brightness threshold
 funcTemplatePath = '';          % Functional template image to register to
 funcTemplateSpace = '';         % Space of func template, required if using custom funcTemplatePath with BIDs space entity
 useTaskTemplate = 0;            % Use a task/acq-specific functional template, rather than a session template
-newMedian = 10000;              % Target value for intensity normalization (median of data is set to this)
+newMedian = 10000;              % Target value for intensity normalization (median of data in brain mask is set to this)
 useTedana = 1;                  % Whether to use tedana-based denoising for multi-echo data
-undistort = 1;                  % Whether to distortion-correct functional data using blip-up/blip-down method
-spinEchoPath = '';              % Spin echo path with PE dir matched to functional, if not using default (determined from json metadata)
-topupWarpPath = '';             % Undistortion warp path, if not using default (determined from json metadata)
-topupJacobianPath = '';         % Undistortion warp jacobian path, if not using default (determined from json metadata)
 useSTC = 1;                     % Whether to use slice timing correction
 useDespike = 1;                 % Whether to apply AFNI's 3dDepike before STC
 sliceTimes = [];                % Slice time (s) relative to onset of volume acquisition (Default: read from JSON file)
 deleteMidprep = 1;              % Whether to delete midprep images
+
+% Undistortion parameters
+undistort = 1;                  % Whether to distortion-correct functional data using blip-up/blip-down method
+spinEchoPath = '';              % Spin echo path with PE dir matched to functional, if not using default (determined from json metadata)
+topupWarpPath = '';             % Undistortion warp path, if not using default (determined from json metadata)
+topupJacobianPath = '';         % Undistortion warp jacobian path, if not using default (determined from json metadata)
 
 % Artifact detection parameters
 disdaqs = 0;                    % Number of disdaq volumes (at beginning of run) to remove. [NOT CURRENTLY IMPLEMENTED]
@@ -229,9 +232,9 @@ if isempty(funcTemplatePath)
         funcTemplateSpace = 'session';
     end
 else
-    [spaceInd,spaceEndInd] = regexp(funcTemplateName,'_space-[a-zA-Z0-9]+_');
+    [spaceInd,spaceEndInd] = regexp(funcTemplateSpace,'_space-[a-zA-Z0-9]+_');
     if sum(spaceInd>0)
-        funcTemplateSpace = funcTemplateName(spaceInd(1)+7:spaceEndInd(1)-1);
+        funcTemplateSpace = funcTemplateSpace(spaceInd(1)+7:spaceEndInd(1)-1);
     elseif isempty(funcTemplateSpace)
         error('funcTemplateSpace must be specified when funcTemplatePath lacks a BIDS space entity.')
     end
@@ -408,11 +411,11 @@ inputPaths = outputPaths;
 for e=1:nEchoes
     outputPaths{e} = fpp.bids.changeName(outputPaths{e},{'desc','space'},{'midprep3moco',funcTemplateSpace});
 end
-% if ~exist(outputPaths{end},'file')      % TEMPORARY DEBUGGING HACK
+if ~exist(outputPaths{end},'file')      % TEMPORARY DEBUGGING HACK
 fpp.func.preproc.oneShotMotionDistortionCorrect(inputPaths,outputPaths,funcTemplatePath,...
     funcTemplateSpace,mcDir,topupWarpPath,topupJacobianPath,xfmMocoTarget2FuncTemplate,...
     xfmSpinEcho2MocoTarget,xfmMocoTarget2SpinEcho,echoForMoCorr);
-% end
+end
 for e=1:nEchoes
     fpp.bids.jsonChangeValue(outputPaths{e},'Description',fpp.func.preproc.description(midprepIntro,steps));
 end
@@ -516,9 +519,9 @@ dataMat = fpp.util.readDataMatrix(outputPath);
 maskMat = fpp.util.readDataMatrix(maskNonZeroPath);
 wmMat = fpp.util.readDataMatrix(wmPath);
 csfMat = fpp.util.readDataMatrix(csfPath);
-confoundTSV.global_signal = sum(dataMat.*maskMat)';
-confoundTSV.white_matter = sum(dataMat.*wmMat)';
-confoundTSV.csf = sum(dataMat.*csfMat)';
+confoundTSV.global_signal = mean(dataMat.*maskMat)';
+confoundTSV.white_matter = mean(dataMat.*wmMat)';
+confoundTSV.csf = mean(dataMat.*csfMat)';
 bids.util.tsvwrite(confoundPath,confoundTSV);
 
 
@@ -566,6 +569,23 @@ if exist(fpp.bids.jsonPath(inputPath))
 end
 fpp.bids.jsonReconstruct(outputPath,outputPath,'fmri');
 fpp.bids.jsonChangeValue(outputPath,'Description',fpp.func.preproc.description(preprocIntro,steps));
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% STEP 11.6: Generate carpet plot
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+nuisanceSeries = [confoundTSV.global_signal confoundTSV.white_matter confoundTSV.csf...
+    confoundTSV.framewise_displacement confoundTSV.dvars_std];
+nuisanceNames = {'Global mean','WM mean','CSF mean','Framewise displacement (mm)','DVARS_std'};
+segmentMaskPaths = {fpp.bids.changeName(maskPath,'desc','gm'),fpp.bids.changeName(maskPath,'desc','wm'),...
+    fpp.bids.changeName(maskPath,'desc','csf')};
+carpetPlotPath = fpp.bids.changeName(outputPath,[],[],'carpetplot','.png');
+segmentColors = {[0 .5 1],[0 1 0],[1 1 0]};
+nuisanceColors = {[61 165 193]/255,[45 167 111]/255,[164 146 43]/255,...
+        [246 102 126]/255,[197 111 242]/255};
+fpp.util.carpetPlot(outputPath,maskNonZeroPath,segmentMaskPaths,nuisanceSeries,...
+    nuisanceNames,carpetPlotPath,segmentColors,nuisanceColors);
 
 
 
