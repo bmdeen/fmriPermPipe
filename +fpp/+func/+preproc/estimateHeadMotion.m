@@ -34,20 +34,17 @@ tsvData.trans_x = motionParams(:,4);
 tsvData.trans_y = motionParams(:,5);
 tsvData.trans_z = motionParams(:,6);
 
-% Add mean translation/rotation in mm/degrees
+% Add framewise translation/rotation (mm/degrees)
 moDiff = zeros(size(motionParams));
 moDiff(2:end,:) = diff(motionParams);
-tsvData.trans_total = sqrt(sum(moDiff(:,4:6).^2,2));
-tsvData.rot_total = acos((cos(moDiff(:,1)).*cos(moDiff(:,2)) + cos(moDiff(:,1)).*cos(moDiff(:,3)) + ...
+tsvData.framewise_translation = sqrt(sum(moDiff(:,4:6).^2,2));
+tsvData.framewise_rotation = acos((cos(moDiff(:,1)).*cos(moDiff(:,2)) + cos(moDiff(:,1)).*cos(moDiff(:,3)) + ...
     cos(moDiff(:,2)).*cos(moDiff(:,3)) + sin(moDiff(:,1)).*sin(moDiff(:,2)).*sin(moDiff(:,3)) - 1)/2)*180/pi;
 
-% Add Framewise Displacement
+% Add framewise displacement (mm)
 moDiffMM = moDiff;
-moDiffMM(:,1:3) = 50*moDiffMM(:,1:3);   % Distance on 50mm-radius sphere, roughly the radius of cortex
+moDiffMM(:,1:3) = 50*moDiffMM(:,1:3);   % Rotation-driven distance on 50mm-radius sphere, roughly the radius of cortex
 tsvData.framewise_displacement = sum(abs(moDiffMM),2);
-
-% Add DVARS
-[tsvData.dvars,tsvData.dvars_std] = fpp.func.preproc.dvars(inputPath);
 
 % Write to BIDS confounds.tsv file
 fpp.bids.tsvWrite(confoundFile,tsvData);

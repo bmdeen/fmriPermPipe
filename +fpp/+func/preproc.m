@@ -411,11 +411,11 @@ inputPaths = outputPaths;
 for e=1:nEchoes
     outputPaths{e} = fpp.bids.changeName(outputPaths{e},{'desc','space'},{'midprep3moco',funcTemplateSpace});
 end
-if ~exist(outputPaths{end},'file')      % TEMPORARY DEBUGGING HACK
+%if ~exist(outputPaths{end},'file')      % TEMPORARY DEBUGGING HACK
 fpp.func.preproc.oneShotMotionDistortionCorrect(inputPaths,outputPaths,funcTemplatePath,...
     funcTemplateSpace,mcDir,topupWarpPath,topupJacobianPath,xfmMocoTarget2FuncTemplate,...
     xfmSpinEcho2MocoTarget,xfmMocoTarget2SpinEcho,echoForMoCorr);
-end
+%end
 for e=1:nEchoes
     fpp.bids.jsonChangeValue(outputPaths{e},'Description',fpp.func.preproc.description(midprepIntro,steps));
 end
@@ -522,6 +522,7 @@ csfMat = fpp.util.readDataMatrix(csfPath);
 confoundTSV.global_signal = mean(dataMat.*maskMat)';
 confoundTSV.white_matter = mean(dataMat.*wmMat)';
 confoundTSV.csf = mean(dataMat.*csfMat)';
+[confoundTSV.dvars,confoundTSV.dvars_std] = fpp.func.preproc.dvars(inputPath,maskNonZeroPath);
 bids.util.tsvwrite(confoundPath,confoundTSV);
 
 

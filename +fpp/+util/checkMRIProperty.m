@@ -12,6 +12,7 @@
 %   + TE - Echo time (ms), in vector form for multi-echo data
 %   + Vols - # of volumes in 4D dataset
 %   + Dims - 3D or 4D image dimensions
+%   + VoxelSize - voxel sizes in each dimension (mm)
 %   + PEDir - Phase-encode direction, BIDS format (e.g. "j-")
 %   + PEDirStr - Phase-encode direction, orientation string format (e.g.
 %       "AP")
@@ -42,10 +43,14 @@ switch lower(propertyName)
             [~, tr] = fpp.util.system(['fslval ' inputPath ' pixdim4']);
             [~, tu] = fpp.util.system(['fslval ' inputPath ' time_units']);
             tu = strtrim(tu);
-            if strcmp(tu,'ms')
-                propertyValue = str2num(tr)/1000;
-            elseif strcmp(tu,'s')
+            if strcmp(tu,'s')
                 propertyValue = str2num(tr);
+            elseif strcmp(tu,'ms')
+                propertyValue = str2num(tr)/1000;
+            elseif strcmp(tu,'us')
+                propertyValue = str2num(tr)/1000000;
+            elseif strcmp(tu,'Unknown')
+                propertyValue = [];
             end
         end
     case 'te'
@@ -128,4 +133,20 @@ switch lower(propertyName)
         [~,vols] = fpp.util.system(['fslval ' inputPath ' dim4']);
         vols = str2num(strtrim(vols));
         if ~isempty(vols) && vols>1, propertyValue(4) = vols; end
+    case {'voxelsize','voxsize'}
+        [~,pixdim1] = fpp.util.system(['fslval ' inputPath ' pixdim1']);
+        propertyValue(1) = str2num(strtrim(pixdim1));
+        [~,pixdim2] = fpp.util.system(['fslval ' inputPath ' pixdim2']);
+        propertyValue(2) = str2num(strtrim(pixdim2));
+        [~,pixdim3] = fpp.util.system(['fslval ' inputPath ' pixdim3']);
+        propertyValue(3) = str2num(strtrim(pixdim3));
+        [~, vu] = fpp.util.system(['fslval ' inputPath ' vox_units']);
+        vu = strtrim(vu);
+        if strcmp(vu,'m')
+            propertyValue = propertyValue*1000;
+        elseif strcmp(vu,'um')
+            propertyValue = propertyValue/1000;
+        elseif strcmp(vu,'Unknown')
+            propertyValue = [];
+        end
 end
