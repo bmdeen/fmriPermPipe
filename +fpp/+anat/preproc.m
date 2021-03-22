@@ -24,7 +24,7 @@ function preproc(inputT1Paths,inputT2Paths,outputDir,varargin)
 %
 % TODO
 % - Alternative values for standardPath and standardName
-% - Rename FNIRT log file to BIDS-compatible
+% - Rename FNIRT log file to BIDS-compatible, or delete
 % - N4 bias correction option when not using T2 images. (e.g., try to use
 %   freesurfer's AntsN4BiasFieldCorrectionFs, to avoid requiring ANTS)
 % - Change naming of run # for xfms to the real run, if BIDS info is
@@ -36,15 +36,24 @@ fpp.util.checkConfig;
 
 % Basic parameters
 overwrite = 0;                  % Whether to overwrite output
+
+% Output resolutions
+dataResolution = mean(fpp.util.checkMRIProperty('voxelsize',inputT1Paths{1}));
+anatResolutionOptions = [.7 .75 .8 1];  % Options for individual-space anatomical resolution
+anatResolutionNames = {'p7','p75','p8','1'};
+[~,anatResolutionInd] = min(abs(anatResolutionOptions-dataResolution));
+anatResolution = anatResolutionNames{anatResolutionInd};
+funcResolution = '2';           % Low-resolution registration target
+
+% Standard paths
 [fppFuncDir,~,~]		= fileparts(mfilename('fullpath'));			% path to the directory containing this script
 tmp = dir([fppFuncDir '/../../data']);
 dataDir = tmp(1).folder;
-% standardPath = [getenv('FSLDIR') '/data/standard/MNI152_T1_1mm.nii.gz']; % Alternative: 1mm MNI space
-% standardDir = [getenv('FSLDIR') '/data/standard'];
 standardName = 'MNI152NLin6ASym';
-standardPath = [dataDir '/space-MNI152Nlin6Asym_res-p8_T1w.nii.gz'];
-standardPath2mm = [dataDir '/space-MNI152Nlin6Asym_res-2_T1w.nii.gz'];
-standardMask = [dataDir '/space-MNI152Nlin6Asym_res-2_desc-brainDilEdit_mask.nii.gz'];    % Use dilated input to provide an inclusive initial brain mask
+standardPath = [dataDir '/space-MNI152Nlin6Asym_res-' anatResolution '_T1w.nii.gz'];
+standardPathFuncRes = [dataDir '/space-MNI152Nlin6Asym_res-' funcResolution '_T1w.nii.gz'];
+% Use dilated MNI-space mask to provide an inclusive initial brain mask
+standardMask = [dataDir '/space-MNI152Nlin6Asym_res-' funcResolution '_desc-brainDilEdit_mask.nii.gz'];
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
 varArgList = {'overwrite'};
@@ -73,7 +82,8 @@ if strcmp(outputDir(end),'/'), outputDir = outputDir(1:end-1); end
 anatPreprocDir = [outputDir '/anat'];
 
 % Check if output exists.
-finalOutputPath = fpp.bids.changeName([anatPreprocDir '/' inputName '.nii.gz'],{'desc','run','space'},{'preproc',[],'individual'},'T1w');
+finalOutputPath = fpp.bids.changeName([anatPreprocDir '/' inputName '.nii.gz'],...
+    {'desc','run','space','res'},{'preproc',[],'individual',anatResolution},'T1w');
 if exist(finalOutputPath,'file') && ~overwrite
     return;
 end
@@ -187,7 +197,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fprintf('%s\n',['Step 3, ACPC alignment                         - ' inputNameGeneric]);
 inputT1Path = outputT1Path;
-outputT1Path = fpp.bids.changeName(inputT1Path,'space','individual');
+outputT1Path = fpp.bids.changeName(inputT1Path,{'space','res'},{'individual',anatResolution});
 inputT1PathRobust = fpp.bids.changeName(inputT1Path,'space','realignedT1wRobustFOV');
 inputT12RobustXfm = fpp.bids.changeName(inputT1Path,{'from','to','mode','space'},...
 	{'realignedT1w','realignedT1wRobustFOV','image',''},'xfm','.mat');
@@ -212,7 +222,7 @@ pathsToDelete = [pathsToDelete inputT1PathRobust inputT12RobustXfm robust2InputT
     robust2StandardXfm inputT12StandardXfm inputT12StandardXfm6Dof];
 if usingT2
     inputT2Path = outputT2Path;
-    outputT2Path = fpp.bids.changeName(inputT2Path,'space','acpcT2w');
+    outputT2Path = fpp.bids.changeName(inputT2Path,{'space','res'},{'acpcT2w',anatResolution});
     inputT2PathRobust = fpp.bids.changeName(inputT2Path,'space','realignedT2wRobustFOV');
     inputT2_2RobustXfm = fpp.bids.changeName(inputT2Path,{'from','to','mode','space'},...
         {'realignedT2w','realignedT2wRobustFOV','image',''},'xfm','.mat');
@@ -247,16 +257,16 @@ if usingT2
     inputT1Path = outputT1Path;
     inputT2Path = outputT2Path;
     outputT2Path = fpp.bids.changeName(inputT2Path,'space','individual');
-    inputT2_2InputT1Xfm = fpp.bids.changeName(inputT2Path,{'from','to','mode','space'},...
-        {'acpcT2w','individual','image',''},'xfm','.mat');
-%     stdT2_2InputT1Xfm = fpp.bids.changeName(inputT2Path,{'from','to','mode','space'},...
-%         {'realignedT2w','individual','image',''},'xfm','.mat');
+    inputT2_2InputT1Xfm = fpp.bids.changeName(inputT2Path,{'from','to','mode','space','res'},...
+        {'acpcT2w','individual','image','',''},'xfm','.mat');
+%     stdT2_2InputT1Xfm = fpp.bids.changeName(inputT2Path,{'from','to','mode','space','res'},...
+%         {'realignedT2w','individual','image','',''},'xfm','.mat');
 %     stdT2_2InputT2Xfm6Dof = inputT2_2StandardXfm6Dof;
     fpp.fsl.flirt(inputT2Path,inputT1Path,inputT2_2InputT1Xfm,outputT2Path,'dof',6,...
         'interp','sinc','searchrx',[-30 30],'searchry',[-30 30],'searchrz',[-30 30]);
 %     fpp.fsl.concatXfm(inputT2_2InputT1Xfm,stdT2_2InputT2Xfm6Dof,stdT2_2InputT1Xfm);
 %     fpp.fsl.moveImage(inputT2Path,inputT1Path,outputT2Path,stdT2_2InputT1Xfm);
-% NOTE: concat xfm method not working!! Not sure why. (BD, 11/11/20)
+% NOTE: concat xfm method not working! Not sure why. (BD, 11/11/20)
     pathsToDelete = [pathsToDelete inputT2_2InputT1Xfm];
 end
 
@@ -268,27 +278,27 @@ end
 fprintf('%s\n',['Step 4: Nonlinear registration to MNI          - ' inputNameGeneric]);
 % Define output paths
 inputT1Path = outputT1Path;
-outputT1PathStandard = fpp.bids.changeName(inputT1Path,{'space','desc'},{standardName,''});
-outputMaskPath = fpp.bids.changeName(inputT1Path,{'desc'},{'nonlinearInitBrain'},'mask');
-individual2StandardXfmLinear = fpp.bids.changeName(inputT1Path,{'from','to','mode','space','desc'},...
-    {'individual',standardName,'image','',''},'xfm','.mat');
-individual2StandardXfm = fpp.bids.changeName(inputT1Path,{'from','to','mode','space','desc'},...
-    {'individual',standardName,'image','',''},'xfm','.nii.gz');
-standard2IndividualXfmLinear = fpp.bids.changeName(individual2StandardXfmLinear,{'from','to'},{standardName,'individual'});
+outputMaskPath = fpp.bids.changeName(inputT1Path,{'desc'},{'brainMNI'},'mask');
+individual2StandardXfmLinear = fpp.bids.changeName(inputT1Path,{'from','to','mode','space','desc','res'},...
+    {'individual',standardName,'image','','',''},'xfm','.mat');
+individual2StandardXfm = fpp.bids.changeName(inputT1Path,{'from','to','mode','space','desc','res'},...
+    {'individual',standardName,'image','','',''},'xfm','.nii.gz');
+standard2IndividualXfmLinear = fpp.bids.changeName(individual2StandardXfmLinear,...
+    {'from','to'},{standardName,'individual'});
 standard2IndividualXfm = fpp.bids.changeName(individual2StandardXfm,{'from','to'},{standardName,'individual'});
-% Compute initial FLIRT/FNIRT 2 standard transforms
-fpp.fsl.flirt(inputT1Path,standardPath2mm,individual2StandardXfmLinear,[],'dof',12);
-fpp.fsl.fnirt(inputT1Path,standardPath2mm,'aff',individual2StandardXfmLinear,'refmask',...
-    standardMask,'cout',individual2StandardXfm,'iout',outputT1PathStandard,...
-    'config',[getenv('FSLDIR') '/etc/flirtsch/T1_2_MNI152_2mm.cnf']);
+% Compute FNIRT-based T1 to MNI transformation
+fpp.fsl.flirt(inputT1Path,standardPathFuncRes,individual2StandardXfmLinear,[],'dof',12);
+fpp.fsl.fnirt(inputT1Path,standardPathFuncRes,'aff',individual2StandardXfmLinear,'refmask',...
+    standardMask,'cout',individual2StandardXfm,'config',[getenv('FSLDIR') '/etc/flirtsch/T1_2_MNI152_2mm.cnf']);
 fpp.fsl.invertXfm(individual2StandardXfmLinear,standard2IndividualXfmLinear);
-fpp.fsl.invertWarp(individual2StandardXfm,standard2IndividualXfm,standardPath2mm);  % Using 2mm reference for speed, since images are in same space
+% Using func resolution reference for speed, since images are in same space
+fpp.fsl.invertWarp(individual2StandardXfm,standard2IndividualXfm,standardPathFuncRes);
 % Define rough brain mask, by transforming dilated MNI space mask
 fpp.fsl.moveImage(standardMask,inputT1Path,outputMaskPath,[],'warp',...
     standard2IndividualXfm,'rel',1,'interp','nn');
 fpp.bids.jsonReconstruct(inputT1Path,outputMaskPath,'mri');
 fpp.bids.jsonChangeValue(outputMaskPath,{'Description','Sources','Type'},...
-    {'Initial brain mask for anatomical, generated by whole-head FNIRT registration to MNI.',...
+    {'Initial brain mask for anatomical, generated by FNIRT-based registration to MNI.',...
     fpp.bids.removeBidsDir(inputT1Path),'Brain'});
 
 
@@ -325,6 +335,13 @@ else
     fpp.util.copyImageAndJson(inputT1Path,outputT1Path,'mri');
     fpp.bids.jsonChangeValue(outputT1Path,'Description',...
         'Anatomical data preprocessed by fmriPermPipe.');
+end
+% Warp preprocessed anatomicals to MNI space
+outputT1PathStandard = fpp.bids.changeName(outputT1Path,{'space','res'},{standardName,funcResolution});
+fpp.fsl.moveImage(outputT1Path,standardPathFuncRes,outputT1PathStandard,[],'warp',individual2StandardXfm,'rel',1);
+if usingT2
+    outputT2PathStandard = fpp.bids.changeName(outputT2Path,{'space','res'},{standardName,funcResolution});
+    fpp.fsl.moveImage(outputT2Path,standardPathFuncRes,outputT2PathStandard,[],'warp',individual2StandardXfm,'rel',1);
 end
 
 

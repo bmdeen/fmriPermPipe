@@ -35,6 +35,10 @@ fpp.util.checkConfig;
 % Use tab indentation for JSON outputs
 jsonOpts.indent = '\t';
 
+% Parameters
+funcResolution = '2';   % Resolution of down-sampled anatomical for functional analysis
+                        % Other options may be added later; this is currently the only working option
+
 % Variable arguments
 overwrite = 0;
 
@@ -103,8 +107,8 @@ if ~exist(inputT2Path,'file'), inputT2Path = []; end
 
 midthickPaths{1} = fpp.bids.changeName(inputT1Path,{'hemi','den','desc','res'},{'L','native',[],[]},'midthickness','.surf.gii');
 midthickPaths{2} = fpp.bids.changeName(midthickPaths{1},'hemi','R');
-individual2FsnativeXfm = fpp.bids.changeName(inputT1Path,{'desc','space','from','to','mode'},...
-    {[],[],'individual','fsnative','image'},'xfm','.mat');
+individual2FsnativeXfm = fpp.bids.changeName(inputT1Path,{'desc','space','from','to','mode','res'},...
+    {[],[],'individual','fsnative','image',[]},'xfm','.mat');
 fsnative2IndividualXfm = fpp.bids.changeName(individual2FsnativeXfm,{'from','to'},{'fsnative','individual'});
 
 for h=1:2
@@ -112,8 +116,8 @@ for h=1:2
     fsLRSpherePaths{h}{2} = strrep(fsLRSpherePaths{h}{1},'den-32k','den-164k');
 end
 
-standardName = 'MNI152NLin6ASym';
-standardPath2mmBrain = [anatPreprocDir '/space-MNI152Nlin6Asym_res-2_desc-brain_T1w.nii.gz'];
+standardSpace = 'MNI152NLin6ASym';
+standardPathFuncResBrain = [anatPreprocDir '/space-' standardSpace '_res-' funcResolution '_desc-brain_T1w.nii.gz'];
 
 
 
@@ -135,7 +139,7 @@ fpp.util.system(['cp ' dataDir '/desc-freesurfer_lut.txt ' anatPreprocDir '/desc
 % Convert parcs to individual
 for p=1:length(parcs)
     inputPath = [mriDir '/' parcs{p} '.nii.gz'];
-    outputPath = fpp.bids.changeName(inputT1Path,{'desc','res'},{parcs{p},[]},'dseg','.nii.gz');
+    outputPath = fpp.bids.changeName(inputT1Path,'desc',parcs{p},'dseg','.nii.gz');
     fpp.fs.mriConvert(strrep(inputPath,'.nii.gz','.mgz'),inputPath);  % Convert orig to .nii.gz
     fpp.fsl.moveImage(inputPath,inputT1Path,outputPath,fsnative2IndividualXfm,'interp','nn');
     fpp.wb.command('volume-label-import',outputPath,[anatPreprocDir '/desc-freesurfer_lut.txt'],outputPath,'-drop-unused-labels');
@@ -145,16 +149,17 @@ for p=1:length(parcs)
     bids.util.jsonencode(fpp.bids.jsonPath(outputPath),jsonData,jsonOpts);
 end
 % Define brain mask
-maskPath = fpp.bids.changeName(inputT1Path,{'desc','res'},{'brainFS',[]},'mask','.nii.gz');
+maskPath = fpp.bids.changeName(inputT1Path,{'desc'},{'brainFS'},'mask','.nii.gz');
 fpp.fsl.maths(wmPath,'-bin -dilD -dilD -dilD -ero -ero',maskPath);
+fpp.bids.jsonChangeValue(maskPath,'Type','Brain');
 fpp.wb.command('volume-fill-holes',maskPath,[],maskPath);
 fpp.fsl.maths(maskPath,'-bin',maskPath);
 % Convert vmPFCLarge ROI from MNI to individual, add to FS brain mask
-% Goal: ensure that none of vmPFC gray matter is excluded.
+% Goal: ensure that none of vmPFC gray matter is excluded, despite issues with FS recon in this area
 standard2IndividualXfm = fpp.bids.changeName(inputT1Path,{'from','to','mode','space','desc','res'},...
-    {standardName,'individual','image','','',[]},'xfm','.nii.gz');
+    {standardSpace,'individual','image','','',[]},'xfm','.nii.gz');
 vmPFCMaskPathStd = [dataDir '/space-MNI152Nlin6Asym_res-2_desc-vmPFCLarge_mask.nii.gz'];
-vmPFCMaskPath = fpp.bids.changeName(inputT1Path,{'desc','res'},{'vmPFCLarge',[]},'mask','.nii.gz');
+vmPFCMaskPath = fpp.bids.changeName(inputT1Path,{'desc'},{'vmPFCLarge'},'mask','.nii.gz');
 fpp.fsl.moveImage(vmPFCMaskPathStd,inputT1Path,vmPFCMaskPath,[],'warp',...
     standard2IndividualXfm,'rel',1,'interp','nn');
 fpp.fsl.maths(maskPath,['-add ' vmPFCMaskPath ' -bin'],maskPath);
@@ -169,19 +174,41 @@ fpp.fsl.maths(maskPath,'-dilD',fpp.bids.changeName(maskPath,'desc','brainFSdil1'
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 3: Process subcortical ROIs
+%%% STEP 3: Generate segment masks
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fprintf('%s\n',['Step 3, Process subcortical ROIs               - ' subjID]);
-subCortROIName = 'space-MNI152Nlin6Asym_res-2_desc-subcorticalAtlas_dseg.nii.gz';
-subCortROIIndivPath = fpp.bids.changeName(wmPath,'desc','subcortical');
-subCortROIMNIPath = [anatPreprocDir '/' subCortROIName];
-fpp.util.copyImageAndJson([dataDir '/space-MNI152Nlin6Asym_res-2_desc-brain_T1w.nii.gz'],standardPath2mmBrain);
-fpp.util.copyImageAndJson([dataDir '/' subCortROIName],subCortROIMNIPath);
-fpp.fsl.maths(wmPath,' -uthr 100',subCortROIIndivPath);
-fpp.wb.command('volume-label-import',subCortROIIndivPath,[anatPreprocDir '/desc-freesurfer_lut.txt'],...
-    subCortROIIndivPath,'-drop-unused-labels');
-fpp.wb.command('volume-label-import',subCortROIMNIPath,[anatPreprocDir '/desc-freesurfer_lut.txt'],...
-    subCortROIMNIPath,'-drop-unused-labels');
+fprintf('%s\n',['Step 3, Generate segment masks                 - ' subjID]);
+roiNames = {'gm','wm','csf'};
+flagStrs = {'--gm','--ctx-wm','--ventricles'};
+parcVolPath = fpp.bids.changeName(wmPath,'desc','aparc+aseg');
+for r=1:length(roiNames)
+    roiPath = fpp.bids.changeName(parcVolPath,'desc',roiNames{r},'mask');
+    fpp.util.system(['mri_binarize --i ' parcVolPath ' --o ' roiPath ' ' flagStrs{r}]);
+    fpp.bids.jsonReconstruct(parcVolPath,roiPath);
+    fpp.bids.jsonChangeValue(roiPath,'Description',['Freesurfer-derived ' roiNames{r} ' mask.']);
+end
+% MNI subcortical dseg
+subcortSegName = ['space-' standardSpace '_res-' funcResolution '_desc-subcorticalAtlas_dseg.nii.gz'];
+subcortSegMNIPath = [anatPreprocDir '/' subcortSegName];
+fpp.util.copyImageAndJson([dataDir '/space-' standardSpace '_res-' funcResolution...
+    '_desc-brain_T1w.nii.gz'],standardPathFuncResBrain);
+fpp.util.copyImageAndJson([dataDir '/' subcortSegName],subcortSegMNIPath);
+fpp.wb.command('volume-label-import',subcortSegMNIPath,[anatPreprocDir '/desc-freesurfer_lut.txt'],...
+    subcortSegMNIPath,'-drop-unused-labels');
+% Subcortical dseg
+subcortSegIndivPath = fpp.bids.changeName(wmPath,'desc','subcortical');
+fpp.fsl.maths(wmPath,[' -uthr 100 -mul ' fpp.bids.changeName(roiPath,'desc','gm')],subcortSegIndivPath);
+fpp.wb.command('volume-label-import',subcortSegIndivPath,[anatPreprocDir '/desc-freesurfer_lut.txt'],...
+    subcortSegIndivPath,'-drop-unused-labels');
+% Subcortical GM
+subcortROIPath = fpp.bids.changeName(roiPath,'desc','gmsubcortical');
+fpp.fsl.maths(subcortSegIndivPath,'-bin',subcortROIPath);
+fpp.bids.jsonReconstruct(parcVolPath,subcortROIPath);
+fpp.bids.jsonChangeValue(subcortROIPath,'Description','Freesurfer-derived subcortical gm mask.');
+% Cortical GM
+cortROIPath = fpp.bids.changeName(roiPath,'desc','gmcortical');
+fpp.fsl.maths(fpp.bids.changeName(roiPath,'desc','gm'),['-sub ' subcortROIPath ' -thr 0'],cortROIPath);
+fpp.bids.jsonReconstruct(parcVolPath,cortROIPath);
+fpp.bids.jsonChangeValue(cortROIPath,'Description','Freesurfer-derived cortical gm mask.');
 
 
 
@@ -228,7 +255,7 @@ for h=1:2
     [~,nVerts] = fpp.util.system(['wb_command -file-information ' midthickPaths{h} ...
          ' | grep ''Number of Vertices:'' | cut -f2 -d: | tr -d ''[:space:]''']);
     nVerts = str2num(strtrim(nVerts));
-    nativeInflationScale = .75*nVerts/32492; % HCP fsLR32k used 0.75. Scale this for native mesh density
+    nativeInflationScale = .75*nVerts/32492; % HCP fsLR 32k used 0.75. Scale this for native mesh density
     fpp.wb.command('surface-generate-inflated',midthickPaths{h},fpp.bids.changeName(midthickPaths{h},[],[],'inflated'),...
         fpp.bids.changeName(midthickPaths{h},[],[],'vinflated'),['-iterations-scale ' num2str(nativeInflationScale)]);
 end
@@ -385,7 +412,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% STEP 9: Resample to fsLR
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fprintf('%s\n',['Step 9, Resample to fsLR                      - ' subjID]);
+fprintf('%s\n',['Step 9, Resample to fsLR                       - ' subjID]);
 surfaces = {'white','pial','midthickness'};
 parcs = {'aparc','aparc.a2009s','medialwall'};
 for h=1:2
@@ -500,6 +527,10 @@ if exist(hcpAtlasDir,'dir')
     parcFiles = {'Q1-Q6_RelatedValidation210.CorticalAreas_dil_Final_Final_Areas_Group_Colors.32k_fs_LR.dlabel.nii',...
         'RSN-networks.32k_fs_LR.dlabel.nii','Gordon333.32k_fs_LR.dlabel.nii'};
     parcNames = {'MMP','RSN','Gordon'};
+    parcDescriptions = {'Multimodal parcellation from Glasser et al. 2016, "A multi-modal parcellation of human cerebral cortex"',...
+        ['Resting-state network parcellation from Yeo et al. 2011, "The organization of the human cerebral cortex'...
+        ' estimated by intrinsic funcitonal connectivity"'],['Resting-state network parcellation from Gordon et al.'...
+        ' 2016, "Generation and evaluation of a cortical area parcellation from resting-state correlations"']};
     borderFiles = {'Q1-Q6_RelatedValidation210.L.CorticalAreas_dil_Final_Final_Areas_Group.32k_fs_LR.border',...
         'Q1-Q6_RelatedValidation210.R.CorticalAreas_dil_Final_Final_Areas_Group.32k_fs_LR.border'};
     templatePath = fpp.bids.changeName(sulcPaths{1},{'hemi','space','den'},...
@@ -507,6 +538,8 @@ if exist(hcpAtlasDir,'dir')
     jsonData = struct();
     jsonData.SpatialRef = 'fsLR';
     jsonData.Density = densityJson;
+    jsonDataVol = struct();
+    jsonDataVol.SpatialRef = inputT1Path;
     for h=1:2                   % Surfaces
         for s=1:length(surfaces)
             outputPath = fpp.bids.changeName(midthickPaths{h},{'sub','space','den','desc'},...
@@ -537,12 +570,15 @@ if exist(hcpAtlasDir,'dir')
             {[],'fsLR','32k',parcNames{p},''},'dseg','.dlabel.nii');
         outputPathNative=fpp.bids.changeName(outputPath,{'sub','space','den'},{subjID,'individual','native'});
         fpp.util.system(['cp ' hcpAtlasDir '/' parcFiles{p} ' ' outputPath]);
-        bids.util.jsonencode(fpp.bids.jsonPath(outputPath),jsonData,jsonOpts);
+        jsonDataParc = jsonData;
+        jsonDataParc.Description = parcDescriptions{p};
+        bids.util.jsonencode(fpp.bids.jsonPath(outputPath),jsonDataParc,jsonOpts);
         fpp.wb.command('cifti-resample',outputPath,['COLUMN ' templatePath ' COLUMN BARYCENTRIC TRILINEAR'],...
             outputPathNative,['-left-spheres ' fsLRSpherePaths{1}{1} ' ' sphereRegFsLRPaths{1} ' '...
             '-right-spheres ' fsLRSpherePaths{2}{1} ' ' sphereRegFsLRPaths{2} ' -surface-largest']);
         % Convert parc to volume
-        parcVolPath = fpp.bids.changeName(outputPath,{'sub','space','den'},{subjID,'individual',[]},[],'.nii.gz');
+        parcVolPath = fpp.bids.changeName(inputT1Path,'desc',parcNames{p},'dseg','.nii.gz');
+        %parcVolPath = fpp.bids.changeName(outputPath,{'sub','space','den'},{subjID,'individual',[]},[],'.nii.gz');
         parcLUTPath = [anatPreprocDir '/desc-' parcNames{p} '_lut.txt'];
         for h=1:2
             parcSurfPaths{h} = fpp.bids.changeName(outputPath,'hemi',Hemis{h},[],'.label.gii');
@@ -559,6 +595,9 @@ if exist(hcpAtlasDir,'dir')
        fpp.fsl.maths(parcVolPaths{1},['-add ' parcVolPaths{2}],parcVolPath);
        fpp.wb.command('cifti-label-export-table',outputPath,'1',parcLUTPath);
        fpp.wb.command('volume-label-import',parcVolPath,parcLUTPath,parcVolPath,'-drop-unused-labels');
+       jsonDataVolParc = jsonDataVol;
+       jsonDataVolParc.Description = parcDescriptions{p};
+       bids.util.jsonencode(fpp.bids.jsonPath(parcVolPath),jsonDataParc,jsonOpts);
        for h=1:2
            fpp.util.system(['rm -rf ' parcSurfPaths{h} ' ' parcVolPaths{h}]);
            if exist(fpp.bids.jsonPath(parcSurfPaths{h}),'file')
@@ -586,10 +625,10 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% STEP 11: Generate spec files
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fprintf('%s\n',['Step 12, Generate spec files                   - ' subjID]);
-volumeFiles = {inputT1Path,inputT1Path,standardPath2mmBrain};     % Add MNI-registered anatomical volumes for third space
+fprintf('%s\n',['Step 11, Generate spec files                   - ' subjID]);
+volumeFiles = {inputT1Path,inputT1Path,standardPathFuncResBrain};     % Add MNI-registered anatomical volumes for third space
 volumeFiles2 = {inputT2Path,inputT2Path,[]};
-subCortROIFiles = {subCortROIIndivPath,subCortROIIndivPath,subCortROIMNIPath};
+subcortSegFiles = {subcortSegIndivPath,subcortSegIndivPath,subcortSegMNIPath};
 surfaceSpaces = {'individual','individual','fsLR'};
 surfaceDensities = {'native','32k','32k'};
 surfaceSubjIDs = {subjID,subjID,[]};
@@ -618,8 +657,8 @@ for s=1:length(surfaceSpaces)
     if ~isempty(volumeFiles2{s})
         fpp.wb.command('add-to-spec-file',specPath,'INVALID',volumeFiles2{s});
     end
-    if ~isempty(subCortROIFiles{s})
-        fpp.wb.command('add-to-spec-file',specPath,'INVALID',subCortROIFiles{s});
+    if ~isempty(subcortSegFiles{s})
+        fpp.wb.command('add-to-spec-file',specPath,'INVALID',subcortSegFiles{s});
     end
     % Add surfaces
     for h=1:2
@@ -679,17 +718,44 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 12: Generate GM/WM/CSF masks
+%%% STEP 12: Downsample to functional resolution
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fprintf('%s\n',['Step 12, Generate gm/wm/csf masks              - ' subjID]);
-roiNames = {'gm','wm','csf'};
-flagStrs = {'--gm','--ctx-wm','--ventricles'};
-parcVolPath = fpp.bids.changeName(wmPath,'desc','aparc+aseg');
-for r=1:length(roiNames)
-    roiPath = fpp.bids.changeName(parcVolPath,'desc',roiNames{r},'mask');
-    fpp.util.system(['mri_binarize --i ' parcVolPath ' --o ' roiPath ' ' flagStrs{r}]);
-    fpp.bids.jsonReconstruct(parcVolPath,roiPath);
-    fpp.bids.jsonChangeValue(roiPath,'Description',['Freesurfer-derived ' roiNames{r} ' mask.']);
+fprintf('%s\n',['Step 12, Downsample to functional resolution   - ' subjID]);
+volumePaths = {inputT1Path,fpp.bids.changeName(inputT1Path,'desc','preprocBrain')};
+nn = [0 0]; % Whether to use nearest neighbor interpolation
+if ~isempty(inputT2Path)
+    volumePaths = [volumePaths {inputT2Path,fpp.bids.changeName(inputT2Path,'desc','preprocBrain')}];
+    nn = [nn 0 0];
+end
+parcNames = {'wmparc','aparc+aseg','aparc.a2009s+aseg','subcortical','Gordon','MMP','RSN'};
+for p=1:length(parcNames)
+    parcVolPath = fpp.bids.changeName(wmPath,'desc',parcNames{p});
+    if exist(parcVolPath,'file')
+        volumePaths{end+1} = parcVolPath;
+    end
+    nn = [nn 1];
+end
+maskNames = {'brainFS','brainFSdil1','gm','csf','wm','gmcortical','gmsubcortical'};
+for m=1:length(maskNames)
+    maskVolPath = fpp.bids.changeName(maskPath,'desc',maskNames{m});
+    if exist(maskVolPath,'file')
+        volumePaths{end+1} = maskVolPath;
+    end
+    nn = [nn 1];
+end
+for v=1:length(volumePaths)
+    inputPath = volumePaths{v};
+    outputPath = fpp.bids.changeName(inputPath,'res',funcResolution);
+    if sum(regexp(inputPath,'brainFSdil1'))>0
+        outputPath = fpp.bids.changeName(outputPath,'desc','brain');
+    end
+    if nn(v)
+        interpStr = 'nn';
+    else
+        interpStr = 'trilinear';
+    end
+    fpp.fsl.moveImage(inputPath,standardPathFuncResBrain,outputPath,...
+        [dataDir '/eye.mat'],'interp',interpStr);
 end
 
 end
