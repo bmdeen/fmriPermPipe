@@ -103,6 +103,7 @@ if strcmp(outputJsonPath,outputPath)
     error('fpp.bids.jsonReconstruct must be run on data file, not json file.');
 end
 inputJsonData = fpp.bids.getMetadata(inputPath);
+if isempty(inputJsonData), return; end
 outputJsonData = struct();
 
 if keepAllFields
@@ -115,6 +116,7 @@ else
         end
     end
 end
+if isempty(fieldnames(outputJsonData)), return; end
 
 bids.util.jsonencode(outputJsonPath,outputJsonData,jsonOpts);
 

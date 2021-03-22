@@ -14,7 +14,7 @@ zMap = tMap;
 zMap.vol = reshape(zVec,size(zMap.vol));
 fpp.util.mriWrite(zMap,outputPath);
 
-if ~isempty(fieldnames(fpp.bids.getMetadata(inputPath)))
+if ~isempty(fpp.bids.getMetadata(inputPath))
     fpp.bids.jsonReconstruct(inputPath,outputPath);
 end
 

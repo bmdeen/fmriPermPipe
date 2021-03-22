@@ -12,7 +12,7 @@ cmd = ['convert_xfm -omat ' outputXfm ' -inverse ' inputXfm];
 fpp.util.system(cmd);
 
 % Write json output files
-if ~isempty(fieldnames(fpp.bids.getMetadata(inputXfm)))
+if ~isempty(fpp.bids.getMetadata(inputXfm))
     fpp.bids.jsonReconstruct(inputXfm,outputXfm,'xfm');
     jsonData = fpp.bids.getMetadata(fpp.bids.jsonPath(inputXfm));
     fpp.bids.jsonChangeValue(outputXfm,{'FromFile','ToFile','CommandLine'},...

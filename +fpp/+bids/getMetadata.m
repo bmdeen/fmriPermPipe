@@ -1,5 +1,6 @@
 
-% Wrapper for bids-matlab function get_metadata
+% Wrapper for bids-matlab function get_metadata. Returns empty if no
+% metadata is found.
 %
 % meta = fpp.bids.getMetadata(filename)
 
@@ -23,5 +24,9 @@ end
 if ~fpp.bids.validFilename(filename), return; end
 
 meta = bids.internal.get_metadata(filename);
+
+if isempty(fieldnames(meta))
+    meta = [];
+end
 
 return

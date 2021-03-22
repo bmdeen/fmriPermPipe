@@ -18,7 +18,7 @@ end
 cmd = ['mri_convert ' flagText ' ' inputPath ' ' outputPath];
 fpp.util.system(cmd);
 
-if ~strcmp(inputName,outputName) && ~isempty(fieldnames(fpp.bids.getMetadata(inputPath)))
+if ~strcmp(inputName,outputName) && ~isempty(fpp.bids.getMetadata(inputPath))
     fpp.bids.jsonReconstruct(inputPath,outputPath);
 end
 

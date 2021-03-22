@@ -85,7 +85,7 @@ fpp.util.system(['cp ' tmpDir '/bias.nii.gz ' outputBiasPath]);
 fpp.util.system(['rm -rf ' tmpDir]);
 
 % Copy / modify json file, if it exists
-if ~isempty(fieldnames(fpp.bids.getMetadata(inputT1PathOrig)))
+if ~isempty(fpp.bids.getMetadata(inputT1PathOrig))
     fpp.bids.jsonReconstruct(inputT1PathOrig,outputBiasPath,'mri');
     fpp.bids.jsonChangeValue(outputBiasPath,'Description',...
         outputDescription,appendDescription);
