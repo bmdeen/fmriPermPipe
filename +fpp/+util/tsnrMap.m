@@ -6,7 +6,7 @@ function tsnrMap(inputPath,outputPath,outputDescription)
 % Define i/o directories/names
 [inputDir,inputName,~] = fpp.util.fileParts(inputPath);
 if isempty(inputDir), inputDir = pwd; end
-if ~exist('outputPath','var')
+if ~exist('outputPath','var') || isempty(outputPath)
     outputPath = [inputDir '/' strrep(inputName,'_bold','') '_tsnr.nii.gz'];
 end
 [outputDir,~,~] = fpp.util.fileParts(outputPath);
@@ -23,7 +23,7 @@ fpp.util.system(['rm -rf ' inputDir '/input_mean2350982452.nii.gz ' inputDir '/i
 if ~isempty(fpp.bids.getMetadata(inputPath))
     fpp.bids.jsonReconstruct(inputPath,outputPath,'mri');
     if exist('outputDescription','var') && ischar(outputDescription)
-        fpp.bids.jsonChangeValue(outputPath,'Description',outputDesciption);
+        fpp.bids.jsonChangeValue(outputPath,'Description',outputDescription);
     else
         fpp.bids.jsonChangeValue(outputPath,'Description','- tSNR map',1);
     end

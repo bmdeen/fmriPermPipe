@@ -93,8 +93,6 @@ types2 = {'GRAY_WHITE','PIAL'};
 shapes = {'sulc','thickness','curv'};
 mapNames = {'Sulc','Thickness','Curvature'};
 
-parcs = {'wmparc','aparc+aseg','aparc.a2009s+aseg'};    % Volumetric parcs
-
 % Paths
 mriDir = [fsSubDir '/mri'];
 surfDir = [fsSubDir '/surf'];
@@ -136,6 +134,7 @@ fpp.fsl.invertXfm(individual2FsnativeXfm,fsnative2IndividualXfm);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fprintf('%s\n',['Step 2, Convert volumetric files to individual - ' subjID]);
 fpp.util.system(['cp ' dataDir '/desc-freesurfer_lut.txt ' anatPreprocDir '/desc-freesurfer_lut.txt']);
+parcs = {'wmparc','aparc+aseg','aparc.a2009s+aseg'};    % Volumetric parcs
 % Convert parcs to individual
 for p=1:length(parcs)
     inputPath = [mriDir '/' parcs{p} '.nii.gz'];
@@ -526,7 +525,7 @@ if exist(hcpAtlasDir,'dir')
     surfacesHCPSuffix = {'_MSMAll','_MSMAll','_MSMAll','_MSMAll','_MSMAll','',''};
     parcFiles = {'Q1-Q6_RelatedValidation210.CorticalAreas_dil_Final_Final_Areas_Group_Colors.32k_fs_LR.dlabel.nii',...
         'RSN-networks.32k_fs_LR.dlabel.nii','Gordon333.32k_fs_LR.dlabel.nii'};
-    parcNames = {'MMP','RSN','Gordon'};
+    parcs = {'MMP','RSN','Gordon'};
     parcDescriptions = {'Multimodal parcellation from Glasser et al. 2016, "A multi-modal parcellation of human cerebral cortex"',...
         ['Resting-state network parcellation from Yeo et al. 2011, "The organization of the human cerebral cortex'...
         ' estimated by intrinsic funcitonal connectivity"'],['Resting-state network parcellation from Gordon et al.'...
@@ -565,9 +564,9 @@ if exist(hcpAtlasDir,'dir')
         fpp.wb.command('cifti-math',[],'metric * mask',outputPathNative,['-var metric ' outputPathNative...
             ' -var mask ' fpp.bids.changeName(maskPaths{1},'hemi',[],[],'.dscalar.nii')]);  % Mask with cortex ROI
     end
-    for p=1:length(parcNames)   % Parcellations
+    for p=1:length(parcs)   % Parcellations
         outputPath=fpp.bids.changeName(sulcPaths{h},{'sub','space','den','desc','hemi'},...
-            {[],'fsLR','32k',parcNames{p},''},'dseg','.dlabel.nii');
+            {[],'fsLR','32k',parcs{p},''},'dseg','.dlabel.nii');
         outputPathNative=fpp.bids.changeName(outputPath,{'sub','space','den'},{subjID,'individual','native'});
         fpp.util.system(['cp ' hcpAtlasDir '/' parcFiles{p} ' ' outputPath]);
         jsonDataParc = jsonData;
@@ -577,9 +576,9 @@ if exist(hcpAtlasDir,'dir')
             outputPathNative,['-left-spheres ' fsLRSpherePaths{1}{1} ' ' sphereRegFsLRPaths{1} ' '...
             '-right-spheres ' fsLRSpherePaths{2}{1} ' ' sphereRegFsLRPaths{2} ' -surface-largest']);
         % Convert parc to volume
-        parcVolPath = fpp.bids.changeName(inputT1Path,'desc',parcNames{p},'dseg','.nii.gz');
+        parcVolPath = fpp.bids.changeName(inputT1Path,'desc',parcs{p},'dseg','.nii.gz');
         %parcVolPath = fpp.bids.changeName(outputPath,{'sub','space','den'},{subjID,'individual',[]},[],'.nii.gz');
-        parcLUTPath = [anatPreprocDir '/desc-' parcNames{p} '_lut.txt'];
+        parcLUTPath = [anatPreprocDir '/desc-' parcs{p} '_lut.txt'];
         for h=1:2
             parcSurfPaths{h} = fpp.bids.changeName(outputPath,'hemi',Hemis{h},[],'.label.gii');
             parcVolPaths{h} = fpp.bids.changeName(outputPath,{'hemi','den'},{Hemis{h},''},[],'.nii.gz');
@@ -640,11 +639,11 @@ sphereDensities = {'native','32k','32k'};
 metricSpaces = {'individual','fsLR','fsLR'};
 metrics = {'sulc','thickness','curv','distortion','distortion','sulc','thickness','curv'};    % Metric files to add to specs
 metricDescs = {'','','','reg2fsLRareal','reg2fsLRedge','HCP1200Atlas','HCP1200Atlas','HCP1200Atlas'};              % Metric descriptions
-parcNames = {'medialwall','medialwallAtlas','aparc','aparc.a2009s','MMP','RSN','Gordon'};
+parcs = {'medialwall','medialwallAtlas','aparc','aparc.a2009s','MMP','RSN','Gordon'};
 if ~hcpDirExists
     surfaceSpaces = surfaceSpaces(1:2); % Only use S1200 space if atlas files exist
     metrics = metrics(1:5);
-    parcNames = parcNames(1:4);
+    parcs = parcs(1:4);
 end
 for s=1:length(surfaceSpaces)
     specPath = fpp.bids.changeName(midthickPaths{1},{'hemi','space','den'},{[],surfaceSpaces{s},...
@@ -687,13 +686,13 @@ for s=1:length(surfaceSpaces)
             metricDescs{i}},metrics{i},'.dscalar.nii'));
     end
     % Add CIFTI label files
-    for i=1:length(parcNames)
+    for i=1:length(parcs)
         subLabel = subjID;
-        if ismember(parcNames{i},{'medialwallAtlas','MMP','RSN','Gordon'}) ...
+        if ismember(parcs{i},{'medialwallAtlas','MMP','RSN','Gordon'}) ...
                 && strcmp(metricSpaces{s},'fsLR'), subLabel = ''; end
         fpp.wb.command('add-to-spec-file',specPath,'INVALID',fpp.bids.changeName(sulcPaths{1},...
             {'sub','hemi','space','den','desc'},{subLabel,[],metricSpaces{s},surfaceDensities{s},...
-            parcNames{i}},'dseg','.dlabel.nii'));
+            parcs{i}},'dseg','.dlabel.nii'));
     end
     % Add border/annot files
     if hcpDirExists
@@ -727,9 +726,9 @@ if ~isempty(inputT2Path)
     volumePaths = [volumePaths {inputT2Path,fpp.bids.changeName(inputT2Path,'desc','preprocBrain')}];
     nn = [nn 0 0];
 end
-parcNames = {'wmparc','aparc+aseg','aparc.a2009s+aseg','subcortical','Gordon','MMP','RSN'};
-for p=1:length(parcNames)
-    parcVolPath = fpp.bids.changeName(wmPath,'desc',parcNames{p});
+parcs = {'wmparc','aparc+aseg','aparc.a2009s+aseg','subcortical','Gordon','MMP','RSN'};
+for p=1:length(parcs)
+    parcVolPath = fpp.bids.changeName(wmPath,'desc',parcs{p});
     if exist(parcVolPath,'file')
         volumePaths{end+1} = parcVolPath;
     end
@@ -756,6 +755,13 @@ for v=1:length(volumePaths)
     end
     fpp.fsl.moveImage(inputPath,standardPathFuncResBrain,outputPath,...
         [dataDir '/eye.mat'],'interp',interpStr);
+end
+% Erode downsampled wm and csf masks by 1 voxel
+maskNames = {'wm','csf'};
+for m=1:length(maskNames)
+    inputPath = fpp.bids.changeName(maskPath,{'desc','res'},{maskNames{m},funcResolution});
+    outputPath = fpp.bids.changeName(inputPath,'desc',[maskNames{m} 'ero1']);
+    fpp.fsl.maths(inputPath,'-ero',outputPath);
 end
 
 end

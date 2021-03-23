@@ -95,7 +95,7 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 1: Register func template to individiual
+%%% STEP 1: Register func template to individual
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fprintf('%s\n',['Step 1, Register func template to individual   - ' subjID]);
 fpp.fsl.flirt(funcTemplatePath,inputT1BrainPath,func2IndividualXfmInit,[],'dof',6);   % Initial FLIRT-based xfm
@@ -131,15 +131,15 @@ fprintf('%s\n',['Step 2, Move masks/parcs to func space         - ' subjID]);
 maskPath = fpp.bids.changeName(inputT1Path,'desc','brainFSdil1','mask','.nii.gz');
 maskPathFunc = fpp.bids.changeName(funcTemplatePath,{'desc','echo'},{'brain',[]},'mask','.nii.gz');
 fpp.fsl.moveImage(maskPath,funcTemplatePath,maskPathFunc,individual2FuncXfm,'interp','nn');
-% Move segment masks to func template space, and erode WM/CSF masks
-masks = {'gm','csf','wm','gmcortical','gmsubcortical'};
-for m=1:length(masks)
-    maskPath = fpp.bids.changeName(inputT1Path,'desc',masks{m},'mask','.nii.gz');
-    maskPathFunc = fpp.bids.changeName(funcTemplatePath,{'desc','echo'},{masks{m},[]},'mask','.nii.gz');
-    if exist(maskPath,'file')
-        fpp.fsl.moveImage(maskPath,funcTemplatePath,maskPathFunc,individual2FuncXfm,'interp','nn');
-        if sum(strcmp(masks{m},{'csf','wm'}))>0
-            fpp.fsl.maths(maskPath,'-ero',fpp.bids.changeName(maskPath,'desc',[masks{m} 'ero1']));
+% Move segment ROIs to func template space, and erode WM/CSF masks
+roiNames = {'gm','csf','wm','gmcortical','gmsubcortical'};
+for r=1:length(roiNames)
+    roiPath = fpp.bids.changeName(inputT1Path,'desc',roiNames{r},'mask','.nii.gz');
+    roiPathFunc = fpp.bids.changeName(funcTemplatePath,{'desc','echo'},{roiNames{r},[]},'mask','.nii.gz');
+    if exist(roiPath,'file')
+        fpp.fsl.moveImage(roiPath,funcTemplatePath,roiPathFunc,individual2FuncXfm,'interp','nn');
+        if sum(strcmp(roiNames{r},{'csf','wm'}))>0
+            fpp.fsl.maths(roiPath,'-ero',fpp.bids.changeName(roiPath,'desc',[roiNames{r} 'ero1']));
         end
     end
 end

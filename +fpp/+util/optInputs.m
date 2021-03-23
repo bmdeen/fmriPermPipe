@@ -31,7 +31,7 @@ if ismember(lower(argName),lower({'expt','inputSuffix','outputSuffix','funcTempl
         'regmod','jacrange','intmod','biasres','numprec','interp','warp','postmat',...
         'premat','midmat','mask','warp1','warp2','jacobian','confoundPath','outlierPath',...
         'analysisDir','fieldMapParamPath','topupWarpPath','topupJacobianPath','spinEchoPath',...
-        'filtType'}))
+        'filtType','templateType','templateRes','anatTemplatePath'}))
     if ischar(argVal)
         argGood = 1;
     else
@@ -46,7 +46,8 @@ elseif ismember(lower(argName),lower({'overwrite','clustCorrect','permuteRest',.
         'pcaUnsmoothed','removeBadVols','useSTC','useTedana','undistort',...
         'useTaskTemplate','applyxfm','imprefm','impinm','ssqlambda','refderiv',...
         'estint','verbose','abs','rel','absout','relout','super','usesqform',...
-        'constrainj','noconstraint','useDespike','nosearch','deleteMidprep'}))
+        'constrainj','noconstraint','useDespike','nosearch','deleteMidprep',...
+        'outputOptcomb'}))
     if (isnumeric(argVal) || islogical(argVal)) && isscalar(argVal) && ismember(argVal,[0 1])
         argGood = 1;
     else
@@ -71,7 +72,7 @@ elseif ismember(lower(argName),lower({'nuisanceType'}))
     
 % Scalar integer in [0,Inf)
 elseif ismember(lower(argName),lower({'tptsAfter','disdaqs','looRun','pcaOrder',...
-        'superlevel','paddingsize','randSeed','permIters'}))
+        'superlevel','paddingsize','randSeed','permIters','nComps'}))
     if isnumeric(argVal) && isscalar(argVal) && mod(argVal,1)==0 && argVal>=0
         argGood = 1;
     else
@@ -121,7 +122,7 @@ elseif ismember(lower(argName),lower({'upsampledTR','smThresh'}))
     
 % Scalar in (0,Inf]
 elseif ismember(lower(argName),lower({'transCutoff','rotCutoff','transSingleAxisCutoff',...
-        'rotSingleAxisCutoff','stdCutoff'}))
+        'rotSingleAxisCutoff','stdCutoff','fdCutoff'}))
     if isnumeric(argVal) && isscalar(argVal) && argVal>0
         argGood = 1;
     else

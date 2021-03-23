@@ -1,9 +1,11 @@
 
-% Function to estimate head motion using FSL's MCFLIRT
+% Function to estimate head motion using FSL's MCFLIRT. Generates
+% transformation matrices to be used for later one-shot motion and
+% distortion correction.
 %
-% motionParams = fpp.func.preproc.estimateHeadMotion(inputPath,outputDir,moCorrTargetVolNum)
+% confoundTSV = fpp.func.preproc.estimateHeadMotion(inputPath,outputDir,moCorrTargetVolNum)
 
-function motionParams = estimateHeadMotion(inputPath,outputDir,moCorrTargetVolNum)
+function confoundTSV = estimateHeadMotion(inputPath,outputDir,moCorrTargetVolNum)
 
 % TODO:
 % - Add definition of json file sidecar for confounds.tsv.
@@ -14,10 +16,6 @@ if ~exist('moCorrTargetVolNum','var')
 end
 [~,inputName,inputExt] = fpp.util.fileParts(inputPath);
 mcBase = [outputDir '/' strrep(inputName,'_bold','') '_motion'];
-confoundFile = [outputDir '/../' fpp.bids.changeName([inputName inputExt],{'desc','echo'},{[],[]},'confounds','.tsv')];
-if exist(confoundFile,'file')
-    tsvData = bids.util.tsvread(confoundFile);
-end
 
 % Run FSL's MCFLIRT
 fpp.util.system(['mcflirt -in ' inputPath ' -out ' mcBase ...
@@ -26,28 +24,25 @@ fpp.util.system(['mcflirt -in ' inputPath ' -out ' mcBase ...
 % Load motion parameters
 motionParams = load([mcBase '.par']);
 
-% Add motion params to confounds.tsv data (rotation in degrees)
-tsvData.rot_x = motionParams(:,1)*180/pi;
-tsvData.rot_y = motionParams(:,2)*180/pi;
-tsvData.rot_z = motionParams(:,3)*180/pi;
-tsvData.trans_x = motionParams(:,4);
-tsvData.trans_y = motionParams(:,5);
-tsvData.trans_z = motionParams(:,6);
+% Add motion params to confound TSV data (mm/degrees)
+confoundTSV.rot_x = motionParams(:,1)*180/pi;
+confoundTSV.rot_y = motionParams(:,2)*180/pi;
+confoundTSV.rot_z = motionParams(:,3)*180/pi;
+confoundTSV.trans_x = motionParams(:,4);
+confoundTSV.trans_y = motionParams(:,5);
+confoundTSV.trans_z = motionParams(:,6);
 
-% Add framewise translation/rotation (mm/degrees)
+% Compute framewise translation/rotation (mm/degrees)
 moDiff = zeros(size(motionParams));
 moDiff(2:end,:) = diff(motionParams);
-tsvData.framewise_translation = sqrt(sum(moDiff(:,4:6).^2,2));
-tsvData.framewise_rotation = acos((cos(moDiff(:,1)).*cos(moDiff(:,2)) + cos(moDiff(:,1)).*cos(moDiff(:,3)) + ...
+confoundTSV.framewise_translation = sqrt(sum(moDiff(:,4:6).^2,2));
+confoundTSV.framewise_rotation = acos((cos(moDiff(:,1)).*cos(moDiff(:,2)) + cos(moDiff(:,1)).*cos(moDiff(:,3)) + ...
     cos(moDiff(:,2)).*cos(moDiff(:,3)) + sin(moDiff(:,1)).*sin(moDiff(:,2)).*sin(moDiff(:,3)) - 1)/2)*180/pi;
 
-% Add framewise displacement (mm)
+% Compute framewise displacement (mm)
 moDiffMM = moDiff;
 moDiffMM(:,1:3) = 50*moDiffMM(:,1:3);   % Rotation-driven distance on 50mm-radius sphere, roughly the radius of cortex
-tsvData.framewise_displacement = sum(abs(moDiffMM),2);
-
-% Write to BIDS confounds.tsv file
-fpp.bids.tsvWrite(confoundFile,tsvData);
+confoundTSV.framewise_displacement = sum(abs(moDiffMM),2);
 
 % Rename xfm outputs
 matFiles = dir([mcBase '.mat/MAT_*']);

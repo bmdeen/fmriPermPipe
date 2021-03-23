@@ -71,6 +71,7 @@ end
 inputNameGeneric = strrep(fpp.bids.changeName(inputName,'dir',[]),'_epi','');
 if strcmp(outputDir(end),'/'), outputDir = outputDir(1:end-1); end
 fmapPreprocDir = [outputDir '/fmap'];
+if ~exist(fmapPreprocDir,'dir'), mkdir(fmapPreprocDir); end
 
 % Topup output files
 topupOutputStem = [fmapPreprocDir '/' inputNameGeneric];

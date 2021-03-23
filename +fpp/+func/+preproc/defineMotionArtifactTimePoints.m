@@ -1,38 +1,35 @@
 
-% Function to identify motionParams-based artifact time points, based on
-% intervolume translation and rotation.
+% Function to identify motion-based artifact time points, based on
+% framewise translation and rotation.
 %
-% artifactTPs = fpp.func.preproc.defineMotionArtifactTimePoints(motionParams,...
-%   transCutoff,rotCutoff,tptsAfter)
+% artifactTPs = fpp.func.preproc.defineMotionArtifactTimePoints(confoundTSV,...
+%   fdCutoff,transCutoff,rotCutoff,tptsAfter)
 
-function artifactTPs = defineMotionArtifactTimePoints(motionParams,transCutoff,rotCutoff,tptsAfter)
+function artifactTPs = defineMotionArtifactTimePoints(confoundTSV,fdCutoff,transCutoff,rotCutoff,tptsAfter)
 
 % Artifact detection parameters
+if ~exist('fdCutoff','var')
+    fdCutoff = .5;              % Artifact detection cutoff: total translation (mm)
+end
 if ~exist('transCutoff','var')
-    transCutoff = .5;               % Artifact detection cutoff: total translation (mm)
+    transCutoff = Inf;       	% Artifact detection cutoff: total translation (mm)
 end
 if ~exist('rotCutoff','var')
-    rotCutoff = .5;                 % Artifact detection cutoff: total rotation (degrees)
+    rotCutoff = Inf;           	% Artifact detection cutoff: total rotation (degrees)
 end
 if ~exist('tptsCutoff','var')
-    tptsAfter = 0;                  % Remove this many time points after pairs of volumes with motionParams
+    tptsAfter = 0;            	% Remove this many time points after pairs of volumes with motionParams
 end
 
 artifactTPs = [];
 
-% Compute total translation/rotation
-moDiff = zeros(size(motionParams));
-moDiff(2:end,:) = diff(motionParams);
-trans = sqrt(sum(moDiff(:,4:6).^2,2));
-rot = acos((cos(moDiff(:,1)).*cos(moDiff(:,2)) + cos(moDiff(:,1)).*cos(moDiff(:,3)) + ...
-    cos(moDiff(:,2)).*cos(moDiff(:,3)) + sin(moDiff(:,1)).*sin(moDiff(:,2)).*sin(moDiff(:,3)) - 1)/2)*180/pi;
-
 % Remove high-movement time points
-artifactTPs = find(trans>transCutoff | rot>rotCutoff);
+artifactTPs = find(confoundTSV.framewise_translation>transCutoff | ...
+    confoundTSV.framewise_rotation>rotCutoff | confoundTSV.framewise_displacement>fdCutoff);
 artifactTPs = sort(union(artifactTPs,artifactTPs-1));   % Include time points before and after a movement
 % Remove time points after motionParams volumes, if desired
 for j = 1:tptsAfter
-    artifactTPs = setdiff(sort(union(artifactTPs,artifactTPs+1)),size(motionParams,1)+1);
+    artifactTPs = setdiff(sort(union(artifactTPs,artifactTPs+1)),length(confoundTSV.framewise_translation)+1);
 end
 
 end

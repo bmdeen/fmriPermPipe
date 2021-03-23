@@ -29,7 +29,7 @@ if ~exist('teVals','var') || isempty(teVals)
 end
 
 % Check output directory, add _bold.nii.gz if missing
-[outputDir,outputName,outputExt] = fpp.util.fileParts(outputPath);
+[outputDir,outputName,~] = fpp.util.fileParts(outputPath);
 if isempty(outputDir), outputDir = pwd; end
 if ~strcmp(outputName(end-4:end),'_bold')
     outputName = [outputName '_bold'];
