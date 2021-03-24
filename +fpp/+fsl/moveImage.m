@@ -25,6 +25,7 @@ function moveImage(inputPath,referencePath,outputPath,preMat,varargin)
 
 % Define variable defaults
 warp = [];                  % Prevent confusion with MATLAB warp fcn
+interp = [];                % Initialize to avoid conflict with the function
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
 varArgList = {'warp','datatype','postmat','mask','interp','superlevel','paddingsize',...
