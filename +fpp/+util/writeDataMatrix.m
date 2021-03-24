@@ -50,7 +50,7 @@ if isCifti
     end
     cifti_write(hdr,outputPath);
 else
-    dims = hdr.volsize;
+    dims = hdr.volsize([2 1 3]);
     if size(dataMat,2)>1, dims(4) = size(dataMat,2); end
     hdr.vol = zeros(dims);
     if exist('maskVol','var') && ~isempty(maskVol)

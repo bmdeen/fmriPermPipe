@@ -20,6 +20,12 @@ fpp.fsl.maths(maskPath,['-s ' num2str(sigma)],tmpPath2);
 fpp.fsl.maths(tmpPath1,['-div ' tmpPath2 ' -mul ' maskPath],tmpPath1);
 fpp.fsl.maths(maskPath,['-mul -1 -add 1 -mul ' inputPath ' -add ' tmpPath1],outputPath);
 fpp.util.system(['rm -rf ' tmpPath1 ' ' tmpPath2]);
+if exist(fpp.bids.jsonPath(tmpPath1),'file')
+    fpp.util.system(['rm -rf ' fpp.bids.jsonPath(tmpPath1)]);
+end
+if exist(fpp.bids.jsonPath(tmpPath2),'file')
+    fpp.util.system(['rm -rf ' fpp.bids.jsonPath(tmpPath2)]);
+end
 
 if ~isempty(fpp.bids.getMetadata(inputPath)) && ~strcmp(inputPath,outputPath)
     fpp.bids.jsonReconstruct(inputPath,outoutPath);

@@ -275,6 +275,15 @@ else
     error('Template type must be specified as func or anat.');
 end
 
+% Default temporal filter type
+if isempty(filtType)
+    if length(filtCutoff)==1
+        filtType = 'high';
+    else
+        filtType = 'bandpass';
+    end
+end
+
 % Define brain mask and segment paths
 maskPath = fpp.bids.changeName(templatePath,{'desc','echo'},{'brain',[]},'mask','.nii.gz');
 gmPath = fpp.bids.changeName(templatePath,{'desc','echo'},{'gm',[]},'mask','.nii.gz');
@@ -496,19 +505,23 @@ if useTedana
     inputPaths = outputPaths;
     outputPathsNew{1} = fpp.bids.changeName(inputPaths{1},{'echo','desc'},{[],'midprep4tedana'});
     outputPathsNew{2} = fpp.bids.changeName(outputPathsNew{1},'desc','midprep4optcomb');
-    if ~exist(outputPathsNew{1},'file') %%% TEMPORARY DEBUGGING HACK
+    outputPaths = outputPathsNew;
+%     if ~exist(outputPaths{1},'file') %%% TEMPORARY DEBUGGING HACK
     fpp.func.preproc.tedana(inputPaths,outputPaths{1},maskNonZeroPath,[],1,teVals);
-    end
+%     end
 elseif multiEcho
     fprintf('%s\n',['Step 7, Multi-echo combine                     - ' outputNameGeneric]);
     steps{1}(end+1:end+2) = {'brain masking (Freesurfer-based)','optimal multi-echo combination (tedana''s t2smap)'};
     inputPaths = outputPaths;
     outputPathsNew{1} = fpp.bids.changeName(inputPaths{1},{'echo','desc'},{[],'midprep4optcomb'});
+    outputPaths = outputPathsNew;
     fpp.func.preproc.tedana(inputPaths,outputPaths{1},maskNonZeroPath,[],0,teVals);
 else
+    fprintf('%s\n',['Step 7, Brain mask                             - ' outputNameGeneric]);
+    steps{1}{end+1} = 'brain masking (Freesurfer-based)';
     inputPaths{1} = outputPaths{1};
     outputPathsNew{1} = fpp.bids.changeName(inputPaths{1},'desc','midprep4mask');
-    steps{1}{end+1} = 'brain masking (Freesurfer-based)';
+    outputPaths = outputPathsNew;
     fpp.fsl.maths(inputPaths{1},['-mul ' maskNonZeroPath],outputPaths{1});
 end
 outputPaths = outputPathsNew;   clear inputPaths;
@@ -545,7 +558,7 @@ if tempFilt
     for i=1:length(outputPaths)
         steps{i}{end+1} = [filtTypeStr ' temporal filtering (' filtCutoffStr ', using MATLAB''s fir1 and filtfilt)'];
         inputPaths{i} = outputPaths{i};
-        outputPaths{i} = fpp.bids.changeName(inputPaths{i},'desc',{[],['midprep5tempfilt' descSuffices{i}]});
+        outputPaths{i} = fpp.bids.changeName(inputPaths{i},'desc',['midprep5tempfilt' descSuffices{i}]);
         fpp.util.mriFilter(inputPaths{i},outputPaths{i},filtCutoff,filtType,filtOrder,tr);
         fpp.bids.jsonReconstruct(inputPaths{i},outputPaths{i},'midprepfmri');
         fpp.bids.jsonChangeValue(outputPaths{i},{'Description','Sources'},...
@@ -628,7 +641,7 @@ if fwhm>0
         outputPaths{i} = fpp.bids.changeName(inputPaths{i},'desc',{[],['midprep7smooth' descSuffices{i}]});
         segmentPaths = {gmPath,wmPath,csfPath};
         fpp.util.copyImageAndJson(inputPaths{i},outputPaths{i},'midprepfmri');
-        for s=1:length(segment)
+        for s=1:length(segmentPaths)
             fpp.util.smoothInMask(outputPaths{i},segmentPaths{s},fwhm,outputPaths{i});
         end
         fpp.bids.jsonChangeValue(outputPaths{i},{'Description','Sources'},...
