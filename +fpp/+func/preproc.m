@@ -613,10 +613,14 @@ for i=1:length(outputPaths)
         confoundTSVs{i}.(['acompcorr_wm_pc' int2str(c)]) = V(:,c);
     end
     csfData = dataMat(csfMat==1,:);
-    csfData = csfData - mean(csfData,2);
-    [~,~,V] = svd(csfData,'econ');
-    for c=1:nComps
-        confoundTSVs{i}.(['acompcorr_csf_pc' int2str(c)]) = V(:,c);
+    if size(csfData,1)<nComps
+        warning(['Eroded CSF ROI is less than ' int2str(nComps) ' - not including CSF aCompCorr regressors.']);
+    else
+        csfData = csfData - mean(csfData,2);
+        [~,~,V] = svd(csfData,'econ');
+        for c=1:nComps
+            confoundTSVs{i}.(['acompcorr_csf_pc' int2str(c)]) = V(:,c);
+        end
     end
     bids.util.tsvwrite(confoundPath,confoundTSVs{i});
 end
