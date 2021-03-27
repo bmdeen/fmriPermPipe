@@ -3,7 +3,7 @@
 % coordinate by time matrix to a NIFTI 3D/4D volume or CIFTI discalar or
 % dtseries file.
 %
-% writeDataMatrix(dataMat,hdr,outputPath,maskPath)
+% writeDataMatrix(dataMat,hdr,outputPath,maskVol)
 %
 % Arguments:
 %   - dataMat (2D numeric matrix): coordinate by time data matrix, or
