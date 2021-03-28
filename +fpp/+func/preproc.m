@@ -77,11 +77,9 @@ function preproc(inputPaths,outputDir,varargin)
 
 % TODO IMMEDIATELY:
 % - Add JSON files for additional TEDANA/ts2map outputs
-% - Run steps 8-10 on optcomb (non-TEDANA) output as well
 %
 % TODO NEXT:
 % - CIFTI-resampling
-% - Spatial smoothing (volumetric, within-segment)
 % - If deleteMidprep==1, remove "Sources" field of final outputs
 % - Add suffix option for desc. Need to edit input/outputNameGeneric, and
 %   edit desc of output TEDANA folder (defitions both within preproc

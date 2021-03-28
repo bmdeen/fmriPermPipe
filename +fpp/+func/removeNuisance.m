@@ -60,15 +60,12 @@ end
 
 % Check that required inputs exist!
 if ~exist(inputPath,'file')
-    fprintf('%s\n',['ERROR: input data ' inputPath ' does not exist.']);
-    return;
+    error(['Input data ' inputPath ' does not exist.']);
 end
 if ~exist(confoundPath,'file')
-    fprintf('%s\n',['ERROR: brain mask ' confoundPath ' does not exist.']);
-    return;
+    error(['Brain mask ' confoundPath ' does not exist.']);
 end
 if exist(outputPath,'file') && ~overwrite
-    fprintf('%s\n',['Output path ' outputPath ' already exists.']);
     return;
 end
 
