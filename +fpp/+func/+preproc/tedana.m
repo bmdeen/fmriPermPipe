@@ -80,7 +80,9 @@ if useTedana
     % Rename component analysis results outputs
     fpp.util.system(['mv ' outputDir '/tedana_*.tsv ' fpp.bids.changeName(outputPathTedana,'desc','tedanaICA','log','.tsv')]);
     fpp.util.system(['mv ' outputDir '/betas_OC.nii.gz ' fpp.bids.changeName(outputPathTedana,'desc','tedanaICA','betas')]);
-    fpp.util.system(['mv ' outputDir '/feats_OC2.nii.gz ' fpp.bids.changeName(outputPathTedana,'desc','tedanaICAzscore','components')]);
+    if exist([outputDir '/feats_OC2.nii.gz'],'file')
+        fpp.util.system(['mv ' outputDir '/feats_OC2.nii.gz ' fpp.bids.changeName(outputPathTedana,'desc','tedanaICAzscore','components')]);
+    end
     methods = {'PCA','ICA'}; suffices = {'components','decomposition','mixing'};
     componentExts = {'.nii.gz','.json','.tsv'};
     for m=1:2
