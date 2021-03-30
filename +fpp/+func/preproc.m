@@ -212,8 +212,7 @@ end
 % Check if inputs exist
 for e=1:length(inputPaths)
     if exist(inputPaths{e},'file')==0
-        fprintf('%s\n\n',['ERROR: Input path ' inputPaths{e} ' does not exist.']);
-        return;
+        error(['Input path ' inputPaths{e} ' does not exist.']);
     end
 end
 

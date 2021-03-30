@@ -34,7 +34,7 @@ fpp.util.checkConfig;
 % Variable arguments: general
 overwrite = 0;           % Whether to overwrite output
 maskPath = [];           % Path to brain mask
-confoundPath = fpp.bids.changeName(inputPath,'desc',[],'confounds','.tsv'); % Path to 
+confoundPath = fpp.bids.changeName(inputPath,'desc',[],'confounds','.tsv'); % Path to confound TSV file
 confoundNames = {};
 
 % Variable arguments: volumes to remove
