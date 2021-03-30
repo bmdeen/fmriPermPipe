@@ -44,10 +44,10 @@ for e=1:length(outputPaths)
                 fpp.fsl.moveImage(inputVolPath,templatePath,outputVolPath,xfmInputVol2SpinEcho,...
                     'warp',topupWarpPath,'postmat',xfmSpinEcho2Template);
                 break;
-            catch errorMsg
+            catch exception
                 if i<10
                     warning('applywarp errored out, trying again');
-                    warning(errorMsg);
+                    warning(exception.msgtext);
                 else
                     error('applywarp errored out multiple times.');
                 end
