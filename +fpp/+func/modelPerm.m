@@ -90,9 +90,9 @@ maskPath = '';              % Path to brain mask (NIFTI/CIFTI)
 analysisDir = '';           % Base dir for analysis output directories
 
 % Confound file parameters
-confoundPath = '';          % Path to confound.tsv file
+confoundPath = fpp.bids.changeName(inputPath,'desc',[],'confounds','.tsv'); % Path to confounds.tsv file
 confoundNames = {};         % Confound file fields to use
-outlierPath = '';           % Path to outliers.tsv file
+outlierPath = fpp.bids.changeName(inputPath,{'space','desc'},{[],[]},'outliers','.tsv');    % Path to outliers.tsv file
 outlierInd = [];            % Outlier time point indices (supercedes outlierPath)
 
 % Modeling parameters
@@ -108,6 +108,7 @@ subtractHalfTR = 1;         % Whether to subtract .5*TR to regressor onsets, to 
 tempFilt = 0;               % Whether to highpass filter regressors (use if data were filtered)
 filtCutoff = 1/100;         % Highpass filter Cutoff (Hz)
 filtOrder = 60;             % Hanning-window FIR filter order
+filtType = '';              % Type of filter (high, low, bandpass)
 
 % Data generation parameters
 plotResults = 0;            % Whether to display result plots
@@ -123,7 +124,7 @@ writeResiduals = 0;         % Whether to write 4-D residual image
 varArgList = {'overwrite','outputSuffix','permuteRest','tempFilt','filtCutoff',...
     'filtOrder','hrfType','upsampledTR','writeResiduals','permIters','plotResults',...
     'randSeed','condNames','maskPath','confoundPath','confoundNames','outlierPath',...
-    'outlierInd','contrastNames'};
+    'outlierInd','contrastNames','filtType'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
@@ -210,38 +211,34 @@ end
 nContrasts = size(contrastMat,1);
 
 % Define outlier indices
-if isempty(outlierInd) && ~isempty(outlierPath)
+if isempty(outlierInd) && exist(outlierPath,'file')
     outlier = bids.util.tsvread(outlierPath);
-    outlierNames = fieldnames(outlier);
-    for i=1:length(outlierNames)
-        outlierInd(end+1) = eval(['find(outlier.' outlierNames{i} ')']);
+    if isempty(outlier)
+        outlierInd = [];
+    else
+        outlierNames = fieldnames(outlier);
+        for i=1:length(outlierNames)
+            outlierInd(end+1) = eval(['find(outlier.' outlierNames{i} ')']);
+        end
     end
 end
 goodVolInd = setdiff(1:numVols,outlierInd);
 
 % Define nuisance regressors
 nuisRegrMat = [];
-if ~isempty(confoundPath)
+if exist(confoundPath,'file')
     confound = bids.util.tsvread(confoundPath);
-    if isempty(confoundNames)
-        confoundNames = fieldnames(confound)';
-    end
     for c=1:length(confoundNames)
         nuisRegrMat(:,end+1) = eval(['confound.' confoundNames{c}]);
     end
     
-    nuisRegrMat = nuisRegrMat(goodVolInd,:);
-    nuisRegrMat = bsxfun(@minus,nuisRegrMat,mean(nuisRegrMat));
-    
-    % Filter nuisance regressors
-    %%% EDIT THIS AFTER EDITING PREPROC TEMP FILT METHOD!
-    if tempFilt
-        [kernel,~] = fir1(filtOrder,2*tr*filtCutoff,'high');
-        for r = 1:size(nuisRegrMat,2)
-            Xtmp = zeros(numVols,1);
-            Xtmp(goodVolInd) = nuisRegrMat(:,r);
-            Xtmp = conv(Xtmp,kernel,'same');
-            nuisRegrMat(:,r) = Xtmp(goodVolInd);
+    if ~isempty(nuisRegrMat)
+        nuisRegrMat = nuisRegrMat(goodVolInd,:);
+        nuisRegrMat = bsxfun(@minus,nuisRegrMat,mean(nuisRegrMat));
+
+        % Filter nuisance regressors
+        if tempFilt
+            nuisRegrMat = fpp.util.firFilter(nuisRegrMat,1/tr,filtCutoff,filtType,filtOrder);
         end
     end
 end
@@ -334,15 +331,8 @@ for iter=0:permIters
     taskRegrMat = bsxfun(@minus,taskRegrMat,mean(taskRegrMat));
     
     % Filter task regressors
-    %%% EDIT THIS AFTER EDITING PREPROC TEMP FILT METHOD!
     if tempFilt
-        [kernel,~] = fir1(filtOrder,2*tr*filtCutoff,'high');
-        for r = 1:size(taskRegrMat,2)
-            Xtmp = zeros(numVols,1);
-            Xtmp(goodVolInd) = taskRegrMat(:,r);
-            Xtmp = conv(Xtmp,kernel,'same');
-            taskRegrMat(:,r) = Xtmp(goodVolInd);
-        end
+        taskRegrMat = fpp.util.firFilter(taskRegrMat,1/tr,filtCutoff,filtType,filtOrder);
     end
     
     % On first iteration, plot regressor information.
