@@ -47,7 +47,7 @@ for e=1:length(outputPaths)
             catch exception
                 if i<10
                     warning('applywarp errored out, trying again');
-                    warning(exception.msgtext);
+                    warning(exception.message);
                 else
                     error('applywarp errored out multiple times.');
                 end
