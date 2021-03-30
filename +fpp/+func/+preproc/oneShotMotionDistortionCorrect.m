@@ -39,8 +39,20 @@ for e=1:length(outputPaths)
         xfmInputVol2SpinEcho = [mcDir '/' fpp.bids.changeName(mcName,{'echo','desc','from','to','mode'},...
             {int2str(echoForMoCorr),'',['native' fpp.util.numPad(t,4)],'SpinEcho','image'},'xfm','.mat')];
         fpp.fsl.concatXfm(xfmNativeFunc2SpinEcho,xfmInputVol2NativeFunc,xfmInputVol2SpinEcho);
-        fpp.fsl.moveImage(inputVolPath,templatePath,outputVolPath,xfmInputVol2SpinEcho,...
-            'warp',topupWarpPath,'postmat',xfmSpinEcho2Template);
+        for i=1:10      % Bug fix, catches random segmentation faults
+            try
+                fpp.fsl.moveImage(inputVolPath,templatePath,outputVolPath,xfmInputVol2SpinEcho,...
+                    'warp',topupWarpPath,'postmat',xfmSpinEcho2Template);
+                break;
+            catch errorMsg
+                if i<10
+                    warning('applywarp errored out, trying again');
+                    warning(errorMsg);
+                else
+                    error('applywarp errored out multiple times.');
+                end
+            end
+        end
         fpp.util.system(['fslmaths ' outputVolPath ' -mul ' topupJacobian2TemplatePath ' ' outputVolPath]);
         mergeCmd = [mergeCmd ' ' outputVolPath];
         if mod(t+1,10)==0
