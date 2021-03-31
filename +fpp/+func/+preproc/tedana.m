@@ -40,6 +40,7 @@ outputPath = [outputDir '/' outputName outputExt];
 
 % Place output in temporary directory to delete extra results
 outputDir = [outputDir '/tedanaTmp' inputName];
+if exist(outputDir,'dir'), fpp.util.system(['rm -rf ' outputDir]); end
 mkdir(outputDir);
 
 % Define wrapper function for fpp.bids.removeBidsDir (for cellfun functionality)
