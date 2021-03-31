@@ -45,7 +45,6 @@ for e=1:length(outputPaths)
     for t=0:vols-1
         inputVolPath = [inputSplitStem fpp.util.numPad(t,4) '.nii.gz'];
         outputVolPath = [outputSplitStem fpp.util.numPad(t,4) '.nii.gz'];
-        fpp.fsl.concatXfm(xfmNativeFunc2Template,xfmSpinEcho2NativeFunc,xfmSpinEcho2Template);
         xfmInputVol2NativeFunc = [mcDir '/' fpp.bids.changeName(mcName,{'echo','desc','from','to','mode'},...
             {int2str(echoForMoCorr),'',['native' fpp.util.numPad(t,4)],'native','image'},'xfm','.mat')];
         xfmInputVol2SpinEcho = [mcDir '/' fpp.bids.changeName(mcName,{'echo','desc','from','to','mode'},...
