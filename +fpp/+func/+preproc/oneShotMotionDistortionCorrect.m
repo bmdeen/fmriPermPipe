@@ -28,10 +28,10 @@ end
 % Copy warp/postmat to avoid applywarp segmentation faults when running multiple runs in parallel
 [~,xfmSE2TempName,~] = fileparts(xfmSpinEcho2Template);
 xfmSpinEcho2TemplateCopy = [mcDir '/' xfmSE2TempName '.mat'];
-fpp.fsl.system(['cp ' xfmSpinEcho2Template ' ' xfmSpinEcho2TemplateCopy]);
+fpp.util.system(['cp ' xfmSpinEcho2Template ' ' xfmSpinEcho2TemplateCopy]);
 [~,topupWarpName,topupWarpExt] = fpp.util.fileParts(topupWarpPath);
 topupWarpPathCopy = [mcDir '/' topupWarpName topupWarpExt];
-fpp.fsl.system(['cp ' topupWarpPath ' ' topupWarpPathCopy]);
+fpp.util.system(['cp ' topupWarpPath ' ' topupWarpPathCopy]);
 
 % Check # of volumes
 vols = fpp.util.checkMRIProperty('vols',inputPaths{1});
