@@ -18,8 +18,12 @@ topupJacobian2TemplatePath = fpp.bids.changeName(topupJacobianPath,'space',templ
 [~,mcName,~] = fileparts(mcDir);
 
 % Move warp Jacobian to template space
-fpp.fsl.concatXfm(xfmNativeFunc2Template,xfmSpinEcho2NativeFunc,xfmSpinEcho2Template);
-fpp.fsl.moveImage(topupJacobianPath,templatePath,topupJacobian2TemplatePath,xfmSpinEcho2Template);
+if ~exist(xfmSpinEcho2Template,'file')
+    fpp.fsl.concatXfm(xfmNativeFunc2Template,xfmSpinEcho2NativeFunc,xfmSpinEcho2Template);
+end
+if ~exist(topupJacobian2TemplatePath,'file')
+    fpp.fsl.moveImage(topupJacobianPath,templatePath,topupJacobian2TemplatePath,xfmSpinEcho2Template);
+end
 
 % Check # of volumes
 vols = fpp.util.checkMRIProperty('vols',inputPaths{1});
@@ -39,7 +43,7 @@ for e=1:length(outputPaths)
         xfmInputVol2SpinEcho = [mcDir '/' fpp.bids.changeName(mcName,{'echo','desc','from','to','mode'},...
             {int2str(echoForMoCorr),'',['native' fpp.util.numPad(t,4)],'SpinEcho','image'},'xfm','.mat')];
         fpp.fsl.concatXfm(xfmNativeFunc2SpinEcho,xfmInputVol2NativeFunc,xfmInputVol2SpinEcho);
-        for i=1:10      % Bug fix, catches random segmentation faults
+        for i=1:10      % Bug fix, catches random segmentation faults by repeating the applywarp command up to 10 times
             try
                 fpp.fsl.moveImage(inputVolPath,templatePath,outputVolPath,xfmInputVol2SpinEcho,...
                     'warp',topupWarpPath,'postmat',xfmSpinEcho2Template);
