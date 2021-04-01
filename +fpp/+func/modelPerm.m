@@ -9,7 +9,7 @@
 % statistics, which is done by fpp.func.model2ndPerm, combining results
 % across runs. Should be run after fpp.func.preproc.
 % 
-% Example usage: modelPerm('/pathToData/sub-01_task-faceloc_run-01_space-session_desc-preproc_bold.nii.gz',...
+% Example usage: modelPerm('/pathToData/sub-01_task-faceloc_run-01_space-individual_desc-preproc_bold.nii.gz',...
 %   '/pathToData/sub-01_task-faceloc_run-01_events.tsv','/pathToData/task-faceloc_contrastmatrix.tsv')
 %
 % Arguments:
@@ -29,7 +29,7 @@
 %       run the script multiple times with different options.
 %   - analysisDir (string): analysis output dir will be written in this dir
 %   - condNames (cell array of strings): array of condition names. Needed
-%       to determine condition order if events.tsv lackstrial_type_id field
+%       to determine cond order if events.tsv lacks trial_type_id field
 %   - contrastNames (cell array of strings): array of contrast names to use
 %   - maskPath (string): path to volumetric mask image (NIFTI)
 %   - confoundPath (string): path to confound.tsv file with nuisance
@@ -62,16 +62,17 @@
 %
 %
 % Critical outputs:
-% - contrast.nii.gz: contrast ("contrast of parameter estimate") images
-% - beta.nii.gz: parameter estimate (beta) images
-% - desc-OLS_zstat.nii.gz: z-statistics computed based on ordinary least
-%   squares.  These are not valid statistics, due to the presence of
-%   temporal autocorrelation, but can give a rough sense of where effects
-%   are located.
+% - contrast: contrast ("contrast of parameter estimate") images
+% - beta: parameter estimate (beta) images
+% - desc-OLS_zstat: z-statistics computed based on ordinary least squares.
+%   These are not valid statistics, due to the presence of temporal
+%   autocorrelation, but can give a rough sense of where effects are
+%   located.
 % - desc-Regressors_image.png: image showing regressor time series
-% - desc-RegressorCorrelations_image.png: image showing correlations between regressors
-% - desc-RegressorVarianceRemoved_image.png: image showing the proportion of variance in
-%   task regressors that is explained by nuisance regressors
+% - desc-RegressorCorrelations_image.png: image showing correlations
+%   between regressors
+% - desc-RegressorVarianceRemoved_image.png: image showing the proportion
+%   of variance in task regressors that is explained by nuisance regressors
 % - perms: directory containing contrast images for each permutation
 
 function modelPerm(inputPath,eventsPath,contrastMatrixPath,varargin)
@@ -124,7 +125,7 @@ writeResiduals = 0;         % Whether to write 4-D residual image
 varArgList = {'overwrite','outputSuffix','permuteRest','tempFilt','filtCutoff',...
     'filtOrder','hrfType','upsampledTR','writeResiduals','permIters','plotResults',...
     'randSeed','condNames','maskPath','confoundPath','confoundNames','outlierPath',...
-    'outlierInd','contrastNames','filtType'};
+    'outlierInd','contrastNames','filtType','analysisDir'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
@@ -138,6 +139,9 @@ if exist('rng','file')
 else
     rand('twister',randSeed);
 end
+
+% Remove non-alphanumeric characters from outputSuffix
+outputSuffix = regexprep(outputSuffix,'[^a-zA-Z0-9]','');
 
 % Check input
 if ~exist(inputPath,'file')
@@ -373,7 +377,8 @@ for iter=0:permIters
             'contrasts','conVarBase','resids','errorDOF','errorVar',...
             'conVars','tStats','zStats','rSquareds','regrNames','tr',...
             'inputPath','maskPath','confoundPath','outlierPath','outlierInd',...
-            'randSeed','permuteRest','hrfType','tempFilt','filtCutoff','filtOrder');
+            'randSeed','permuteRest','hrfType','tempFilt','filtCutoff',...
+            'filtOrder','contrastNames');
     else
         conVarBasePerm{iter} = conVarBase;
     end
