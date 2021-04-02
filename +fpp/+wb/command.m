@@ -1,5 +1,5 @@
 
-% fpp.wb.command(inputPath,argText,outputPath,flagText[,outputDescription,appendDescription])
+% fpp.wb.command(cmdType,inputPath,argText,outputPath,flagText[,outputDescription,appendDescription])
 %
 % Wrapper for HCP's wb_command function, which generates JSON metadata for
 % the output data if it exists for the input.

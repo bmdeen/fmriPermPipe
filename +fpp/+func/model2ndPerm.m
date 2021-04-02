@@ -134,8 +134,8 @@ for c=1:nContrasts
     % UNPERMUTED
     if weightRuns
         % Inverse variance weighting across runs
-        weightEquation = '"(';
-        flagText = [' ' outputContrastPath];
+        weightEquation = '(';
+        flagText = '';
         weightSum = 0;
         for r=1:nRuns
             inputContrastPaths{r} = [inputDirs{r} '/' fpp.bids.changeName(inputNames{r},'desc',...
@@ -149,8 +149,8 @@ for c=1:nContrasts
             end
             weightSum = weightSum + 1/regrData{r}.conVarBase(c);
         end
-        weightEquation = [weightEquation ')/' num2str(weightSum) '"'];
-        fpp.wb.command([],weightEquation,outputContrastPath,flagText);
+        weightEquation = [weightEquation ')/' num2str(weightSum)];
+        fpp.wb.command('volume-math',[],weightEquation,outputContrastPath,flagText);
     else
         % Unweighted average
         cmd = '';
@@ -161,7 +161,7 @@ for c=1:nContrasts
                 cmd = [cmd '-add ' inputContrastPaths{r} ' '];
             end
         end
-        cmd = [cmd ' -div ' nRuns];
+        cmd = [cmd ' -div ' int2str(nRuns)];
         fpp.fsl.maths(inputContrastPaths{1},cmd,outputContrastPath);
     end
     % PERMUTED
@@ -171,8 +171,8 @@ for c=1:nContrasts
             [iterSuffix inputSuffix outputSuffix contrastNames{c}],'contrast','.nii.gz')];
         if weightRuns
             % Inverse variance weighting across runs
-            weightEquation = '"(';
-            flagText = [' ' outputContrastPath];
+            weightEquation = '(';
+            flagText = '';
             weightSum = 0;
             for r=1:nRuns
                 inputContrastPaths{r} = [inputDirs{r} '/perms/' iterSuffix '/' fpp.bids.changeName(inputNames{r},'desc',...
@@ -186,8 +186,8 @@ for c=1:nContrasts
                 end
                 weightSum = weightSum + 1/regrData{r}.conVarBase(c);
             end
-            weightEquation = [weightEquation ')/' num2str(weightSum) '"'];
-            fpp.wb.command([],weightEquation,outputContrastPath,flagText);
+            weightEquation = [weightEquation ')/' num2str(weightSum)];
+            fpp.wb.command('volume-math',[],weightEquation,outputContrastPath,flagText);
         else
             % Unweighted average
             cmd = '';
@@ -198,7 +198,7 @@ for c=1:nContrasts
                     cmd = [cmd '-add ' inputContrastPaths{r} ' '];
                 end
             end
-            cmd = [cmd ' -div ' nRuns];
+            cmd = [cmd ' -div ' int2str(nRuns)];
             fpp.fsl.maths(inputContrastPaths{1},cmd,outputContrastPath);
         end
         
