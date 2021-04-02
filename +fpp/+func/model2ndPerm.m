@@ -131,7 +131,7 @@ for c=1:nContrasts
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%% SUBSTEP 1: Average contrast images across runs
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % UNPERMUTED
+    % Unpermuted data
     if weightRuns
         % Inverse variance weighting across runs
         weightEquation = '(';
@@ -164,7 +164,7 @@ for c=1:nContrasts
         cmd = [cmd ' -div ' int2str(nRuns)];
         fpp.fsl.maths(inputContrastPaths{1},cmd,outputContrastPath);
     end
-    % PERMUTED
+    % Permuted data
     for iter=1:permIters
         iterSuffix = ['iter' int2str(iter)];
         outputContrastPathPerm = [permsDir '/' fpp.bids.changeName(outputNameGeneric,'desc',...
@@ -199,7 +199,7 @@ for c=1:nContrasts
                 end
             end
             cmd = [cmd ' -div ' int2str(nRuns)];
-            fpp.fsl.maths(inputContrastPaths{1},cmd,outputContrastPath);
+            fpp.fsl.maths(inputContrastPaths{1},cmd,outputContrastPathPerm);
         end
         
         if mod(iter,10)==0
