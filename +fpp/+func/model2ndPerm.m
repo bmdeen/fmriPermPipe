@@ -84,35 +84,14 @@ for r=1:nRuns
     end
     inputMat = [inputDirs{r} '/' fpp.bids.changeName(inputNames{r},'desc',inputSuffix,'RegressionData','.mat')];
     regrData{r} = load(inputMat);
-    permItersVec(i) = length(regrData{r}.conVarBasePerm);
+    permItersVec(r) = length(regrData{r}.conVarBasePerm);
 end
 contrastNames = regrData{1}.contrastNames;
 nContrasts = length(contrastNames);
 permIters = min(permItersVec);          % # of permutation iterations
 
-% Check existence of input images
-missingInputs = 0;
-for r=1:numRuns
-    for c=1:nContrasts
-        for iter=1:permIters
-            iterSuffix = ['iter' int2str(iter)];
-            inputContrastPath = [inputDirs{i} '/perms/' iterSuffix '/' fpp.bids.changeName(inputNames{r},...
-                'desc',[iterSuffix inputSuffix contrastNames{c}],'contrast',outputExt)];
-            if ~exist(inputContrastPath,'file')
-                missingInputs = 1;
-                break;
-            end
-        end
-        if missingInputs, break; end
-    end
-	if missingInputs, break; end
-end
-if missingInputs
-    error('Not all permuted contrast input images exist.');
-end
-
 % Define and create output directory
-outputNameGeneric = fpp.bids.changeName(inputName,{'run','desc'},{'',[inputSuffix outputSuffix]},'model2perm','');
+outputNameGeneric = fpp.bids.changeName(inputNames{1},{'run','desc'},{'',[inputSuffix outputSuffix]},'model2perm','');
 outputName = fpp.bids.changeName(outputNameGeneric,'sub','','model2perm','');
 outputDirBase = [analysisDir '/' outputName];
 if exist(outputDirBase,'dir')
@@ -147,7 +126,7 @@ for c=1:nContrasts
     % Unpermuted analysis
     cmd = '';
     sumWeights = 0;    % Sum of weighting factors for cope images
-    for r=1:numRuns
+    for r=1:nRuns
         inputContrastPath = [inputDirs{r} '/' fpp.bids.changeName(inputNames{r},'desc',...
             [inputSuffix contrastNames{c}],'contrast',outputExt)];
         tmpPath{r} = [outputDir '/desc-TmpWeighted' int2str(r) '_contrast.nii.gz'];
@@ -159,7 +138,7 @@ for c=1:nContrasts
     end
     cmd = [cmd '-div ' num2str(sumWeights)];
     fpp.fsl.maths(tmpPath{1},cmd,outputContrastPath);
-    for r=1:numRuns
+    for r=1:nRuns
         fpp.util.system(['rm -rf ' tmpPath{r}]);
     end
     % Permuted analyses
@@ -169,20 +148,20 @@ for c=1:nContrasts
             [iterSuffix inputSuffix outputSuffix contrastNames{c}],'contrast','.nii.gz')];
         cmd = '';
         sumWeights = 0;    % Sum of weighting factors for cope images
-        for r=1:numRuns
+        for r=1:nRuns
             inputContrastPath = [inputDirs{r} '/perms/' iterSuffix '/' fpp.bids.changeName(inputNames{r},'desc',...
                 [iterSuffix inputSuffix contrastNames{c}],'contrast',outputExt)];
             tmpPath{r} = [permsDir '/desc-TmpWeighted' int2str(r) '_contrast.nii.gz'];
             fpp.util.system(['fslmaths ' inputContrastPath ' -mul ' ...
-                num2str(1/rData{r}.conVarBasePerm{iter}(c)) ' ' tmpPath{r}]);
-            sumWeights = sumWeights+1/rData{r}.conVarBasePerm{iter}(c);
+                num2str(1/regrData{r}.conVarBasePerm{iter}(c)) ' ' tmpPath{r}]);
+            sumWeights = sumWeights+1/regrData{r}.conVarBasePerm{iter}(c);
             if r>1
                 cmd = [cmd '-add ' tmpPath{r} ' '];
             end
         end
         cmd = [cmd '-div ' num2str(sumWeights)];
         fpp.fsl.maths(tmpPath{1},cmd,outputContrastPathPerm);
-        for r=1:numRuns
+        for r=1:nRuns
             fpp.util.system(['rm -rf ' tmpPath{r}]);
         end
         if mod(iter,10)==0
@@ -191,7 +170,7 @@ for c=1:nContrasts
     end
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% SUBSTEP 1: Merge permuted contrasts across iterations
+    %%% SUBSTEP 2: Merge permuted contrasts across iterations
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     concatContrastPath = [permsDir '/' fpp.bids.changeName(outputNameGeneric,'desc',...
     	[inputSuffix outputSuffix contrastNames{c} 'Permutations'],'contrast','.nii.gz')];
@@ -214,7 +193,7 @@ for c=1:nContrasts
         mergeCmd2 = ['fslmerge -t ' concatContrastPaths{i} ' '];
         for j=(1+(i-1)*contrastsPerMerge):min(permIters,i*contrastsPerMerge)
             outputContrastPathPerm = [permsDir '/' fpp.bids.changeName(outputNameGeneric,'desc',...
-                [iterSuffix inputSuffix outputSuffix contrastNames{c}],'contrast','.nii.gz')];
+                ['iter' int2str(j) inputSuffix outputSuffix contrastNames{c}],'contrast','.nii.gz')];
             mergeCmd2 = [mergeCmd2 ' ' outputContrastPathPerm];
         end
         fpp.util.system(mergeCmd2);
@@ -226,7 +205,7 @@ for c=1:nContrasts
     
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% SUBSTEP 1: Compute permutation-based stats
+    %%% SUBSTEP 3: Compute permutation-based stats
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Compute zstat by fitting a voxelwise Gaussian to permuted contrasts
     fpp.util.system(['fslmaths ' concatContrastPath ' -Tmean ' outputContrastMeanPath]);
