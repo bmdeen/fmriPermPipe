@@ -218,7 +218,7 @@ for i=1:length(scanlog.series)
                 end
             else
                 didNotWrite(i) = 1;
-                break;
+                continue;   % Still loop through echoes to define outputNiftiPathsRelative for fmap IntendedFor metadata
             end
         end
     else
