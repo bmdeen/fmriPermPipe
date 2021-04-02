@@ -25,6 +25,13 @@
 % - outputSuffix (string): suffix for output directory
 % - analysisDir (string): analysis output dir will be written in this dir.
 %   Must match analysisDir used for fpp.func.modelPerm
+% - weightRuns (boolean, default 0): Whether to use inverse variance
+%   weighting across runs. This is statistically optimal, and important
+%       when runs are different lengths or have different amounts of
+%       collinearity between task and nuisance regressors, or outlier
+%       volumes removed. However, it roughly doubles compute time, an
+%       isn't critical when runs are similar in design, length, and noise
+%       properties.
 %
 % Critical outputs:
 % - contrast.nii.gz: cross-run contrast image
@@ -47,12 +54,13 @@ overwrite = 0;              % Whether to overwrite output
 inputSuffix = '';           % Suffix of directories 
 outputSuffix = '';          % New suffix for output dir
 analysisDir = '';           % Directory for analysis outputs
+weightRuns = 0;             % Whether to weight runs by inverse variance factor
 
 charLimit = 100000;         % Character limit for bash commands
 outputExt = '.nii.gz';      % Output file extension
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
-varArgList = {'overwrite','inputSuffix','outputSuffix'};
+varArgList = {'overwrite','inputSuffix','outputSuffix','analysisDir','weightRuns'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
@@ -123,49 +131,79 @@ for c=1:nContrasts
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%% SUBSTEP 1: Average contrast images across runs
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Unpermuted analysis
-    cmd = '';
-    sumWeights = 0;    % Sum of weighting factors for cope images
-    for r=1:nRuns
-        inputContrastPath = [inputDirs{r} '/' fpp.bids.changeName(inputNames{r},'desc',...
-            [inputSuffix contrastNames{c}],'contrast',outputExt)];
-        tmpPath{r} = [outputDir '/desc-TmpWeighted' int2str(r) '_contrast.nii.gz'];
-        fpp.fsl.maths(inputContrastPath,['-mul ' num2str(1/regrData{r}.conVarBase(c))],tmpPath{r});
-        sumWeights = sumWeights+1/regrData{r}.conVarBase(c);
-        if r>1
-            cmd = [cmd '-add ' tmpPath{r} ' '];
+    % UNPERMUTED
+    if weightRuns
+        % Inverse variance weighting across runs
+        weightEquation = '"(';
+        flagText = [' ' outputContrastPath];
+        weightSum = 0;
+        for r=1:nRuns
+            inputContrastPaths{r} = [inputDirs{r} '/' fpp.bids.changeName(inputNames{r},'desc',...
+                [inputSuffix contrastNames{c}],'contrast',outputExt)];
+            cStr = ['c' int2str(r)];
+            flagText = [flagText ' -var ' cStr ' ' inputContrastPaths{r}];
+            if r==1
+                weightEquation = [weightEquation cStr '*' num2str(1/regrData{r}.conVarBase(c))];
+            else
+                weightEquation = [weightEquation '+' cStr '*' num2str(1/regrData{r}.conVarBase(c))];
+            end
+            weightSum = weightSum + 1/regrData{r}.conVarBase(c);
         end
+        weightEquation = [weightEquation ')/' num2str(weightSum) '"'];
+        fpp.wb.command([],weightEquation,outputContrastPath,flagText);
+    else
+        % Unweighted average
+        cmd = '';
+        for r=1:nRuns
+            inputContrastPaths{r} = [inputDirs{r} '/' fpp.bids.changeName(inputNames{r},'desc',...
+                [inputSuffix contrastNames{c}],'contrast',outputExt)];
+            if r>1
+                cmd = [cmd '-add ' inputContrastPaths{r} ' '];
+            end
+        end
+        cmd = [cmd ' -div ' nRuns];
+        fpp.fsl.maths(inputContrastPaths{1},cmd,outputContrastPath);
     end
-    cmd = [cmd '-div ' num2str(sumWeights)];
-    fpp.fsl.maths(tmpPath{1},cmd,outputContrastPath);
-    for r=1:nRuns
-        fpp.util.system(['rm -rf ' tmpPath{r}]);
-    end
-    % Permuted analyses
+    % PERMUTED
     for iter=1:permIters
         iterSuffix = ['iter' int2str(iter)];
         outputContrastPathPerm = [permsDir '/' fpp.bids.changeName(outputNameGeneric,'desc',...
             [iterSuffix inputSuffix outputSuffix contrastNames{c}],'contrast','.nii.gz')];
-        cmd = '';
-        sumWeights = 0;    % Sum of weighting factors for cope images
-        for r=1:nRuns
-            inputContrastPath = [inputDirs{r} '/perms/' iterSuffix '/' fpp.bids.changeName(inputNames{r},'desc',...
-                [iterSuffix inputSuffix contrastNames{c}],'contrast',outputExt)];
-            tmpPath{r} = [permsDir '/desc-TmpWeighted' int2str(r) '_contrast.nii.gz'];
-            fpp.util.system(['fslmaths ' inputContrastPath ' -mul ' ...
-                num2str(1/regrData{r}.conVarBasePerm{iter}(c)) ' ' tmpPath{r}]);
-            sumWeights = sumWeights+1/regrData{r}.conVarBasePerm{iter}(c);
-            if r>1
-                cmd = [cmd '-add ' tmpPath{r} ' '];
+        if weightRuns
+            % Inverse variance weighting across runs
+            weightEquation = '"(';
+            flagText = [' ' outputContrastPath];
+            weightSum = 0;
+            for r=1:nRuns
+                inputContrastPaths{r} = [inputDirs{r} '/perms/' iterSuffix '/' fpp.bids.changeName(inputNames{r},'desc',...
+                    [iterSuffix inputSuffix contrastNames{c}],'contrast',outputExt)];
+                cStr = ['c' int2str(r)];
+                flagText = [flagText ' -var ' cStr ' ' inputContrastPaths{r}];
+                if r==1
+                    weightEquation = [weightEquation cStr '*' num2str(1/regrData{r}.conVarBase(c))];
+                else
+                    weightEquation = [weightEquation '+' cStr '*' num2str(1/regrData{r}.conVarBase(c))];
+                end
+                weightSum = weightSum + 1/regrData{r}.conVarBase(c);
             end
+            weightEquation = [weightEquation ')/' num2str(weightSum) '"'];
+            fpp.wb.command([],weightEquation,outputContrastPath,flagText);
+        else
+            % Unweighted average
+            cmd = '';
+            for r=1:nRuns
+                inputContrastPaths{r} = [inputDirs{r} '/perms/' iterSuffix '/' fpp.bids.changeName(inputNames{r},'desc',...
+                    [iterSuffix inputSuffix contrastNames{c}],'contrast',outputExt)];
+                if r>1
+                    cmd = [cmd '-add ' inputContrastPaths{r} ' '];
+                end
+            end
+            cmd = [cmd ' -div ' nRuns];
+            fpp.fsl.maths(inputContrastPaths{1},cmd,outputContrastPath);
         end
-        cmd = [cmd '-div ' num2str(sumWeights)];
-        fpp.fsl.maths(tmpPath{1},cmd,outputContrastPathPerm);
-        for r=1:nRuns
-            fpp.util.system(['rm -rf ' tmpPath{r}]);
-        end
+        
         if mod(iter,10)==0
-            fprintf('%s\n',[outputNameGeneric ' ' contrastNames{c} ' - iter ' int2str(iter)]);
+            fprintf('%s\n',['Iter ' int2str(iter) ' - ' contrastNames{c} ' ' outputNameGeneric]);
         end
     end
     

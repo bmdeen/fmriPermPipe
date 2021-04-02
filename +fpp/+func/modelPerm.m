@@ -421,7 +421,7 @@ for iter=0:permIters
     end
     
     if mod(iter,10)==0
-        fprintf('%s\n',[outputNameGeneric ' - iter ' int2str(iter)]);
+        fprintf('%s\n',['Iter ' int2str(iter) ' - ' outputNameGeneric]);
     end
 end
 
