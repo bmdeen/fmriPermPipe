@@ -187,7 +187,7 @@ for c=1:nContrasts
                 weightSum = weightSum + 1/regrData{r}.conVarBase(c);
             end
             weightEquation = [weightEquation ')/' num2str(weightSum)];
-            fpp.wb.command('volume-math',[],weightEquation,outputContrastPath,flagText);
+            fpp.wb.command('volume-math',[],weightEquation,outputContrastPathPerm,flagText);
         else
             % Unweighted average
             cmd = '';
