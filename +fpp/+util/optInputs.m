@@ -31,7 +31,7 @@ if ismember(lower(argName),lower({'expt','inputSuffix','outputSuffix','funcTempl
         'regmod','jacrange','intmod','biasres','numprec','interp','warp','postmat',...
         'premat','midmat','mask','warp1','warp2','jacobian','confoundPath','outlierPath',...
         'analysisDir','fieldMapParamPath','topupWarpPath','topupJacobianPath','spinEchoPath',...
-        'filtType','templateType','templateRes','anatTemplatePath'}))
+        'filtType','templateType','templateRes','anatTemplatePath','parcPath','sizeType'}))
     if ischar(argVal)
         argGood = 1;
     else
@@ -47,7 +47,7 @@ elseif ismember(lower(argName),lower({'overwrite','clustCorrect','permuteRest',.
         'useTaskTemplate','applyxfm','imprefm','impinm','ssqlambda','refderiv',...
         'estint','verbose','abs','rel','absout','relout','super','usesqform',...
         'constrainj','noconstraint','useDespike','nosearch','deleteMidprep',...
-        'outputOptcomb','weightRuns'}))
+        'outputOptcomb','weightRuns','invertStats'}))
     if (isnumeric(argVal) || islogical(argVal)) && isscalar(argVal) && ismember(argVal,[0 1])
         argGood = 1;
     else
@@ -97,7 +97,7 @@ elseif ismember(lower(argName),lower({'echoesToUse'}))
     end
     
 % Vector of integers in (0,Inf)
-elseif ismember(lower(argName),lower({'runList','conList','outlierInd'}))
+elseif ismember(lower(argName),lower({'runList','conList','outlierInd','parcInd'}))
     if isnumeric(argVal) && isvector(argVal) && sum(mod(argVal,1)==0)==length(argVal) && sum(argVal==0)==0
         argGood = 1;
     else
@@ -113,7 +113,7 @@ elseif ismember(lower(argName),lower({'voxThresh','clustThresh','faValue'}))
     end
     
 % Scalar in (0,Inf)
-elseif ismember(lower(argName),lower({'upsampledTR','smThresh'}))
+elseif ismember(lower(argName),lower({'upsampledTR','smThresh','roiSize'}))
     if isnumeric(argVal) && isscalar(argVal) && argVal>0 && argVal~=inf
         argGood = 1;
     else
@@ -136,6 +136,14 @@ elseif ismember(lower(argName),lower({'fwhm','imprefval','impinval','lambda','bi
         argGood = 1;
     else
         errorMsg = ['Argument ' argName ' must be a scalar >= 0.'];
+    end
+    
+% Scalar in [-Inf,Inf]
+elseif ismember(lower(argName),lower({'statThresh'}))
+    if isnumeric(argVal) && isscalar(argVal)
+        argGood = 1;
+    else
+        errorMsg = ['Argument ' argName ' must be a scalar.'];
     end
     
 % Vector of values in (0,Inf)
