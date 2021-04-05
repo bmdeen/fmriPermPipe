@@ -25,7 +25,7 @@ if ~exist(topupJacobian2TemplatePath,'file')
     fpp.fsl.moveImage(topupJacobianPath,templatePath,topupJacobian2TemplatePath,xfmSpinEcho2Template);
 end
 
-% Copy warp/postmat to avoid applywarp segmentation faults when running multiple runs in parallel
+% Copy warp/postmat inputs to avoid applywarp segmentation faults when running multiple runs in parallel
 [~,xfmSE2TempName,~] = fileparts(xfmSpinEcho2Template);
 xfmSpinEcho2TemplateCopy = [mcDir '/' xfmSE2TempName '.mat'];
 fpp.util.system(['cp ' xfmSpinEcho2Template ' ' xfmSpinEcho2TemplateCopy]);
@@ -33,7 +33,7 @@ fpp.util.system(['cp ' xfmSpinEcho2Template ' ' xfmSpinEcho2TemplateCopy]);
 topupWarpPathCopy = [mcDir '/' topupWarpName topupWarpExt];
 fpp.util.system(['cp ' topupWarpPath ' ' topupWarpPathCopy]);
 
-% Check # of volumes
+% Check # of volumes and TR
 vols = fpp.util.checkMRIProperty('vols',inputPaths{1});
 tr = fpp.util.checkMRIProperty('tr',inputPaths{1});
 
@@ -50,20 +50,8 @@ for e=1:length(outputPaths)
         xfmInputVol2SpinEcho = [mcDir '/' fpp.bids.changeName(mcName,{'echo','desc','from','to','mode'},...
             {int2str(echoForMoCorr),'',['native' fpp.util.numPad(t,4)],'SpinEcho','image'},'xfm','.mat')];
         fpp.fsl.concatXfm(xfmNativeFunc2SpinEcho,xfmInputVol2NativeFunc,xfmInputVol2SpinEcho);
-        for i=1:10      % Bug fix, catches random segmentation faults by repeating the applywarp command up to 10 times
-            try
-                fpp.fsl.moveImage(inputVolPath,templatePath,outputVolPath,xfmInputVol2SpinEcho,...
-                    'warp',topupWarpPathCopy,'postmat',xfmSpinEcho2TemplateCopy);
-                break;
-            catch exception
-                if i<10
-                    warning(exception.message);
-                    warning('applywarp errored out, trying again');
-                else
-                    error('applywarp errored out multiple times.');
-                end
-            end
-        end
+        fpp.fsl.moveImage(inputVolPath,templatePath,outputVolPath,xfmInputVol2SpinEcho,...
+            'warp',topupWarpPathCopy,'postmat',xfmSpinEcho2TemplateCopy);
         fpp.util.system(['fslmaths ' outputVolPath ' -mul ' topupJacobian2TemplatePath ' ' outputVolPath]);
         mergeCmd = [mergeCmd ' ' outputVolPath];
         if mod(t+1,10)==0
