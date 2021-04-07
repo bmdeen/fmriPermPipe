@@ -413,17 +413,28 @@ pathsToDelete = [pathsToDelete outputPaths];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fprintf('%s\n',['Step 4, Generate/unwarp MocoTargetVol          - ' outputNameGeneric]);
 mocoTargetPath = fpp.bids.changeName(outputPaths{echoForMoCorr},'desc','MocoTargetVol');
-fpp.util.system(['fslroi ' outputPaths{echoForMoCorr} ' ' mocoTargetPath ' ' int2str(moCorrTargetVolNum) ' 1']);
-fpp.bids.jsonReconstruct(outputPaths{echoForMoCorr},mocoTargetPath);
-fpp.bids.jsonChangeValue(mocoTargetPath,'Description','Target volume for motion correction.');
-% Undistorted MocoTarget vol
+if ~exist(mocoTargetPath,'file') || overwrite
+    fpp.util.system(['fslroi ' outputPaths{echoForMoCorr} ' ' mocoTargetPath ' ' int2str(moCorrTargetVolNum) ' 1']);
+    fpp.bids.jsonReconstruct(outputPaths{echoForMoCorr},mocoTargetPath);
+    fpp.bids.jsonChangeValue(mocoTargetPath,'Description','Target volume for motion correction.');
+else
+    warning(['Not overwriting existing moco target image. If motion artifact thresholds '...
+        'have changed, set overwrite==1 to rewrite this image.']);
+end
+% Undistort MocoTarget vol
 if undistort
     mocoTargetUndistortedPath = fpp.bids.changeName(outputPaths{echoForMoCorr},'desc','MocoTargetVolUndistorted');
-    [xfmMocoTarget2SpinEcho,xfmSpinEcho2MocoTarget] = fpp.func.preproc.undistort(mocoTargetPath,mocoTargetUndistortedPath,...
-        spinEchoPath,topupWarpPath,topupJacobianPath);
-    fpp.bids.jsonChangeValue(mocoTargetUndistortedPath,'Description','Target volume for motion correction, undistorted.');
+    if ~exist(mocoTargetUndistortedPath,'file') || overwrite
+        [xfmMocoTarget2SpinEcho,xfmSpinEcho2MocoTarget] = fpp.func.preproc.undistort(mocoTargetPath,mocoTargetUndistortedPath,...
+            spinEchoPath,topupWarpPath,topupJacobianPath);
+        fpp.bids.jsonChangeValue(mocoTargetUndistortedPath,'Description','Target volume for motion correction, undistorted.');
+    else
+        xfmMocoTarget2SpinEcho = fpp.bids.changeName(mocoTargetPath,{'desc','from','to','mode','echo'},...
+        {'','native','SpinEcho','image',[]},'xfm','.mat');
+        xfmSpinEcho2MocoTarget = fpp.bids.changeName(mocoTargetpath,{'desc','from','to','mode','echo'},...
+        {'','SpinEcho','native','image',[]},'xfm','.mat');
+    end
 end
-
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -444,9 +455,11 @@ xfmMocoTarget2FuncTemplate = fpp.bids.changeName(mocoTargetPath,{'desc','from','
     {'','native','session','image',[]},'xfm','.mat');
 xfmFuncTemplate2MocoTarget = fpp.bids.changeName(mocoTargetPath,{'desc','from','to','mode','echo'},...
     {'','session','native','image',[]},'xfm','.mat');
-fpp.fsl.flirt(mocoTargetToRegisterPath,funcTemplatePathRegTarget,xfmMocoTarget2FuncTemplate,[],'cost','corratio',...
-    'dof',6,'searchrx',[-180 180],'searchry',[-180 180],'searchrz',[-180 180]);
-fpp.fsl.invertXfm(xfmMocoTarget2FuncTemplate,xfmFuncTemplate2MocoTarget);
+if ~exist(xfmMocoTarget2FuncTemplate,'file') || ~exist(xfmFuncTemplate2MocoTarget,'file') || overwrite
+    fpp.fsl.flirt(mocoTargetToRegisterPath,funcTemplatePathRegTarget,xfmMocoTarget2FuncTemplate,[],'cost','corratio',...
+        'dof',6,'searchrx',[-180 180],'searchry',[-180 180],'searchrz',[-180 180]);
+    fpp.fsl.invertXfm(xfmMocoTarget2FuncTemplate,xfmFuncTemplate2MocoTarget);
+end
 if strcmpi(templateType,'anat')
     xfmFunc2AnatTemplate = fpp.bids.changeName(funcTemplatePath,...
         {'desc','space','res','echo','from','to','mode'},...
@@ -454,7 +467,9 @@ if strcmpi(templateType,'anat')
     xfmMocoTarget2Template = fpp.bids.changeName(inputPaths{1},...
         {'desc','space','res','echo','from','to','mode'},...
         {[],[],[],[],'native','individual','image'},'xfm','.mat');
-    fpp.fsl.concatXfm(xfmFunc2AnatTemplate,xfmMocoTarget2FuncTemplate,xfmMocoTarget2Template);
+    if ~exist(xfmMocoTarget2Template,'file') || overwrite
+        fpp.fsl.concatXfm(xfmFunc2AnatTemplate,xfmMocoTarget2FuncTemplate,xfmMocoTarget2Template);
+    end
 else
     xfmMocoTarget2Template = xfmMocoTarget2FuncTemplate;
 end
