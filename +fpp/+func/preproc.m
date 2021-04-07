@@ -419,7 +419,7 @@ if ~exist(mocoTargetPath,'file') || overwrite
     fpp.bids.jsonChangeValue(mocoTargetPath,'Description','Target volume for motion correction.');
 else
     warning(['Not overwriting existing moco target image. If motion artifact thresholds '...
-        'have changed, set overwrite==1 to rewrite this image.']);
+        'have changed, set overwrite to 1 to rewrite this image, or add a suffix.']);
 end
 % Undistort MocoTarget vol
 if undistort
@@ -431,7 +431,7 @@ if undistort
     else
         xfmMocoTarget2SpinEcho = fpp.bids.changeName(mocoTargetPath,{'desc','from','to','mode','echo'},...
         {'','native','SpinEcho','image',[]},'xfm','.mat');
-        xfmSpinEcho2MocoTarget = fpp.bids.changeName(mocoTargetpath,{'desc','from','to','mode','echo'},...
+        xfmSpinEcho2MocoTarget = fpp.bids.changeName(mocoTargetPath,{'desc','from','to','mode','echo'},...
         {'','SpinEcho','native','image',[]},'xfm','.mat');
     end
 end
