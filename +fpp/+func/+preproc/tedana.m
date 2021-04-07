@@ -59,7 +59,7 @@ if useTedana
         outputDir ' --mask ' maskPath ' --verbose']);
     
     % Create output directory
-    outputDirTedana = strrep(fpp.bids.changeName(outputPath,{'space','desc'},{[],[]}),'_bold.nii.gz','_tedana');
+    outputDirTedana = strrep(fpp.bids.changeName(outputPath,{'desc'},{[]}),'_bold.nii.gz','_tedana');
     fpp.util.system(['mv ' outputDir '/figures ' outputDirTedana]);
     outputPathTedana = [outputDirTedana '/' outputName outputExt];
     

@@ -266,7 +266,7 @@ if strcmpi(templateType,'anat')
             ' Run fpp.anat.postproc or specify a different image.']);
     end
 elseif strcmpi(templateType,'func')
-    templatePath = funcTemplate;
+    templatePath = funcTemplatePath;
     templateSpace = funcTemplateSpace;
 else
     error('Template type must be specified as func or anat.');
