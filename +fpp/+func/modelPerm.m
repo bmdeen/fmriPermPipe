@@ -405,7 +405,7 @@ for iter=0:permIters
                 [outputSuffix condNames{r}],'beta',outputExt)];
             pscPath = fpp.bids.changeName(betaPath,[],[],'psc',outputExt);
             fpp.util.writeDataMatrix(betas(r,:)',hdr,betaPath,maskVol);
-            fpp.wb.command([imageType '-math'],[],'beta/(mean*mask)',pscPath,...
+            fpp.wb.command([imageType '-math'],[],'100*beta/(mean*mask)',pscPath,...
                 ['-var beta ' betaPath ' -var mean ' meanPath ' -var mask ' maskPath]);
         end
         
