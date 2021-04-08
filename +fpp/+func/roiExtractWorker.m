@@ -14,12 +14,12 @@ function [psc condNames] = roiExtractWorker(modelDir,roiPath)
 psc = [];
 
 % Check if ROI input is NIFTI or CIFTI
-[~,~,roiExt] = fpp.util.fileParts(roipath);
+[~,~,roiExt] = fpp.util.fileParts(roiPath);
 if ~ismember(lower(roiExt),{'.nii.gz','.nii','.dscalar.nii'})
     error('roiPath must be a NIFTI or CIFTI dscalar file.');
 end
 imageType = 'volume';
-if strcmpi(inputExt,'.dscalar.nii')
+if strcmpi(roiExt,'.dscalar.nii')
     imageType = 'cifti';
 end
 
@@ -32,8 +32,8 @@ suffix = fpp.bids.checkNameValue(modelName,'desc');
 
 % Extract PSC values within ROI
 for c=1:length(condNames)
-    pscPath = [modelDir '/' fpp.bids.changeName(modelName,'desc',[suffix condNames],'psc','.nii.gz')];
-    pscVal = fpp.wb.command([imageType '-stats'],[],[],['-reduce MEAN -roi ' roiPath]);
+    pscPath = [modelDir '/' fpp.bids.changeName(modelName,'desc',[suffix condNames{c}],'psc','.nii.gz')];
+    pscVal = fpp.wb.command([imageType '-stats'],pscPath,[],[],['-reduce MEAN -roi ' roiPath]);
     psc(c) = str2num(strtrim(pscVal));
 end
 
