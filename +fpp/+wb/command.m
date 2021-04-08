@@ -1,5 +1,5 @@
 
-% fpp.wb.command(cmdType,inputPath,argText,outputPath,flagText[,outputDescription,appendDescription])
+% cmdOut = fpp.wb.command(cmdType,inputPath,argText,outputPath,flagText[,outputDescription,appendDescription])
 %
 % Wrapper for HCP's wb_command function, which generates JSON metadata for
 % the output data if it exists for the input.
@@ -77,9 +77,8 @@ end
 cmd = ['wb_command -' cmdType ' ' inputPath ' ' argText ' ' outputPath ' ' flagText];
 [~,cmdOut] = fpp.util.system(cmd);
 
-% For commands that output display text, show output and return
+% For commands that output text and no file, return output value.
 if strcmp(outputType,'Disp')
-    disp(cmdOut);
     return;
 end
 
