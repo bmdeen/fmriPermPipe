@@ -85,8 +85,8 @@ for r=1:nRuns
         error(['Input path ' inputPaths{r} ' does not exist.']);
     end
     [~,inputNames{r},~] = fpp.util.fileParts(inputPaths{r});
-    inputDirs{r} = [analysisDir '/' fpp.bids.changeName(inputNames{r},{'sub','desc'},...
-        {[],inputSuffix},'modelperm','')];
+    inputDirs{r} = [analysisDir '/' fpp.bids.changeName(inputNames{r},'desc',...
+        inputSuffix,'modelperm','')];
     if ~exist(inputDirs{r},'dir')
         error(['Input analysis directory ' inputDirs{r} ' does not exist.']);
     end
@@ -99,8 +99,7 @@ nContrasts = length(contrastNames);
 permIters = min(permItersVec);          % # of permutation iterations
 
 % Define and create output directory
-outputNameGeneric = fpp.bids.changeName(inputNames{1},{'run','desc'},{'',[inputSuffix outputSuffix]},'model2perm','');
-outputName = fpp.bids.changeName(outputNameGeneric,'sub','','model2perm','');
+outputName = fpp.bids.changeName(inputNames{1},{'run','desc'},{'',[inputSuffix outputSuffix]},'model2perm','');
 outputDirBase = [analysisDir '/' outputName];
 if exist(outputDirBase,'dir')
     if overwrite
@@ -122,9 +121,9 @@ for c=1:nContrasts
     end
     
     % Output files
-    outputContrastPath = [outputDir '/' fpp.bids.changeName(outputNameGeneric,'desc',...
+    outputContrastPath = [outputDir '/' fpp.bids.changeName(outputName,'desc',...
         [inputSuffix outputSuffix contrastNames{c}],'contrast',outputExt)];
-    outputZStatPath = [outputDir '/' fpp.bids.changeName(outputNameGeneric,'desc',...
+    outputZStatPath = [outputDir '/' fpp.bids.changeName(outputName,'desc',...
         [inputSuffix outputSuffix contrastNames{c}],'zstat',outputExt)];
     
     
@@ -167,7 +166,7 @@ for c=1:nContrasts
     % Permuted data
     for iter=1:permIters
         iterSuffix = ['iter' int2str(iter)];
-        outputContrastPathPerm = [permsDir '/' fpp.bids.changeName(outputNameGeneric,'desc',...
+        outputContrastPathPerm = [permsDir '/' fpp.bids.changeName(outputName,'desc',...
             [iterSuffix inputSuffix outputSuffix contrastNames{c}],'contrast','.nii.gz')];
         if weightRuns
             % Inverse variance weighting across runs
@@ -203,34 +202,34 @@ for c=1:nContrasts
         end
         
         if mod(iter,10)==0
-            fprintf('%s\n',['Iter ' int2str(iter) ' - ' contrastNames{c} ' ' outputNameGeneric]);
+            fprintf('%s\n',['Iter ' int2str(iter) ' - ' contrastNames{c} ' ' outputName]);
         end
     end
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%% SUBSTEP 2: Merge permuted contrasts across iterations
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    concatContrastPath = [permsDir '/' fpp.bids.changeName(outputNameGeneric,'desc',...
+    concatContrastPath = [permsDir '/' fpp.bids.changeName(outputName,'desc',...
     	[inputSuffix outputSuffix contrastNames{c} 'Permutations'],'contrast','.nii.gz')];
-    outputContrastMeanPath = [permsDir '/' fpp.bids.changeName(outputNameGeneric,'desc',...
+    outputContrastMeanPath = [permsDir '/' fpp.bids.changeName(outputName,'desc',...
         [inputSuffix outputSuffix contrastNames{c} 'PermutationMean'],'contrast',outputExt)];
-    outputContrastStdDevPath = [permsDir '/' fpp.bids.changeName(outputNameGeneric,'desc',...
+    outputContrastStdDevPath = [permsDir '/' fpp.bids.changeName(outputName,'desc',...
         [inputSuffix outputSuffix contrastNames{c} 'PermutationStdDev'],'contraststddev',outputExt)];
     mergeCmd = ['fslmerge -t ' concatContrastPath ' '];
     
     % Split up merge command to avoid Linux command character limits
-    cLength = length([permsDir '/' fpp.bids.changeName(outputNameGeneric,'desc',...
+    cLength = length([permsDir '/' fpp.bids.changeName(outputName,'desc',...
             ['iter' permIters inputSuffix outputSuffix contrastNames{c}],'contrast','.nii.gz')]);
     mLength = length(mergeCmd);
     contrastsPerMerge = floor((charLimit-mLength)/cLength);
     mergeIters = ceil(permIters/contrastsPerMerge);
     for i=1:mergeIters
-        concatContrastPaths{i} = [permsDir '/' fpp.bids.changeName(outputNameGeneric,'desc',...
+        concatContrastPaths{i} = [permsDir '/' fpp.bids.changeName(outputName,'desc',...
             [inputSuffix outputSuffix contrastNames{c} 'Permutations' int2str(i)],'contrast','.nii.gz')];
         mergeCmd = [mergeCmd ' ' concatContrastPaths{i}];
         mergeCmd2 = ['fslmerge -t ' concatContrastPaths{i} ' '];
         for j=(1+(i-1)*contrastsPerMerge):min(permIters,i*contrastsPerMerge)
-            outputContrastPathPerm = [permsDir '/' fpp.bids.changeName(outputNameGeneric,'desc',...
+            outputContrastPathPerm = [permsDir '/' fpp.bids.changeName(outputName,'desc',...
                 ['iter' int2str(j) inputSuffix outputSuffix contrastNames{c}],'contrast','.nii.gz')];
             mergeCmd2 = [mergeCmd2 ' ' outputContrastPathPerm];
         end
@@ -251,7 +250,7 @@ for c=1:nContrasts
     fpp.util.system(['fslmaths ' outputContrastPath ' -sub ' outputContrastMeanPath ...
         ' -div ' outputContrastStdDevPath ' ' outputZStatPath]);
     
-    fprintf('%s\n',[outputNameGeneric ' ' contrastNames{c} ' - Computed permutation stats']);
+    fprintf('%s\n',[outputName ' ' contrastNames{c} ' - Computed permutation stats']);
 
 end
 

@@ -149,7 +149,7 @@ if ~exist(inputPath,'file')
 end
 [inputDir,inputName,inputExt] = fpp.util.fileParts(inputPath);
 if isempty(inputDir), inputDir = pwd; end
-outputNameGeneric = strrep(fpp.bids.changeName(inputName,'desc',outputSuffix),'_bold','');
+outputNameGeneric = fpp.bids.changeName(inputName,'desc',outputSuffix,'bold','');
 numVols = fpp.util.checkMRIProperty('vols',inputPath);
 tr = fpp.util.checkMRIProperty('tr',inputPath);
 exptDuration = tr*numVols;
@@ -239,7 +239,7 @@ if exist(confoundPath,'file')
     if ~isempty(nuisRegrMat)
         nuisRegrMat = nuisRegrMat(goodVolInd,:);
         nuisRegrMat = bsxfun(@minus,nuisRegrMat,mean(nuisRegrMat));
-
+        
         % Filter nuisance regressors
         if tempFilt
             nuisRegrMat = fpp.util.firFilter(nuisRegrMat,1/tr,filtCutoff,filtType,filtOrder);
@@ -249,7 +249,7 @@ end
 regrNames = [condNames,confoundNames];
 
 % Define and create output directory
-outputName = strrep(fpp.bids.changeName(inputName,{'sub','desc'},{[],outputSuffix},'modelperm','.ext'),'.ext','');
+outputName = strrep(fpp.bids.changeName(inputName,'desc',outputSuffix,'modelperm','.ext'),'.ext','');
 if isempty(analysisDir)
     analysisDir = [inputDir '/../analysis'];
 end
