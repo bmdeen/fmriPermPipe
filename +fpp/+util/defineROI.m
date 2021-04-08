@@ -6,7 +6,8 @@
 % fpp.util.defineROI(statPath,searchPath,outputPath,varargin)
 %
 % Arguments:
-% - statPath (string): path to statistical map
+% - statPath (string or cell array of strings): path to statistical map. If
+%       cell array, maps will be averaged first.
 % - searchPath (string): path to search space mask image
 %
 % Variable arguments:
@@ -53,10 +54,25 @@ if strcmpi(sizeType,'vox')
     roiSize = round(roiSize);
 end
 
+% Generate search space from parcellation, if parcPath/parcInds specified
 if isempty(searchPath) && ~isempty(parcPath) && ~isempty(parcInds)
     fpp.util.label2ROI(parcPath,parcInds,searchPath)
 end
 
+% Average statistical maps, if statPath is a cell array
+statAvg = 0;
+if iscell(statPath)
+    statAvg = 1;
+    statPaths = statPath;
+    [statDir,statName,~] = fpp.util.fileParts(statPaths{1});
+    statPath = [statDir '/' statName '_tmpDefineROI2098315310985.nii.gz'];
+    cmd = '';
+    for i=2:length(statPaths), cmd = [cmd ' -add ' statPaths{i}]; end
+    cmd = [cmd ' -div ' int2str(length(statPaths))];
+    fpp.fsl.maths(statPaths{1},cmd,statPath);
+end
+
+% Load statistical map and search space
 if ~isempty(maskPath)
     maskData = fpp.util.mriRead(maskPath);
     [statVec,~] = fpp.util.readDataMatrix(statPath,maskData.vol);
@@ -118,6 +134,14 @@ if exist(fpp.bids.jsonPath(searchPath),'file')
     end
     outputSources = cellfun(removeBidsDir,{statPath,searchPath},'UniformOutput',false);
     fpp.bids.jsonChangeValue(outputPath,{'Description','Sources','RawSources'},{outputDescription,outputSources,[]});
+end
+
+% Delete temporary, averaged statistic map, if necessary
+if statAvg
+    system(['rm -rf ' statPath]);
+    if exist(fpp.bids.jsonPath(statPath),'file')
+        system(['rm -rf ' fpp.bids.jsonPath(statPath)]);
+    end
 end
 
 end
