@@ -1,5 +1,5 @@
 
-% fpp.func.roiExtractWorker(modelDir,roiPath)
+% [psc,condNames] = fpp.func.roiExtractWorker(modelDir,roiPath)
 %
 % Basic function that extracts percent signal change responses across
 % conditions from one run of one task, within a region-of-interest
@@ -9,7 +9,7 @@
 % - modelDir (string): modelperm directory to extract responses from
 % - roipath (string): path to region-of-interest mask image
 
-function [psc condNames] = roiExtractWorker(modelDir,roiPath)
+function [psc,condNames] = roiExtractWorker(modelDir,roiPath)
 
 psc = [];
 
