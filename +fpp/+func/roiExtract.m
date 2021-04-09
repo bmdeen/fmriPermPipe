@@ -67,7 +67,7 @@ end
 
 % Get search space info
 [~,searchName,~] = fpp.util.fileParts(searchPath);
-searchDesc = fpp.bids.checkNameValue(searchpath,'desc');
+searchDesc = fpp.bids.checkNameValue(searchPath,'desc');
 
 % Get modelperm directory desc/task info
 [analysisDir,extractResponseName,~] = fpp.util.fileParts(extractResponseDir);
@@ -89,7 +89,7 @@ end
 dirs = fpp.util.regExpDir(analysisDir,regexprep(extractResponseName,'run-[a-zA-Z0-9]+_','run-[a-zA-Z0-9]+_'));
 for d=1:length(dirs)
     extractResponseDirs{d} = [analysisDir '/' dirs(d).name];
-    extractResponseRuns{d} = fpp.bids.checkNameValue(dirs(d).name);
+    extractResponseRuns{d} = fpp.bids.checkNameValue(dirs(d).name,'run');
 end
 [~,sortInd] = sort(cellfun(@str2num,extractResponseRuns));  % Sort runs by run #
 extractResponseDirs = extractResponseDirs(sortInd);
@@ -101,7 +101,7 @@ runNames = extractResponseRuns;
 dirs = fpp.util.regExpDir(analysisDir,regexprep(defineROIName,'run-[a-zA-Z0-9]+_','run-[a-zA-Z0-9]+_'));
 for d=1:length(dirs)
     defineROIDirs{d} = [analysisDir '/' dirs(d).name];
-    defineROIRuns{d} = fpp.bids.checkNameValue(dirs(d).name);
+    defineROIRuns{d} = fpp.bids.checkNameValue(dirs(d).name,'run');
 end
 [~,sortInd] = sort(cellfun(@str2num,defineROIRuns));  % Sort runs by run #
 defineROIDirs = defineROIDirs(sortInd);

@@ -93,7 +93,7 @@ if iscell(statPath)
     for s=1:nStats
         statStr = ['s' int2str(s)];
         flagText = [flagText ' -var ' statStr ' ' statPaths{s}];
-        if r==1
+        if s==1
             weightEquation = [weightEquation statStr];
         else
             weightEquation = [weightEquation '+' statStr];
