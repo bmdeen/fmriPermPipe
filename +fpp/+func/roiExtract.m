@@ -87,6 +87,9 @@ end
 
 % Find all extractResponse directories, across runs
 dirs = fpp.util.regExpDir(analysisDir,regexprep(extractResponseName,'run-[a-zA-Z0-9]+_','run-[a-zA-Z0-9]+_'));
+if isempty(dirs)
+    error(['Could not find analysis directories with name ' extractResponseName]);
+end
 for d=1:length(dirs)
     extractResponseDirs{d} = [analysisDir '/' dirs(d).name];
     extractResponseRuns{d} = fpp.bids.checkNameValue(dirs(d).name,'run');
