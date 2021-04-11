@@ -1,7 +1,7 @@
 
 % [psc,condNames,runNames] = fpp.func.roiExtract(extractResponseDir,defineROIDir,contrastName,searchPath,varargin)
 %
-% Script to extract region-of-interest responses from a given task and
+% Function to extract region-of-interest responses from a given task and
 % participant, using ROIs defined by maximally responsive coordinates from
 % a specific contrast in another task, within a search space. If the two
 % tasks are the same, a leave-one-run-out analysis is performed, to ensure
@@ -139,18 +139,22 @@ if loro
         % Define ROI, using average statistical map from all but one run
         loroSuffix = ['LORO' defineROIRuns{r}];
         roiPath = [roiDir '/' fpp.bids.changeName(searchName,'desc',...
-            [searchDesc defineROITask contrastName invertSuffix numSuffix loroSuffix]) inputExt];
-        fpp.util.defineROI(zStatPaths(setdiff(1:nRuns,r)),searchPath,roiPath,'roiSize',roiSize,...
-            'sizeType',sizeType,'invertStats',invertStats,'maskPath',maskPath);
+            [searchDesc defineROITask defineROIDesc contrastName invertSuffix numSuffix loroSuffix]) inputExt];
+        if ~exist(roiPath,'file')
+            fpp.util.defineROI(zStatPaths(setdiff(1:nRuns,r)),searchPath,roiPath,'roiSize',roiSize,...
+                'sizeType',sizeType,'invertStats',invertStats,'maskPath',maskPath);
+        end
         
         [psc(r,:),condNames] = fpp.func.roiExtractWorker(extractResponseDirs{r},roiPath);
     end
 else
     % Define ROI, using average statistical map
     roiPath = [roiDir '/' fpp.bids.changeName(searchName,'desc',...
-        [searchDesc defineROITask contrastName invertSuffix numSuffix]) inputExt];
-    fpp.util.defineROI(zStatPaths,searchPath,roiPath,'roiSize',roiSize,...
-        'sizeType',sizeType,'invertStats',invertStats,'maskPath',maskPath);
+        [searchDesc defineROITask defineROIDesc contrastName invertSuffix numSuffix]) inputExt];
+    if ~exist(roiPath,'file')
+        fpp.util.defineROI(zStatPaths,searchPath,roiPath,'roiSize',roiSize,...
+            'sizeType',sizeType,'invertStats',invertStats,'maskPath',maskPath);
+    end
     
     % Extract responses for each run
     for r=1:nRuns
