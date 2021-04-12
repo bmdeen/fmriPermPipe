@@ -17,6 +17,7 @@
 % - searchPath (string): path to the search space
 %
 % Variable arguments:
+% - overwrite (boolean): whether to overwrite existing ROIs
 % - roiSize (scalar): size of ROI, in % or # of coords in a search space
 % - sizeType ('pct' or 'num'): whether size is measured in # or % of coords
 % - invertStats (boolean, default = 0): whether to invert statistical map
@@ -32,13 +33,14 @@ function [psc,condNames,runNames] = roiExtract(extractResponseDir,defineROIDir,c
 psc = [];
 
 % Variable argument defaults
+overwrite = 0;
 roiSize = 5;
 sizeType = 'pct';
 invertStats = 0;
 maskPath = '';
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
-varArgList = {'roiSize','sizeType','invertStats','maskPath'};
+varArgList = {'roiSize','sizeType','invertStats','maskPath','overwrite'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
@@ -143,7 +145,7 @@ if loro
         loroSuffix = ['LORO' defineROIRuns{r}];
         roiPath = [roiDir '/' fpp.bids.changeName(searchName,'desc',...
             [searchDesc defineROITask defineROIDesc contrastName invertSuffix numSuffix loroSuffix]) inputExt];
-        if ~exist(roiPath,'file')
+        if ~exist(roiPath,'file') || overwrite
             fpp.util.defineROI(zStatPaths(setdiff(1:nRuns,r)),searchPath,roiPath,'roiSize',roiSize,...
                 'sizeType',sizeType,'invertStats',invertStats,'maskPath',maskPath);
         end
@@ -154,7 +156,7 @@ else
     % Define ROI, using average statistical map
     roiPath = [roiDir '/' fpp.bids.changeName(searchName,'desc',...
         [searchDesc defineROITask defineROIDesc contrastName invertSuffix numSuffix]) inputExt];
-    if ~exist(roiPath,'file')
+    if ~exist(roiPath,'file') || overwrite
         fpp.util.defineROI(zStatPaths,searchPath,roiPath,'roiSize',roiSize,...
             'sizeType',sizeType,'invertStats',invertStats,'maskPath',maskPath);
     end
