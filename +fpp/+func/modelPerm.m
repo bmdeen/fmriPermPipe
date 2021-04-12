@@ -251,7 +251,7 @@ end
 regrNames = [condNames,confoundNames];
 
 % Define and create output directory
-outputName = strrep(fpp.bids.changeName(inputName,'desc',outputSuffix,'modelperm','.ext'),'.ext','');
+outputName = fpp.bids.changeName(inputName,'desc',outputSuffix,'modelperm','');
 if isempty(analysisDir)
     analysisDir = [inputDir '/../analysis'];
 end
@@ -267,6 +267,13 @@ end
 mkdir(outputDir);
 outputDirOrig = outputDir;
 outputMat = [outputDirOrig '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'RegressionData','.mat')];
+
+% Define and create condition TSV file
+condPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'conditions','.tsv')];
+for c=1:nConds
+    condTSV.cond_names{c} = condNames{c};
+end
+bids.util.tsvwrite(condPath,condTSV);
 
 
 
