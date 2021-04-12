@@ -105,6 +105,14 @@ elseif ismember(lower(argName),lower({'runList','conList','outlierInd','parcInd'
         errorMsg = ['Argument ' argName ' must be a vector of integers > 0.'];
     end
     
+% Vector of boolean values
+elseif ismember(lower(argName),lower({'confoundFilt'}))
+    if (isnumeric(argVal) || islogical(argVal)) && isvector(argVal) && sum(ismember(argVal,[0 1]))==length(argVal)
+        argGood = 1;
+    else
+        errorMsg = ['Argument ' argName ' must be a vector of boolean values.'];
+    end
+    
 % Scalar in (0,1)
 elseif ismember(lower(argName),lower({'voxThresh','clustThresh','faValue'}))
     if isnumeric(argVal) && isscalar(argVal) && argVal>0 && argVal<1
