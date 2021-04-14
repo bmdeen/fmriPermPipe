@@ -8,7 +8,7 @@ function argVal = optInputs(argList,argName)
 %%% Find intended value for argument argName
 argVal = [];
 for i = 1:length(argList)
-    if strcmpi(argList{i},argName) && length(argList)>i
+    if ~iscell(argList{i}) && strcmpi(argList{i},argName) && length(argList)>i
         argVal = argList{i+1};
         break;
     end
@@ -48,7 +48,7 @@ elseif ismember(lower(argName),lower({'overwrite','clustCorrect','permuteRest',.
         'useTaskTemplate','applyxfm','imprefm','impinm','ssqlambda','refderiv',...
         'estint','verbose','abs','rel','absout','relout','super','usesqform',...
         'constrainj','noconstraint','useDespike','nosearch','deleteMidprep',...
-        'outputOptcomb','weightRuns','invertStats'}))
+        'outputOptcomb','weightRuns','invertStats','deleteFeat'}))
     if (isnumeric(argVal) || islogical(argVal)) && isscalar(argVal) && ismember(argVal,[0 1])
         argGood = 1;
     else

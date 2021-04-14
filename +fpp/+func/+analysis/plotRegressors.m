@@ -7,6 +7,8 @@
 
 function plotRegressors(taskRegrMat,nuisRegrMat,regrNames,outputDir,outputNameGeneric,closeFigs)
 
+titleSize = 8;     % Font size of plot titles
+
 % Determine description field
 descExp = '_desc-[0-9a-zA-Z]+_';
 [descInd,descIndEnd] = regexp(outputNameGeneric,descExp);
@@ -17,6 +19,7 @@ else
 end
 
 X = [taskRegrMat nuisRegrMat];
+nConds = size(taskRegrMat,2);
 
 % 1) Plot all regressors
 regrFig = figure('units','normalized','position',[.1 .1 .8 .8]);
@@ -34,11 +37,12 @@ for r=1:numRegrs
     plot(X(:,r));
     xlim([1 size(X,1)]);
     if r==1
-        title([outputNameGeneric ': ' regrNames{r}],'interpreter','none');
+        title({outputNameGeneric,regrNames{r}},'interpreter','none','FontSize',titleSize);
     else
         title(regrNames{r},'interpreter','none');
     end
 end
+set(gcf,'Color',[1 1 1]);
 saveas(regrFig,[outputDir '/' fpp.bids.changeName(outputNameGeneric,'desc',...
     [descValue 'Regressors']) '_image.png']);
 if closeFigs, close(regrFig); end
@@ -48,8 +52,9 @@ corrFig = figure;
 if closeFigs, set(corrFig,'visible','off'); end
 imagesc(corr(X),[-1 1]); colorbar;
 set(gca,'XTick',1:numRegrs,'YTick',1:numRegrs,'XTickLabel',...
-    [],'YTickLabel',regrNames);
-title([outputNameGeneric ': Regressor Correlations'],'interpreter','none');
+    [],'YTickLabel',regrNames,'TickLabelInterpreter','none');
+set(gcf,'Color',[1 1 1]);
+title({outputNameGeneric,'Regressor Correlations'},'interpreter','none','FontSize',titleSize);
 saveas(corrFig,[outputDir '/' fpp.bids.changeName(outputNameGeneric,'desc',...
     [descValue 'RegressorCorrelations']) '_image.png']);
 if closeFigs, close(corrFig); end
@@ -62,8 +67,9 @@ if ~isempty(nuisRegrMat)
     varRemoved = ones(1,nConds)-sum(taskRegrMatProj.^2)./sum(taskRegrMat.^2);
     bar(varRemoved);
     ylim([0 1]);
-    set(gca,'XTick',1:nConds,'XTickLabel',regrNames(1:nConds));
-    title([outputNameGeneric ': Variance Explained by Nuisance Regrs'],'interpreter','none');
+    set(gca,'XTick',1:nConds,'XTickLabel',regrNames(1:nConds),'TickLabelInterpreter','none');
+    set(gcf,'Color',[1 1 1]);
+    title({outputNameGeneric,'Variance Explained by Nuisance Regrs'},'interpreter','none','FontSize',titleSize);
 	saveas(varianceFig,[outputDir '/' fpp.bids.changeName(outputNameGeneric,'desc',...
         [descValue 'RegressorVarianceRemoved']) '_image.png']);
     if closeFigs, close(varianceFig); end

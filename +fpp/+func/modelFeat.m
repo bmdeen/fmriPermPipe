@@ -2,8 +2,8 @@
 % fpp.func.modelFeat(inputPath,eventsPath,contrastMatrixPath,varargin)
 %
 % Step 1 of a two-step process (modelFeat, model2ndFeat) to perform a
-% General Linear Model based analysis of fMRI data using FSL's FEAT. Should
-% be run after fpp.func.preproc.
+% General Linear Model based analysis of fMRI data using FSL's FEAT/FILM.
+% Should be run after fpp.func.preproc.
 % 
 % Example usage: modelFeat('/pathToData/sub-01_task-faceloc_run-01_space-individual_desc-preproc_bold.nii.gz',...
 %   '/pathToData/sub-01_task-faceloc_run-01_events.tsv','/pathToData/task-faceloc_contrastmatrix.tsv')
@@ -47,6 +47,8 @@
 %       (Hz)
 %   - filtOrder (integer in (0,Inf); default=60): Hanning-window FIR filter
 %       order.
+%   - deleteFeat (boolean; default true): whether to delete output .feat
+%       directory, after copying relevant files to modelfeat dir
 %   - plotResults (boolean; default=0): whether to display result plots
 %   - writeResiduals (boolean; default=0): whether to output GLM residuals
 %
@@ -95,6 +97,7 @@ filtOrder = 60;             % Hanning-window FIR filter order
 filtType = '';              % Type of filter (high, low, bandpass)
 
 % Data generation parameters
+deleteFeat = 1;             % Whether to delete output .feat directory
 plotResults = 0;            % Whether to display result plots
 writeResiduals = 0;         % Whether to write 4-D residual image
 
@@ -116,6 +119,8 @@ for i=1:length(varArgList)
     end
 end
 
+% Check confoundNames input
+if size(confoundNames,1)>size(confoundNames,2), confoundNames = confoundNames'; end
 % Check confoundFilt input
 if tempFilt && ~isempty(confoundNames) && (isempty(confoundFilt) ||...
         length(confoundFilt)~=length(confoundNames))
@@ -132,16 +137,16 @@ if ~exist(inputPath,'file')
 end
 [inputDir,inputName,inputExt] = fpp.util.fileParts(inputPath);
 if isempty(inputDir), inputDir = pwd; end
-outputNameGeneric = fpp.bids.changeName(inputName,'desc',outputSuffix,'bold','');
+outputName = fpp.bids.changeName(inputName,'desc',outputSuffix,'modelfeat','');
 numVols = fpp.util.checkMRIProperty('vols',inputPath);
 tr = fpp.util.checkMRIProperty('tr',inputPath);
 totalVoxels = prod(fpp.util.checkMRIProperty('dims',inputPath));
 exptDuration = tr*numVols;
 if mod(tr/2,upsampledTR)~=0
-    error(['TR/2 must be a multiple of upsampledTR - ' outputNameGeneric]);
+    error(['TR/2 must be a multiple of upsampledTR - ' outputName]);
 end
 if ~ismember(lower(inputExt),{'.nii.gz','.nii','.dtseries.nii'})
-    error(['inputPath must be a NIFTI or CIFTI dtseries file - ' outputNameGeneric]);
+    error(['inputPath must be a NIFTI or CIFTI dtseries file - ' outputName]);
 end
 isCifti = 0;
 if strcmpi(inputExt,'.dtseries.nii')
@@ -163,7 +168,7 @@ if exist(condNames)
     for b=1:length(events.trial_type)
         events.trial_type_id{b} = find(strcmpi(events.trial_type{b},condNames));
         if isempty(events.trial_type_id{b})
-            error(['condNames input does not match events TSV file - ' outputNameGeneric]);
+            error(['condNames input does not match events TSV file - ' outputName]);
         end
     end
     if size(condNames,1)>size(condNames,2), condNames = condNames'; end
@@ -171,13 +176,13 @@ elseif isfield(events,'trial_type_id')
     for c=1:max(events.trial_type_id)
         ind = find(events.trial_type_id==c);
         if isempty(ind)
-            error(['All conditions must be included in each run - ' outputNameGeneric]);
+            error(['All conditions must be included in each run - ' outputName]);
         end
         condNames{c} = events.trial_type{ind(1)};
     end
 else
     error(['If events.tsv does not contain a trial_type_id field, condNames must be '...
-        'defined to specify condition order - ' outputNameGeneric]);
+        'defined to specify condition order - ' outputName]);
 end
 nConds = length(condNames);
 for c=1:nConds  % 3-column event format
@@ -200,9 +205,9 @@ end
 nContrasts = size(contrastMat,1);
 
 % Define outlier indices
-if exist(outlierPath,'file')
+if exist(outlierPath,'file') && ~isempty(bids.util.tsvread(outlierPath))
     outlier = bids.util.tsvread(outlierPath);
-    outlierNames = fieldnames(outlier);
+    outlierNames = fieldnames(outlier)';
 else
     outlier = struct();
     outlierNames = {};
@@ -211,28 +216,26 @@ nOutliers = length(outlierNames);
 
 % Define nuisance regressors
 nuisRegrMat = [];
-if exist(confoundPath,'file')
+if exist(confoundPath,'file') && ~isempty(confoundNames)
     confound = bids.util.tsvread(confoundPath);
     for c=1:length(confoundNames)
-        nuisRegrMat(:,end+1) = eval(['confound.' confoundNames{c}]);
+        nuisRegrMat(:,end+1) = confound.(confoundNames{c});
     end
     
-    if ~isempty(nuisRegrMat)
-        nuisRegrMat = bsxfun(@minus,nuisRegrMat,mean(nuisRegrMat));
-        
-        % Filter nuisance regressors
-        if tempFilt
-            nuisRegrMat(:,confoundFilt==1) = fpp.util.firFilter(...
-                nuisRegrMatnuisRegrMat(:,confoundFilt==1),1/tr,filtCutoff,filtType,filtOrder);
-        end
-        
-        % Redefine confound TSV after temporal filtering.
-        confoundNew = struct();
-        for c=1:length(confoundNames)
-            eval(['confoundNew.' confoundNames{c} ' = nuisRegrMat(:,' int2str(c) ');']);
-        end
-        confound = confoundNew;
+    nuisRegrMat = bsxfun(@minus,nuisRegrMat,mean(nuisRegrMat));
+    
+    % Filter nuisance regressors
+    if tempFilt
+        nuisRegrMat(:,confoundFilt==1) = fpp.util.firFilter(...
+            nuisRegrMatnuisRegrMat(:,confoundFilt==1),1/tr,filtCutoff,filtType,filtOrder);
     end
+    
+    % Redefine confound TSV after temporal filtering.
+    confoundNew = struct();
+    for c=1:length(confoundNames)
+        confoundNew.(confoundNames{c}) = nuisRegrMat(:,c);
+    end
+    confound = confoundNew;
 else
     confound = struct();
 end
@@ -240,9 +243,10 @@ regrNames = [condNames,confoundNames];
 
 % Add outlier to confound struct
 for i=1:length(outlierNames)
-    eval(['confound.' outlierNames{i} ' = outlier.' outlierNames{i} ');']);
-    nuisRegrMat(:,end+1) = eval(['outlier.' outlierNames{i}]);
+    confound.(outlierNames{i}) = outlier.(outlierNames{i});
+    nuisRegrMat(:,end+1) = outlier.(outlierNames{i});
 end
+regrNames = [regrNames,outlierNames];
 
 % Load and add TEDANA regressors to confound struct
 % NOTE: Not designed to handle tedana dirs with desc field
@@ -251,32 +255,48 @@ if useTedana && sum(regexpi(inputDesc,'NoTedana'))==0
     tedanaTSVPath = [inputDir '/' fpp.bids.changeName(inputName,'desc','','tedana','')...
         '/' fpp.bids.changeName(inputName,'desc','tedanaICARejected','mixing','.tsv')];
     tedana = fpp.bids.tsvread(tedanaTSVPath);
-    tedanaNames = fieldnames(tedana);
+    tedanaNames = fieldnames(tedana)';
     for i=1:length(tedanaNames)
-        eval(['confound.' outlierNames{i} ' = tedana.' tedanaNames{i} ');']);
-        nuisRegrMat(:,end+1) = eval(['tedana.' tedanaNames{i}]);
+        confound.(tedanaNames{i}) = tedana.(tedanaNames{i});
+        nuisRegrMat(:,end+1) = tedana.(tedanaNames{i});
     end
+    regrNames = [regrNames,tedanaNames];
 end
 
+% Demean nuisance regressors, after adding outlier/tedana regressors
+nuisRegrMat = bsxfun(@minus,nuisRegrMat,mean(nuisRegrMat));
+
 % Define and create output directory
-outputName = fpp.bids.changeName(inputName,'desc',outputSuffix,'modelfeat','');
 if isempty(analysisDir)
     analysisDir = [inputDir '/../analysis'];
 end
 outputDir = [analysisDir '/' outputName];
+outputFeatDir = [analysisDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'model','.feat')];
 if ~exist(analysisDir,'dir'), mkdir(analysisDir); end
 if exist(outputDir,'dir')
     if overwrite
         fpp.util.system(['rm -rf ' outputDir]);
+        if exist(outputFeatDir,'dir')
+            fpp.util.system(['rm -rf ' outputFeatDir]);
+        end
     else
         return;
     end
 end
 mkdir(outputDir);
-outputMat = [outputDirOrig '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'RegressionData','.mat')];
+outputMat = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'RegressionData','.mat')];
 
-% Define FEAT output directory
-outputFeatDir = [analysisDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'model','.feat')];
+% Write full confound TSV file
+confoundOutputPath = [outputDir '/' fpp.bids.changeName(outputName,'desc',...
+    [outputSuffix 'Feat'],'confounds','.tsv')];
+if ~isempty(fieldnames(confound))
+    bids.util.tsvwrite(confoundOutputPath,confound);
+    confoundFile = ['set confoundev_files(1) "' confoundOutputPath '"'];
+    useConfound = 1;
+else
+    confoundFile = '';
+    useConfound = 0;
+end
 
 % Define and create condition TSV file
 condPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'conditions','.tsv')];
@@ -286,7 +306,7 @@ end
 bids.util.tsvwrite(condPath,condTSV);
 
 % Define MNI space path
-stdPath = [getenv('FSLDIR') '/MNI152_T1_2mm_brain.nii.gz'];
+stdPath = [getenv('FSLDIR') '/data/standard/MNI152_T1_2mm_brain.nii.gz'];
 
 % Define FPP data directory
 [fppFuncDir,~,~]		= fileparts(mfilename('fullpath'));			% path to the directory containing this script
@@ -298,7 +318,7 @@ designTemplatePath = [dataDir '/desc-fpptemplate_design.fsf'];
 designPath = [outputDir '/' fpp.bids.changeName(outputName,[],[],'design','.fsf')];
 
 % Load FSF template
-fid = fopen(template);
+fid = fopen(designTemplatePath);
 fsfTemplate = [];
 while 1
     line = fgetl(fid);
@@ -331,32 +351,20 @@ end
 for c=1:nConds
     regrPaths{c} = [outputDir '/' fpp.bids.changeName(outputName,'desc',...
         [outputSuffix condNames{c}],'regressor','.txt')];
-    fid = fopen(regrPaths{c});
+    fid = fopen(regrPaths{c},'w');
     fprintf(fid,'%f\n',taskRegrMat(:,c));
     fclose(fid);
 end
 
-% Write full confound TSV file
-confoundOutputPath = [outputDir '/' fpp.bids.changeName(outputName,'desc',...
-    [outputSuffix 'feat'],'confounds','.tsv')];
-if ~isempty(fieldnames(confound))
-    fpp.bids.tsvwrite(confoundOutputPath,confound);
-    confoundFile = ['set confoundev_files(1) "' confoundOutputPath '"'];
-    useConfound = 1;
-else
-    confoundFile = '';
-    useConfound = 0;
+% Check design matrix X
+X = [taskRegrMat nuisRegrMat];
+if rank(X)<size(X,2)
+    error(['Design matrix is rank-deficient - ' outputName]);
 end
 
 % Plot regressor information.
 fpp.func.analysis.plotRegressors(taskRegrMat,nuisRegrMat,regrNames,outputDir,...
-    outputNameGeneric,~plotResults);
-
-% Check design matrix X
-X = [taskRegrMat nuisRegrMat];
-if rank(X)<size(X,2)
-    error(['Design matrix is rank-deficient - ' outputNameGeneric]);
-end
+    outputName,~plotResults);
 
 % Save outputs
 save(outputMat,'regressors3Col','X','condNames','tr','inputPath',...
@@ -405,15 +413,15 @@ for con = 1:nContrasts
         conInfo = [conInfo sprintf('%s\n\n',...
             ['set fmri(con_orig' int2str(con) '.' int2str(c) ') ' int2str(contrastMat(con,c))])];
     end
-    conInfo = [evinfo sprintf('%s\n\n','')];
+    conInfo = [conInfo sprintf('%s\n\n','')];
     
 end
 
 conInfo = [conInfo sprintf('%s\n%s\n\n','set fmri(conmask_zerothresh_yn) 0','set fmri(conmask1_1) 0')];
 
 % Define FEAT .fsf variables to change.
-names = {'OutputDir',            'TR', 'Vols', 'nConds', 'nContrasts', 'TotalVoxels', 'UseConfound', 'ConfoundFile', 'EvInfo', 'ConInfo', 'StdPath'};
-vals =   {outputFeatDir(1:end-5), tr,   vols,   nConds,   nContrasts,   totalVoxels,   useConfoud,    confoundFile,   evInfo,   conInfo,   stdPath};
+names = {'InputPath', 'OutputDir',            'TR', 'Vols',  'nConds', 'nContrasts', 'TotalVoxels', 'UseConfound', 'ConfoundFile', 'EvInfo', 'ConInfo', 'StdPath'};
+vals =   {inputPath,   outputFeatDir(1:end-5), tr,   numVols, nConds,   nContrasts,   totalVoxels,   useConfound,   confoundFile,   evInfo,   conInfo,   stdPath};
 
 % Write new values to fsf file
 fsf = fsfTemplate;
@@ -426,15 +434,71 @@ fid = fopen(designPath,'w');
 fprintf(fid,fsf);
 fclose(fid);
 
-% Run FEAT analysis via command line
-% fpp.util.system(['feat ' designPath]);
 
 
-% Move files to new location
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% STEP 4: Run FEAT analysis
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+disp(['Running FEAT - ' outputName]);
+fpp.util.system(['feat ' designPath]);
 
 
 
-
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% STEP 5: Copy/rename output files
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+inputStatPaths = {};
+outputStatPaths = {};
+for c=1:nConds
+    % Beta values
+    inputStatPaths{end+1} = [outputFeatDir '/stats/pe' int2str(c) outputExt];
+    outputStatPaths{end+1} = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
+        [outputSuffix condNames{c}],'beta',outputExt)];
+end
+for con=1:nContrasts
+    % Contrast values
+    inputStatPaths{end+1} = [outputFeatDir '/stats/cope' int2str(con) outputExt];
+    outputStatPaths{end+1} = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
+        [outputSuffix contrastNames{con}],'contrast',outputExt)];
+    % Contrast variance
+    inputStatPaths{end+1} = [outputFeatDir '/stats/varcope' int2str(con) outputExt];
+    outputStatPaths{end+1} = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
+        [outputSuffix contrastNames{con}],'contrastvariance',outputExt)];
+    % T-stats
+    inputStatPaths{end+1} = [outputFeatDir '/stats/tstat' int2str(con) outputExt];
+    outputStatPaths{end+1} = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
+        [outputSuffix contrastNames{con}],'tstat',outputExt)];
+    % Z-stats
+    inputStatPaths{end+1} = [outputFeatDir '/stats/zstat' int2str(con) outputExt];
+    outputStatPaths{end+1} = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
+        [outputSuffix contrastNames{con}],'zstat',outputExt)];
+end
+% Report Log
+inputStatPaths{end+1} = [outputFeatDir '/report_log.html'];
+outputStatPaths{end+1} = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'log','.html')];
+% DoF
+inputStatPaths{end+1} = [outputFeatDir '/stats/dof'];
+outputStatPaths{end+1} = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'dof','')];
+% Smoothness
+inputStatPaths{end+1} = [outputFeatDir '/stats/smoothness'];
+outputStatPaths{end+1} = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'smoothness','')];
+% Error variance
+inputStatPaths{end+1} = [outputFeatDir '/stats/sigmasquareds' outputExt];
+outputStatPaths{end+1} = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'errorvariance',outputExt)];
+% Autocorrelation
+inputStatPaths{end+1} = [outputFeatDir '/stats/threshac1' outputExt];
+outputStatPaths{end+1} = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'autocorrelation',outputExt)];
+% Residuals
+if writeResiduals
+    inputStatPaths{end+1} = [outputFeatDir '/stats/res4d' outputExt];
+    outputStatPaths{end+1} = [outputDir '/' fpp.bids.changeName(inputName,...
+        'desc',[outputSuffix 'Residuals'],'bold',outputExt)];
+end
+% Copy files
+for i=1:length(inputStatPaths)
+    fpp.util.system(['cp ' inputStatPaths{i} ' ' outputStatPaths{i}]);
+end
+% Delete FEAT directory
+if deleteFeat, fpp.util.system(['rm -rf ' outputFeatDir]); end
 
 end
