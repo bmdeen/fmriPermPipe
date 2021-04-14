@@ -143,6 +143,9 @@ end
 % Remove non-alphanumeric characters from outputSuffix
 outputSuffix = regexprep(outputSuffix,'[^a-zA-Z0-9]','');
 
+% Check confoundNames
+if size(confoundNames,1)>size(confoundNames,2), confoundNames = confoundNames'; end
+
 % Check input
 if ~exist(inputPath,'file')
     error(['Input path ' inputPath ' does not exist.']);
