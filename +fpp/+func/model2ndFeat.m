@@ -17,7 +17,6 @@
 % Variable arguments:
 % - overwrite (boolean; default=0): whether to overwrite files that have
 %       already been written by this function.
-% - inputSuffix (string): suffix for 1st-level analysis directories
 % - outputSuffix (string): suffix for output directory
 % - analysisDir (string): analysis output dir will be written in this dir.
 %   Must match analysisDir used for fpp.func.modelFeat
@@ -35,12 +34,11 @@ function model2ndFeat(inputDirs,varargin)
 fpp.util.checkConfig;
 
 overwrite = 0;              % Whether to overwrite output
-inputSuffix = '';           % Suffix of directories 
 outputSuffix = '';          % New suffix for output dir
 analysisDir = '';           % Directory for analysis outputs
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
-varArgList = {'overwrite','inputSuffix','outputSuffix','analysisDir'};
+varArgList = {'overwrite','outputSuffix','analysisDir'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
@@ -56,6 +54,9 @@ inputSuffix = regexprep(inputSuffix,'[^a-zA-Z0-9]','');
 if isempty(analysisDir)
     [analysisDir,~,~] = fpp.util.fileParts(inputDirs{1});
 end
+
+% Define inputSuffix
+inputSuffix = fpp.bids.checkNameValue(inputDirs{1},'desc');
 
 % Check if inputs exist, load RegressionData.mat
 nRuns = length(inputDirs);
