@@ -46,9 +46,8 @@ for i=1:length(varArgList)
     end
 end
 
-% Remove non-alphanumeric characters from suffices
+% Remove non-alphanumeric characters from outputSuffix
 outputSuffix = regexprep(outputSuffix,'[^a-zA-Z0-9]','');
-inputSuffix = regexprep(inputSuffix,'[^a-zA-Z0-9]','');
 
 % Define analysis directory
 if isempty(analysisDir)
@@ -70,6 +69,7 @@ for r=1:nRuns
 end
 contrastNames = regrData{1}.contrastNames;
 nContrasts = length(contrastNames);
+nConds = length(regrData{1}.condNames);
 
 % Define and create output directory
 outputName = fpp.bids.changeName(inputNames{1},{'run','desc'},{'',[inputSuffix outputSuffix]},'model2feat','');
@@ -83,22 +83,29 @@ if exist(outputDir,'dir')
 end
 mkdir(outputDir);
 
-% Check wether inputs are CIFTI or NIFTI
+% Check whether inputs are CIFTI or NIFTI
 paths = dir([inputDirs{1} '/' fpp.bids.changeName(inputNames{1},'desc',...
     [inputSuffix contrastNames{1}],'contrast','') '.*nii*']);
 if isempty(paths), error('Could not find contrast maps in first input directory.'); end
-[~,~,inputExt] = fpp.util.fileParts(paths(1).name);
-if ~ismember(lower(inputExt),{'.nii.gz','.nii','.dscalar.nii'})
+[~,~,outputExt] = fpp.util.fileParts(paths(1).name);
+if ~ismember(lower(outputExt),{'.nii.gz','.nii','.dscalar.nii'})
     error('Inputs must be a NIFTI or CIFTI dscalar files.');
 end
 isCifti = 0;
-if strcmpi(inputExt,'.dscalar.nii')
+if strcmpi(outputExt,'.dscalar.nii')
     isCifti = 1;
 end
 if isCifti
     imageType = 'cifti';
 else
     imageType = 'volume';
+end
+
+% Compute contrast variance for weighting runs
+for r=1:nRuns
+    V = inv(regrData{r}.X'*regrData{r}.X);
+    % Estimated contrast variance, up to error variance term
+    regrData{r}.conVarBase = diag(regrData{r}.contrastMat*V(1:nConds,1:nConds)*regrData{r}.contrastMat');
 end
 
 
@@ -158,7 +165,7 @@ for c=1:nContrasts
     
     % Compute t-statistic
     equation = 'con/sqrt(convar)';
-    flagTest = ['-var con ' outputContrastPath ' -var convar ' outputContrastVarPath];
+    flagText = ['-var con ' outputContrastPath ' -var convar ' outputContrastVarPath];
     fpp.wb.command([imageType '-math'],[],equation,outputTStatPath,flagText);
     
     % Compute total dof
@@ -174,5 +181,7 @@ for c=1:nContrasts
     % Convert t- to z-statistic.
     fpp.util.convertTtoZ(outputTStatPath,outputZStatPath,sum(dof));
 end
+
+disp(['Finished FEAT 2nd - ' outputName]);
 
 end
