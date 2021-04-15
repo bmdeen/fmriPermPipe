@@ -254,7 +254,7 @@ inputDesc = fpp.bids.checkNameValue(inputName,'desc');
 if useTedana && sum(regexpi(inputDesc,'NoTedana'))==0
     tedanaTSVPath = [inputDir '/' fpp.bids.changeName(inputName,'desc','','tedana','')...
         '/' fpp.bids.changeName(inputName,'desc','tedanaICARejected','mixing','.tsv')];
-    tedana = fpp.bids.tsvread(tedanaTSVPath);
+    tedana = bids.util.tsvread(tedanaTSVPath);
     tedanaNames = fieldnames(tedana)';
     for i=1:length(tedanaNames)
         confound.(tedanaNames{i}) = tedana.(tedanaNames{i});
