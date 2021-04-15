@@ -32,7 +32,7 @@ if ismember(lower(argName),lower({'expt','inputSuffix','outputSuffix','funcTempl
         'premat','midmat','mask','warp1','warp2','jacobian','confoundPath','outlierPath',...
         'analysisDir','fieldMapParamPath','topupWarpPath','topupJacobianPath','spinEchoPath',...
         'filtType','templateType','templateRes','anatTemplatePath','parcPath','sizeType',...
-        'templateSpace'}))
+        'templateSpace','referencePath','subcortSegPath'}))
     if ischar(argVal)
         argGood = 1;
     else
@@ -197,6 +197,8 @@ elseif ismember(lower(argName),lower({'spinEchoPaths','spinEchoPhaseEncodeDirect
     else
         errorMsg = ['Argument ' argName ' must be a cell array of strings.'];
     end
+else
+    errorMsg = ['Unknown argument name ' argName];
 end
 
 %%% Throw error if argVal is not compatible
