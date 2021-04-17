@@ -98,7 +98,7 @@ elseif ismember(lower(argName),lower({'echoesToUse'}))
     end
     
 % Vector of integers in (0,Inf)
-elseif ismember(lower(argName),lower({'runList','conList','outlierInd','parcInd'}))
+elseif ismember(lower(argName),lower({'runList','conList','outlierInd','parcInds'}))
     if isnumeric(argVal) && isvector(argVal) && sum(mod(argVal,1)==0)==length(argVal) && sum(argVal==0)==0
         argGood = 1;
     else
@@ -122,7 +122,7 @@ elseif ismember(lower(argName),lower({'voxThresh','clustThresh','faValue'}))
     end
     
 % Scalar in (0,Inf)
-elseif ismember(lower(argName),lower({'upsampledTR','smThresh','roiSize'}))
+elseif ismember(lower(argName),lower({'upsampledTR','smThresh'}))
     if isnumeric(argVal) && isscalar(argVal) && argVal>0 && argVal~=inf
         argGood = 1;
     else
@@ -131,7 +131,7 @@ elseif ismember(lower(argName),lower({'upsampledTR','smThresh','roiSize'}))
     
 % Scalar in (0,Inf]
 elseif ismember(lower(argName),lower({'transCutoff','rotCutoff','transSingleAxisCutoff',...
-        'rotSingleAxisCutoff','stdCutoff','fdCutoff'}))
+        'rotSingleAxisCutoff','stdCutoff','fdCutoff','roiSize'}))
     if isnumeric(argVal) && isscalar(argVal) && argVal>0
         argGood = 1;
     else

@@ -74,7 +74,7 @@ else
 end
 
 % Generate search space from parcellation, if parcPath/parcInds specified
-if isempty(searchPath) && ~isempty(parcPath) && ~isempty(parcInds)
+if ~isempty(parcPath) && ~isempty(parcInds)
     fpp.util.label2ROI(parcPath,parcInds,searchPath)
 end
 
