@@ -79,7 +79,7 @@ if length(dims)>3
 end
 
 % Check if input is a t- or z-statistical map
-isStat = 1;
+isStat = 0;
 if contains(inputNiftiPath,{'tstat.nii','zstat.nii'}), isStat = 1; end
 
 % Register image to individual space, if necessary
