@@ -80,6 +80,9 @@ if length(dims)>3
     tr = fpp.util.checkMRIProperty('tr',inputNiftiPath);
 end
 if isLabel
+    if length(dims)>3
+        error('fpp.func.surfaceResample can only handle 3D label files, not 4D.');
+    end
     giftiType = 'label';
     fwhm = 0;
     interpStr = 'nn';
@@ -100,7 +103,7 @@ else
 end
 if isLabel  % For labels, re-import label table text file to resampled output
     tmpLUTPath = [outputDir '/' inputName '_tmpSurfaceResample21093520813502_lut.txt'];
-    fpp.wb.command('volume-label-export-table',inputNiftiPath,1,tmpLUTPath);
+    fpp.wb.command('volume-label-export-table',inputNiftiPath,'1',tmpLUTPath);
     fpp.wb.command('volume-label-import',tmpNiftiPath,tmpLUTPath,tmpNiftPath);
 end
 
