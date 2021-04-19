@@ -55,7 +55,7 @@ referencePath = [];
 fwhm = 0;
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
-varArgList = {'subcortSegPath','premat','referencePath','fwhm'};
+varArgList = {'subcortSegPath','premat','referencePath','fwhm','isLabel'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
