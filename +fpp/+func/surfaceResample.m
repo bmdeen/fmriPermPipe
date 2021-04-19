@@ -104,7 +104,7 @@ end
 if isLabel  % For labels, re-import label table text file to resampled output
     tmpLUTPath = [outputDir '/' inputName '_tmpSurfaceResample21093520813502_lut.txt'];
     fpp.wb.command('volume-label-export-table',inputNiftiPath,'1',tmpLUTPath);
-    fpp.wb.command('volume-label-import',tmpNiftiPath,tmpLUTPath,tmpNiftPath);
+    fpp.wb.command('volume-label-import',tmpNiftiPath,tmpLUTPath,tmpNiftiPath);
 end
 
 for h=1:2
