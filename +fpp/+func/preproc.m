@@ -652,7 +652,8 @@ end
 if fwhm>0
     fprintf('%s\n',['Step 11, Spatially smooth                      - ' outputNameGeneric]);
     for i=1:length(outputPaths)
-        steps{i}{end+1} = 'volumetric spatial smoothing within tissue component (GM, WM, CSF)';
+        steps{i}{end+1} = ['volumetric spatial smoothing within tissue component (GM, WM, CSF), '...
+            num2str(fwhm) 'mm-fwhm Gaussian kernel'];
         inputPaths{i} = outputPaths{i};
         outputPaths{i} = fpp.bids.changeName(inputPaths{i},'desc',{[],['midprep7smooth' descSuffices{i}]});
         segmentPaths = {gmPath,wmPath,csfPath};
