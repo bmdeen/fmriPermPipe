@@ -7,8 +7,10 @@
 function [badVols,nVols] = readOutlierTSV(outlierPath)
 
 badVols = [];
+nVols = [];
 
 tsv = bids.util.tsvread(outlierPath);
+if isempty(tsv), return; end
 fields = fieldnames(tsv);
 for f=1:length(fields)
     thisData = tsv.(fields{f});
