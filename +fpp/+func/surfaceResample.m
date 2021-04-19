@@ -1,7 +1,6 @@
 
 % Function to resample a NIFTI 3D or 4D volumetric image file to the
-% cortical surface. Intended for continuous scalar data, not discrete
-% label/mask images.
+% cortical surface.
 %
 % Currently assumes that surfaces are at native (freesurfer) resolution.
 %
@@ -21,6 +20,8 @@
 % - outputCiftiPath (string): path to output CIFTI file
 %
 % Variable arguments:
+% - isLabel (boolean, default false): whether data should be treated as a
+%       label file (by default, 3D images are treated as metric data)
 % - subcortSegPath (string): path to subcortical segmentation label image,
 %       in individual space. If specified, CIFTI will include subcortical
 %       volumetric in addition to surface data.
@@ -47,6 +48,7 @@ hemis = {'L','R'};
 structures = {'CORTEX_LEFT','CORTEX_RIGHT'};
 
 % Variable arguments
+isLabel = 0;
 subcortSegPath = [];
 premat = [];
 referencePath = [];
@@ -77,15 +79,22 @@ if length(dims)>3
     giftiType = 'func';
     tr = fpp.util.checkMRIProperty('tr',inputNiftiPath);
 end
+if isLabel
+    giftiType = 'label';
+    fwhm = 0;
+    interpStr = 'nn';
+else
+    interpStr = 'trilinear';
+end
 
 % Check if input is a t- or z-statistical map
 isStat = 0;
-if contains(inputNiftiPath,{'tstat.nii','zstat.nii'}), isStat = 1; end
+if contains(inputNiftiPath,{'tstat.nii','zstat.nii'}) && ~isLabel, isStat = 1; end
 
 % Register image to individual space, if necessary
 tmpNiftiPath = [outputDir '/' inputName '_tmpSurfaceResample21093520813502.nii.gz'];
 if ~isempty(premat)
-    fpp.fsl.moveImage(inputNiftiPath,referencePath,tmpNiftiPath,premat,'interp','trilinear');
+    fpp.fsl.moveImage(inputNiftiPath,referencePath,tmpNiftiPath,premat,'interp',interpStr);
 else
     fpp.util.copyImageAndJson(inputNiftiPath,tmpNiftiPath);
 end
@@ -93,13 +102,19 @@ end
 for h=1:2
     tmpGiftiPaths{h} = [outputDir '/' inputName '_hemi-' hemis{h}...
         '_tmpSurfaceResample21093520813502.' giftiType '.gii'];
-    fpp.wb.command('volume-to-surface-mapping',tmpNiftiPath,inputSurfacePaths{h}{1},tmpGiftiPaths{h},...
-        ['-ribbon-constrained ' inputSurfacePaths{h}{2} ' ' inputSurfacePaths{h}{3}]);
+    if isLabel
+        fpp.wb.command('volume-label-to-surface-mapping',tmpNiftiPath,inputSurfacePaths{h}{1},tmpGiftiPaths{h},...
+            ['-ribbon-constrained ' inputSurfacePaths{h}{2} ' ' inputSurfacePaths{h}{3}]);
+    else
+        fpp.wb.command('volume-to-surface-mapping',tmpNiftiPath,inputSurfacePaths{h}{1},tmpGiftiPaths{h},...
+            ['-ribbon-constrained ' inputSurfacePaths{h}{2} ' ' inputSurfacePaths{h}{3}]);
+%         if isStat     % Not needed if GIFTI files are deleted
+%             fpp.wb.command('metric-palette',tmpGiftiPaths{h},'MODE_USER_SCALE',[],...
+%                 '-pos-user 2.5 6 -neg-user -2.5 -6 -palette-name FSL -disp-pos true');
+%         end
+    end
     fpp.wb.command('set-structure',tmpGiftiPaths{h},structures{h});
-%     if isStat     % Not needed if GIFTI files are deleted
-%         fpp.wb.command('metric-palette',tmpGiftiPaths{h},'MODE_USER_SCALE',[],...
-%             '-pos-user 2.5 6 -neg-user -2.5 -6 -palette-name FSL -disp-pos true');
-%     end
+
 end
 
 % Combine GIFTI hemispheres into CIFTI file
@@ -117,6 +132,12 @@ if strcmp(giftiType,'shape')
         fpp.wb.command('cifti-palette',outputCiftiPath,'MODE_USER_SCALE',outputCiftiPath,...
             '-pos-user 2.5 6 -neg-user -2.5 -6 -palette-name FSL -disp-pos true');
     end
+elseif strcmp(giftiType,'label')
+    fpp.wb.command('cifti-create-label',[],[],outputCiftiPath,...
+        ['-left-label ' tmpGiftiPaths{1} ' -roi-left ' inputSurfaceROIPaths{1}...
+        ' -right-label ' tmpGiftiPaths{2} ' -roi-right ' inputSurfaceROIPaths{2} volumeStr]);
+    mapName = fpp.bids.changeName(inputName,{'space','den','res'},{[],[],[]},[],'');
+    fpp.wb.command('set-map-names',outputCiftiPath,[],[],['-map 1 ' mapName]);
 else
     fpp.wb.command('cifti-create-dense-timeseries',[],[],outputCiftiPath,...
         ['-left-metric ' tmpGiftiPaths{1} ' -roi-left ' inputSurfaceROIPaths{1}...
