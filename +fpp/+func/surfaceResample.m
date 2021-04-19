@@ -98,6 +98,11 @@ if ~isempty(premat)
 else
     fpp.util.copyImageAndJson(inputNiftiPath,tmpNiftiPath);
 end
+if isLabel  % For labels, re-import label table text file to resampled output
+    tmpLUTPath = [outputDir '/' inputName '_tmpSurfaceResample21093520813502_lut.txt'];
+    fpp.wb.command('volume-label-export-table',inputNiftiPath,1,tmpLUTPath);
+    fpp.wb.command('volume-label-import',tmpNiftiPath,tmpLUTPath,tmpNiftPath);
+end
 
 for h=1:2
     tmpGiftiPaths{h} = [outputDir '/' inputName '_hemi-' hemis{h}...
@@ -108,13 +113,8 @@ for h=1:2
     else
         fpp.wb.command('volume-to-surface-mapping',tmpNiftiPath,inputSurfacePaths{h}{1},tmpGiftiPaths{h},...
             ['-ribbon-constrained ' inputSurfacePaths{h}{2} ' ' inputSurfacePaths{h}{3}]);
-%         if isStat     % Not needed if GIFTI files are deleted
-%             fpp.wb.command('metric-palette',tmpGiftiPaths{h},'MODE_USER_SCALE',[],...
-%                 '-pos-user 2.5 6 -neg-user -2.5 -6 -palette-name FSL -disp-pos true');
-%         end
     end
     fpp.wb.command('set-structure',tmpGiftiPaths{h},structures{h});
-
 end
 
 % Combine GIFTI hemispheres into CIFTI file
@@ -159,5 +159,6 @@ end
 % Delete temporary paths
 fpp.util.deleteImageAndJson(tmpNiftiPath);
 for h=1:2, fpp.util.deleteImageAndJson(tmpGiftiPaths{h}); end
+if exist(tmpLUTPath), fpp.util.system(['rm -rf ' tmpLUTPath]); end
 
 end
