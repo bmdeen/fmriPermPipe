@@ -1,5 +1,5 @@
 
-% [b,s,e] = barColor(X,[colorArray,errorVec,gapInd])
+% [b,s,e] = barColor(X,[colorArray,errorVec,gapInd,dataPoints])
 %
 % Function to plot a bar graph with specific bar colors, and overlaid
 % circles for individual data points.
@@ -24,6 +24,7 @@
 function [b,s,e,barInd] = barColor(X,colorArray,errorVec,gapInd,dataPoints)
 
 e = [];
+s = [];
 nSamples = size(X,1);
 nConds = size(X,2);
 
@@ -105,6 +106,7 @@ end
 
 % Plot errors
 if errorVec
+    hold on;
     e = errorbar(mean(X,1),errors,'.k');
     set(e,'LineWidth',2);
 end
