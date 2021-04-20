@@ -13,6 +13,7 @@
 %       for error. 0 = no error bars, 1 = standard error, vector = use
 %       specified values.
 % - gapInd (vector): gaps in the graph will be placed after these bars
+% - dataPoints (boolean): whether to plot individual data points
 %
 % Outputs:
 % - b (Bar object): bar graph handle
@@ -20,7 +21,7 @@
 % - e (ErrorBar object): error bar graph handle, if errors were used
 % - barInd (vector): y-position of bars in graph
 
-function [b,s,e,barInd] = barColor(X,colorArray,errorVec,gapInd)
+function [b,s,e,barInd] = barColor(X,colorArray,errorVec,gapInd,dataPoints)
 
 e = [];
 nSamples = size(X,1);
@@ -43,6 +44,9 @@ elseif size(errorVec,1)>size(errorVec,2)
 end
 if ~exist('gapInd','var') || isempty(gapInd)
     gapInd = [];
+end
+if ~exist('dataPoints','var') || isempty(dataPoints)
+    dataPoints = 1;
 end
 
 % Add gaps between bars
@@ -89,13 +93,15 @@ for c=1:size(b.CData,1)
 end
 
 % Plot individual data points
-scatterX = []; scatterY = [];
-for i=barInd
-    scatterX = [scatterX; i*ones(nSamples,1)];
-    scatterY = [scatterY; X(:,i)];
+if dataPoints
+    scatterX = []; scatterY = [];
+    for i=barInd
+        scatterX = [scatterX; i*ones(nSamples,1)];
+        scatterY = [scatterY; X(:,i)];
+    end
+    hold on;
+    s = scatter(scatterX,scatterY,50,'k','filled');
 end
-hold on;
-s = scatter(scatterX,scatterY,50,'k','filled');
 
 % Plot errors
 if errorVec
@@ -106,7 +112,7 @@ end
 % Set figure/axis properties
 box off;
 set(gcf,'Color',[1 1 1]);
-set(gca,'LineWidth',2,'FontSize',30,'XTick',[]);
+set(gca,'LineWidth',2,'FontSize',24,'XTick',[]);
 set(b,'LineWidth',2,'BarWidth',.75);
 set(b.BaseLine,'LineWidth',2);
 ylim = get(gca,'YLim');
