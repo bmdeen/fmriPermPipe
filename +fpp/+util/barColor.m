@@ -97,8 +97,25 @@ end
 if dataPoints
     scatterX = []; scatterY = [];
     for i=barInd
+        prevLength = length(scatterX);
         scatterX = [scatterX; i*ones(nSamples,1)];
         scatterY = [scatterY; X(:,i)];
+        
+        % Deal with multiple dots positioned at the same y-value. Stagger
+        % x-position of dots to display multiple dots.
+        allYVals = unique(X(:,i));
+        if length(allYVals)<length(X(:,i))
+            for yInd=1:length(allYVals)
+                if sum(X(:,i)==allYVals(yInd))>1
+                    ind = find(X(:,i)==allYVals(yInd));
+                    xPos = linspace(i-b.BarWidth/2,i+b.BarWidth/2,length(ind)+2);
+                    xPos = xPos(2:end-1);
+                    for d=1:length(ind)
+                        scatterX(prevLength+ind(d)) = xPos(d);
+                    end
+                end
+            end
+        end
     end
     hold on;
     s = scatter(scatterX,scatterY,50,'k','filled');
