@@ -68,6 +68,6 @@ if exist('badVoxPath','var') && ~isempty(badVoxPath)
     fpp.fsl.maths([outputStem 'mask.nii.gz'],['-sub ' goodVoxPath],badVoxPath);
 end
 
-%fpp.util.system(['rm -rf ' outputStem '*']);
+fpp.util.system(['rm -rf ' outputStem '*']);
 
 end
