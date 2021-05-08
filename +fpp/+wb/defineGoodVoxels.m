@@ -1,7 +1,6 @@
 
-% Function to identify good/bad voxels in fMRMI data. Remove voxels with a 
-% temporal coefficient of variance greater than 0.5 standard deviations of 
-% their local neighborhood.
+% Function to identify good/bad voxels in fMRMI data. Remove local outliers
+% in temporal coefficient of variance, based on HCP method.
 % 
 % fpp.wb.defineGoodVoxels(inputPath,gmPath,goodVoxPath,badVoxPath)
 %
@@ -15,7 +14,7 @@ function defineGoodVoxels(inputPath,gmPath,goodVoxPath,badVoxPath)
 
 % Constants
 neighborhoodSmoothing = 5;  % Gaussian sigma defining extent of local neighborhood
-sdFactor = .5;              % Remove voxels with CoV this many SDs above local mean
+sdFactor = .5;              % Remove voxels this many SDs above mean of CoV modulation index
 
 [outputDir,~,~] = fpp.util.fileParts(goodVoxPath);
 if isempty(outputDir), outputDir = pwd; end
