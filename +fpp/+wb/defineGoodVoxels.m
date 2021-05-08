@@ -30,41 +30,41 @@ else
 end
 
 % Compute coefficient of variation
-fpp.fsl.maths([outputStem 'input'],'-Tmean',[outputStem 'mean']);
-fpp.fsl.maths([outputStem 'input'],'-Tstd',[outputStem 'std']);
-fpp.fsl.maths([outputStem 'std'],['-div ' outputStem 'mean'],[outputStem 'cov']);
+fpp.fsl.maths([outputStem 'input.nii.gz'],'-Tmean',[outputStem 'mean.nii.gz']);
+fpp.fsl.maths([outputStem 'input.nii.gz'],'-Tstd',[outputStem 'std.nii.gz']);
+fpp.fsl.maths([outputStem 'std.nii.gz'],['-div ' outputStem 'mean.nii.gz'],[outputStem 'cov.nii.gz']);
 
 % Mask CoV by cortical gm
-fpp.fsl.maths([outputStem 'std'],['-mas ' gmPath],[outputStem 'cov_ribbon']);
+fpp.fsl.maths([outputStem 'std.nii.gz'],['-mas ' gmPath],[outputStem 'cov_ribbon.nii.gz']);
 
 % Normalize CoV (divide by mean)
-[~,result] = fpp.util.system(['fslstats ' outputStem 'cov_ribbon -M']);
+[~,result] = fpp.util.system(['fslstats ' outputStem 'cov_ribbon.nii.gz -M']);
 covMean = str2num(strtrim(result));
-fpp.fsl.maths([outputStem 'cov_ribbon'],['-div ' num2str(covMean)],[outputStem 'cov_ribbon_norm']);
+fpp.fsl.maths([outputStem 'cov_ribbon.nii.gz'],['-div ' num2str(covMean)],[outputStem 'cov_ribbon_norm.nii.gz']);
 
 % Smooth normalized CoV within ribbon
-fpp.fsl.maths([outputStem 'cov_ribbon_norm'],['-bin -s ' num2str(neighborhoodSmoothing)],[outputStem 'SmoothNorm']);
-fpp.fsl.maths([outputStem 'cov_ribbon_norm'],['-s '  num2str(neighborhoodSmoothing) ' -div '...
-    outputStem 'SmoothNorm -dilD'],[outputStem 'cov_ribbon_norm_s' num2str(neighborhoodSmoothing)]);
+fpp.fsl.maths([outputStem 'cov_ribbon_norm.nii.gz'],['-bin -s ' num2str(neighborhoodSmoothing)],[outputStem 'SmoothNorm.nii.gz']);
+fpp.fsl.maths([outputStem 'cov_ribbon_norm.nii.gz'],['-s '  num2str(neighborhoodSmoothing) ' -div '...
+    outputStem 'SmoothNorm.nii.gz -dilD'],[outputStem 'cov_ribbon_norm_s' num2str(neighborhoodSmoothing) '.nii.gz']);
 
 % Define CoV modulation: CoV unsmoothed / CoV smoothed.
-fpp.fsl.maths([outputStem 'cov'],['-div ' num2str(covMean) ' -div ' outputStem...
-    'cov_ribbon_norm_s' num2str(neighborhoodSmoothing)],[outputStem 'cov_norm_modulate']);
-fpp.fsl.maths([outputStem 'cov_norm_modulate'],['-mas ' gmPath],[outputStem 'cov_norm_modulate_ribbon']);
+fpp.fsl.maths([outputStem 'cov.nii.gz'],['-div ' num2str(covMean) ' -div ' outputStem...
+    'cov_ribbon_norm_s' num2str(neighborhoodSmoothing) '.nii.gz'],[outputStem 'cov_norm_modulate.nii.gz']);
+fpp.fsl.maths([outputStem 'cov_norm_modulate.nii.gz'],['-mas ' gmPath],[outputStem 'cov_norm_modulate_ribbon.nii.gz']);
 
 % Compute mean and standard deviation of CoV modulation
-[~,result] = fpp.util.system(['fslstats ' outputStem 'cov_norm_modulate_ribbon -S']);
+[~,result] = fpp.util.system(['fslstats ' outputStem 'cov_norm_modulate_ribbon.nii.gz -S']);
 stdVal = str2num(strtrim(result));
-[~,result] = fpp.util.system(['fslstats ' outputStem 'cov_norm_modulate_ribbon -M']);
+[~,result] = fpp.util.system(['fslstats ' outputStem 'cov_norm_modulate_ribbon.nii.gz -M']);
 meanVal = str2num(strtrim(result));
 covThresh = meanVal+stdVal*sdFactor;
 
 % Define good and bad voxels based on CoV modulation
-fpp.fsl.maths([outputStem 'mean'],'-bin',[outputStem 'mask']);
-fpp.fsl.maths([outputStem 'cov_norm_modulate'],['-thr ' num2str(covThresh) ' -bin -sub '...
+fpp.fsl.maths([outputStem 'mean.nii.gz'],'-bin',[outputStem 'mask.nii.gz']);
+fpp.fsl.maths([outputStem 'cov_norm_modulate.nii.gz'],['-thr ' num2str(covThresh) ' -bin -sub '...
     outputStem 'mask -mul -1'],goodVoxelPath);
 if exist('badVoxelPath','var') && ~isempty(badVoxelPath)
-    fpp.fsl.maths([outputStem 'mask'],['-sub ' goodVoxelPath],badVoxelPath);
+    fpp.fsl.maths([outputStem 'mask.nii.gz'],['-sub ' goodVoxelPath],badVoxelPath);
 end
 
 %fpp.util.system(['rm -rf ' outputStem '*']);
