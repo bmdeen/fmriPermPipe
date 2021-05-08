@@ -35,7 +35,7 @@ fpp.fsl.maths([outputStem 'input.nii.gz'],'-Tstd',[outputStem 'std.nii.gz']);
 fpp.fsl.maths([outputStem 'std.nii.gz'],['-div ' outputStem 'mean.nii.gz'],[outputStem 'cov.nii.gz']);
 
 % Mask CoV by cortical gm
-fpp.fsl.maths([outputStem 'std.nii.gz'],['-mas ' gmPath],[outputStem 'cov_ribbon.nii.gz']);
+fpp.fsl.maths([outputStem 'cov.nii.gz'],['-mas ' gmPath],[outputStem 'cov_ribbon.nii.gz']);
 
 % Normalize CoV (divide by mean)
 [~,result] = fpp.util.system(['fslstats ' outputStem 'cov_ribbon.nii.gz -M']);
@@ -63,6 +63,7 @@ covThresh = meanVal+stdVal*sdFactor;
 fpp.fsl.maths([outputStem 'mean.nii.gz'],'-bin',[outputStem 'mask.nii.gz']);
 fpp.fsl.maths([outputStem 'cov_norm_modulate.nii.gz'],['-thr ' num2str(covThresh) ' -bin -sub '...
     outputStem 'mask -mul -1'],goodVoxPath);
+
 if exist('badVoxPath','var') && ~isempty(badVoxPath)
     fpp.fsl.maths([outputStem 'mask.nii.gz'],['-sub ' goodVoxPath],badVoxPath);
 end
