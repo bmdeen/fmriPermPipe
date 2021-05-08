@@ -63,7 +63,7 @@ covThresh = meanVal+stdVal*sdFactor;
 fpp.fsl.maths([outputStem 'mean.nii.gz'],'-bin',[outputStem 'mask.nii.gz']);
 fpp.fsl.maths([outputStem 'cov_norm_modulate.nii.gz'],['-thr ' num2str(covThresh) ' -bin -sub '...
     outputStem 'mask -mul -1'],goodVoxPath);
-if exist('badVoxelPath','var') && ~isempty(badVoxPath)
+if exist('badVoxPath','var') && ~isempty(badVoxPath)
     fpp.fsl.maths([outputStem 'mask.nii.gz'],['-sub ' goodVoxPath],badVoxPath);
 end
 
