@@ -16,10 +16,10 @@ function [dataMat,hdr] = readDataMatrix(inputPath,maskVol)
 [~,~,inputExt] = fpp.util.fileParts(inputPath);
 if ismember(lower(inputExt),{'.nii.gz','.nii'})
     isCifti = 0;
-elseif ismember(lower(inputExt),{'.dscalar.nii','.dtseries.nii'})
+elseif ismember(lower(inputExt),{'.dlabel.nii','.dscalar.nii','.dtseries.nii'})
     isCifti = 1;
 else
-    error('fpp.util.readDataMatrix is intended for NIFTI or dscalar/dtseries CIFTI files.');
+    error('fpp.util.readDataMatrix is intended for NIFTI or dlabel/dscalar/dtseries CIFTI files.');
 end
 
 if isCifti
