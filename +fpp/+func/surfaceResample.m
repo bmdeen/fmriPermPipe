@@ -55,11 +55,6 @@ function surfaceResample(inputNiftiPath,inputSurfacePaths,surfaceROIPaths,output
 % - Resample subcortical to CIFTI properly. Need to modify labels of input
 %       segmentation.
 
-% CURRENT:
-% - Resample to fsLR, not just native space. Need spherical coordinate
-%       systems and registration as variable arguments.
-% - Consider adding surface and/or volume dilation, as in HCP pipeline?
-
 % Constants
 hemis = {'L','R'};
 structures = {'CORTEX_LEFT','CORTEX_RIGHT'};
