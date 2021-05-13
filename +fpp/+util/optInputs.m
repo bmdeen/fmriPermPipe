@@ -32,7 +32,7 @@ if ismember(lower(argName),lower({'expt','inputSuffix','outputSuffix','funcTempl
         'premat','midmat','mask','warp1','warp2','jacobian','confoundPath','outlierPath',...
         'analysisDir','fieldMapParamPath','topupWarpPath','topupJacobianPath','spinEchoPath',...
         'filtType','templateType','templateRes','anatTemplatePath','parcPath','sizeType',...
-        'templateSpace','referencePath','subcortSegPath'}))
+        'templateSpace','referencePath','subcortSegPath','outputNiftiPath'}))
     if ischar(argVal)
         argGood = 1;
     else
@@ -73,7 +73,7 @@ elseif ismember(lower(argName),lower({'nuisanceType'}))
     
 % Scalar integer in [0,Inf)
 elseif ismember(lower(argName),lower({'tptsAfter','disdaqs','looRun','pcaOrder',...
-        'superlevel','paddingsize','randSeed','permIters','nComps'}))
+        'superlevel','paddingsize','randSeed','permIters','nComps','surfDilation','volDilation'}))
     if isnumeric(argVal) && isscalar(argVal) && mod(argVal,1)==0 && argVal>=0
         argGood = 1;
     else
@@ -191,7 +191,8 @@ elseif ismember(lower(argName),lower({'customNuisRegr'}))
 
 % Cell array of strings
 elseif ismember(lower(argName),lower({'spinEchoPaths','spinEchoPhaseEncodeDirections',...
-        'condNames','confoundNames','contrastNames','phaseEncodeDirections'}))
+        'condNames','confoundNames','contrastNames','phaseEncodeDirections',...
+        'sphereRegFsLRPaths','midthickFsLRPaths'}))
     if iscellstr(argVal)
         argGood = 1;
     else
