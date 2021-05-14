@@ -1,7 +1,7 @@
 
 % Wrapper function to write data stored as a coordinate by 1 vector or
-% coordinate by time matrix to a NIFTI 3D/4D volume or CIFTI discalar or
-% dtseries file.
+% coordinate by time matrix to a NIFTI 3D/4D volume or CIFTI discalar, 
+% dlabel or dtseries file.
 %
 % writeDataMatrix(dataMat,hdr,outputPath,maskVol)
 %
@@ -20,10 +20,10 @@ function writeDataMatrix(dataMat,hdr,outputPath,maskVol)
 [~,~,outputExt] = fpp.util.fileParts(outputPath);
 if ismember(lower(outputExt),{'.nii.gz','.nii'})
     isCifti = 0;
-elseif ismember(lower(outputExt),{'.dscalar.nii','.dtseries.nii'})
+elseif ismember(lower(outputExt),{'.dlabel.nii','.dscalar.nii','.dtseries.nii'})
     isCifti = 1;
 else
-    error('fpp.util.readDataMatrix is intended for NIFTI or dscalar/dtseries CIFTI files.');
+    error('fpp.util.readDataMatrix is intended for NIFTI or dlabel/dscalar/dtseries CIFTI files.');
 end
 
 dtseriesFields = {'seriesStart','seriesStep','seriesUnit'};
@@ -47,6 +47,8 @@ if isCifti
                 rmfield(hdr.diminfo{2},dscalarFields{f});
             end
         end
+    elseif strcmpi(outputExt,'.dlabel.nii')
+        hdr.diminfo{2}.type = 'labels';
     end
     cifti_write(hdr,outputPath);
 else
