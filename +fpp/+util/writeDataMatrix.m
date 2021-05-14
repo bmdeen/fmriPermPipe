@@ -49,6 +49,11 @@ if isCifti
         end
     elseif strcmpi(outputExt,'.dlabel.nii')
         hdr.diminfo{2}.type = 'labels';
+        for f=1:length(dtseriesFields)
+            if isfield(hdr.diminfo{2},dtseriesFields{f})
+                rmfield(hdr.diminfo{2},dtseriesFields{f});
+            end
+        end
     end
     cifti_write(hdr,outputPath);
 else
