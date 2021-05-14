@@ -73,7 +73,8 @@ midthickFsLRPaths = {};
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
 varArgList = {'subcortSegPath','premat','referencePath','fwhm','isLabel',...
-    'surfDilation','volDilation','outputNiftiPath','sphereRegFsLRPaths'};
+    'surfDilation','volDilation','outputNiftiPath','sphereRegFsLRPaths',...
+    'midthickFsLRPaths'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
@@ -222,6 +223,6 @@ end
 % Delete temporary paths
 fpp.util.deleteImageAndJson(tmpNiftiPath);
 for h=1:2, fpp.util.deleteImageAndJson(tmpGiftiPaths{h}); end
-if exist(tmpLUTPath), fpp.util.system(['rm -rf ' tmpLUTPath]); end
+if isLabel && exist(tmpLUTPath), fpp.util.system(['rm -rf ' tmpLUTPath]); end
 
 end
