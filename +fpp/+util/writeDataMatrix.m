@@ -1,7 +1,7 @@
 
 % Wrapper function to write data stored as a coordinate by 1 vector or
 % coordinate by time matrix to a NIFTI 3D/4D volume or CIFTI discalar, 
-% dlabel or dtseries file.
+% dlabel, or dtseries file.
 %
 % writeDataMatrix(dataMat,hdr,outputPath,maskVol)
 %
