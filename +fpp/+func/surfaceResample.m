@@ -217,7 +217,7 @@ if fwhm>0
     outputCiftiSmPath = fpp.bids.changeName(outputCiftiPath,'desc',[outputDesc fwhmStr]);
     fpp.wb.command('cifti-smoothing',outputCiftiPath,[num2str(sigmaSm) ' '...
         num2str(sigmaSm) ' COLUMN'],outputCiftiSmPath,['-left-surface '...
-        outputMidthickPaths{2} ' -right-surface ' outputMidthickPaths{2}]);
+        outputMidthickPaths{1} ' -right-surface ' outputMidthickPaths{2}]);
 end
 
 % Delete temporary paths
