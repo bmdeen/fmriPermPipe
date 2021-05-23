@@ -1,5 +1,5 @@
 
-% Wrapper for FSL's aff2Rigid, to reduce a 12-DOF registration to standard
+% Wrapper for FSL's aff2rigid, to reduce a 12-DOF registration to standard
 % space to 6-DOF. Generates .json metadata for output xfm.
 %
 % fpp.fsl.aff2Rigid(inputXfm,outputXfm)

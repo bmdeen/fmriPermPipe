@@ -1,5 +1,5 @@
 
-% Function to FDR-correct z-statistic image, output thresholded image.
+% Function to FDR-correct z-statistic image, output thresholded image
 %
 % fpp.func.analysis.fdrCorrect(inputPath,outputPath,maskPath,qThresh,tails)
 

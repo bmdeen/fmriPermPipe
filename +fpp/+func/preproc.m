@@ -79,7 +79,6 @@ function preproc(inputPaths,outputDir,varargin)
 % - Add JSON files for additional TEDANA/ts2map outputs
 %
 % TODO NEXT:
-% - CIFTI-resampling
 % - If deleteMidprep==1, remove "Sources" field of final outputs
 % - Add suffix option for desc. Need to edit input/outputNameGeneric, and
 %   edit desc of output TEDANA folder (defitions both within preproc
@@ -640,17 +639,10 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 10: Resample to cortical surface
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%fprintf('%s\n',['Step 10, Resample to cortical surface          - ' outputNameGeneric]);
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 11: Spatially smooth
+%%% STEP 10: Spatially smooth
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if fwhm>0
-    fprintf('%s\n',['Step 11, Spatially smooth                      - ' outputNameGeneric]);
+    fprintf('%s\n',['Step 10, Spatially smooth                      - ' outputNameGeneric]);
     for i=1:length(outputPaths)
         steps{i}{end+1} = ['volumetric spatial smoothing within tissue component (GM, WM, CSF), '...
             num2str(fwhm) 'mm-fwhm Gaussian kernel'];
@@ -670,7 +662,7 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 11.5: Rename output
+%%% STEP 10.5: Rename output
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i=1:length(outputPaths)
     inputPaths{i} = outputPaths{i};
@@ -686,7 +678,7 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 11.6: Generate carpet plot
+%%% STEP 10.6: Generate carpet plot
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 nuisanceNames = {'Global mean','WM mean','CSF mean','Framewise displacement (mm)','DVARS_std'};
 segmentMaskPaths = {fpp.bids.changeName(maskPath,'desc','gm'),fpp.bids.changeName(maskPath,'desc','wm'),...
@@ -705,9 +697,9 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 12: Compute tSNR
+%%% STEP 11: Compute tSNR
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fprintf('%s\n',['Step 12, Compute tSNR                          - ' outputNameGeneric]);
+fprintf('%s\n',['Step 11, Compute tSNR                          - ' outputNameGeneric]);
 if genTSNR
     for i=1:length(outputPaths)
         fpp.util.tsnrMap(outputPaths{i},[],fpp.func.preproc.description(tsnrIntro,steps{i}));

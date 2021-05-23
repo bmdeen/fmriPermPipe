@@ -1,5 +1,5 @@
 
-% Function to convert an t-statistic map to a z-statistic map
+% Function to convert a t-statistic map to a z-statistic map
 
 function convertTtoZ(inputPath,outputPath,dof)
 

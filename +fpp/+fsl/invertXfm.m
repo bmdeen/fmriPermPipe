@@ -1,5 +1,5 @@
 
-% Wrapper for FSL's convert_xfm -concat, to combine affine transforms.
+% Wrapper for FSL's convert_xfm -inverse, to invert an affine transform.
 % Generates .json metadata for output transform.
 %
 % fpp.fsl.invertXfm(inputXfm,outputXfm)
