@@ -7,9 +7,8 @@ Steps include dicom conversion, preprocessing of anatomical and fMRI data, and s
 
 **NOTE: These scripts are currently under active development, and will be changing frequently. A more stable version is expected by 2022. Currently in progress: wrapper scripts using BIDS naming conventions; json metadata for statistical modeling outputs; Docker container to facilitate installation**
 
-
-
 <br />
+
 ## Installation
 
 FPP runs on Mac or Linux (not Windows), on MATLAB 2016b+. MATLAB should be opened through a Bash terminal, to ensure that Bash environment variables are defined. FPP incorporates a number of neuroimaging software packages as dependencies, which must be installed and sourced in the local Bash or MATLAB environment:
@@ -28,9 +27,9 @@ MATLAB:
 * [cifti-matlab](https://github.com/Washington-University/cifti-matlab)
 * [Freesurfer](https://surfer.nmr.mgh.harvard.edu/) MATLAB tools
 
-
-
 <br />
+
+
 ## Data requirements
 
 The minimum required data for this pipeline include:
@@ -45,9 +44,9 @@ For anatomical images, we recommend collecting 2-3 images at relatively high res
 
 Note: if distortion correction based on spin-echo acquisitions is used, the pipeline assumes that all functional data have a common phase-encode direction.
 
-
-
 <br />
+
+
 ## Usage
 
 FPP may be used as a full pipeline, or in segments, including dicom conversion, preprocessing, and analysis. For partial usage, raw or preprocessed input data must be formatted based on the BIDS specification. The package also contains a number of standalone functions, including wrappers for FSL, Freesurfer, and Connectome Workbench tools that generate BIDS-formatted JSON metadata for outputs, and other image processing utilities.
@@ -158,9 +157,9 @@ Visualization:
 * `fpp.util.carpetPlot` - generate carpet plot of fMRI data and nuisance metrics
 * `fpp.util.barColor` - generate bar plot with colored bars and overlaid data points
 
-
-
 <br />
+
+
 ## Processing details
 
 Detailed descriptions of processing steps in the pipeline are provided below.
@@ -213,9 +212,9 @@ After running second-level modeling (within-subject, cross-run), correction for 
 
 **Details on permutation-based statistical inference.** `fpp.func.modelPerm` computes within-subject statistics using a permutation test. Specifically, on each iteration (of 5,000 total, by default) the order of blocks within an experiment is randomly permuted, and voxelwise contrast values are computed, in order to build a null distribution of contrast values at each voxel. As with any permutation test, this analysis relies on the assumption of exchangeability (in this case, of block orders): that under the null hypothesis of no condition differences, the distribution of the test statistic is identical regardless of block order. The best way to ensure that this criterion is satisfied is to build it into the design of the experiment by using a randomization scheme to determine block order. For more details of the logic of permutation-based fMRI analysis, see Nichols and Holmes (2001).
 
-
-
 <br />
+
+
 ## References
 
 FPP uses tools from numerous neuroimaging software packages, choosing the best tool available for each processing step. The below papers should be cited when the corresponding processing steps have been used.
@@ -272,18 +271,18 @@ Parker DB, Razlighi QR (2019) The benefit of slice timing correction in common f
 Power JD, Plitt M, Kundu P, Bandettini PA, Martin A (2017) Temporal interpolation alters motion in fMRI scans: Magnitudes and consequences for artifact detection. PLOS One 12(9): e0182939. doi: 10.1371/journal.pone.0182939<br />
 Power JD, Plitt M, Gotts SJ, Kundu P, Voon V, Bandettini PA, Martin A (2018) Ridding fMRI data of motion-related influences: Removal of signals with distinct spatial and physical bases in multiecho data. PNAS 115(9): E2105-14. doi: 10.1073/pnas.1720985115
 
-
-
 <br />
+
+
 ## Version History
 
 Version 1 (2012-2016): early version of pipeline, with more basic preprocessing and analysis functionality.
 
 Version 2 (2019-current): updated version, incorporating optimized fMRI preprocessing, HCP-like anatomical pipeline, and BIDS compatibility.
 
-
-
 <br />
+
+
 ## Licenses
 
 fMRIPermPipe relies on numerous software packages, each of which has its own license. Additionally, the data folder contains files specifying template images from the Human Connectome Project (`*_space-fsLR_*` and `*_space-fsaverage_*`), and the Montreal Neurological Institute (`*_space-MNI152NLin6Asym_*`). These files have their own licenses, which are reproduced below.
