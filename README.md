@@ -241,7 +241,7 @@ FPP uses tools from numerous neuroimaging software packages, choosing the best t
 _Dicom conversion_
 * Li X, Morgan PS, Ashburner J, Smith J, Rorden C (2016) The first step for neuroimaging data analysis: DICOM to NIfTI conversion. J Neurosci Methods 264: 47-56. doi: 10.1016/j.jneumeth.2016.03.001
 
-_Anatomical pipeline (fpp.anat.pre/postproc)_
+_Anatomical pipeline_
 * Glasser MF, Sotiropoulos SN, Wilson JA, Coalson TS, Fischl B, Andersson JSL, Xu J, Jbabdi S, Webster M, Polimeni JR, Van Essen DC, Jenkinson M, Wu-Minn HCP Consortium (2013) The minimal preprocessing pipelines for the Human Connectome Project. NeuroImage 80: 105-124. doi: 10.1016/j.neuroimage.2013.04.127
 * Robinson EC, Jbabdi S, Glasser MF, Andersson J, Burgess GC, Harms MP, Smith SM, Van Essen DC, Jenkinson M (2014) MSM: a new flexible framework for Multimodal Surface Matching. NeuroImage 100: 414-26. doi: 10.1016/j.neuroimage.2014.05.06
 * Robinson EC, Garcia K, Glasser MF, Chen Z, Coalson TS, Makropoulos A, Bozek J, Wright R, Schuh A, Webster M, Hutter J (2018) Multimodal surface matching with higher-order smoothness constraints. NeuroImage 167: 453-65. doi: 10.1016/j.neuroimage.2017.10.037
