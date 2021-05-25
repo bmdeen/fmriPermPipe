@@ -7,6 +7,15 @@ Steps include dicom conversion, preprocessing of anatomical and fMRI data, and s
 
 **NOTE: These scripts are currently under active development, and will be changing frequently. A more stable version is expected by 2022. Currently in progress: wrapper scripts using BIDS naming conventions; json metadata for statistical modeling outputs; Docker container to facilitate installation**
 
+Contents:
+1. [Installation](https://github.com/bmdeen/fmriPermPipe/tree/fppipe-v2#installation)
+2. [Data requirements](https://github.com/bmdeen/fmriPermPipe/tree/fppipe-v2#data-requirements)
+3. [Usage](https://github.com/bmdeen/fmriPermPipe/tree/fppipe-v2#usage)
+4. [Processing details](https://github.com/bmdeen/fmriPermPipe/tree/fppipe-v2#processing-details)
+5. [References](https://github.com/bmdeen/fmriPermPipe/tree/fppipe-v2#installation)
+6. [Licenses](https://github.com/bmdeen/fmriPermPipe/tree/fppipe-v2#licenses)
+<br />
+
 
 
 ## Installation
@@ -164,8 +173,22 @@ Detailed descriptions of processing steps in the pipeline are provided below.
 
 ### Anatomical pre/postprocessing
 
-[ADD STUFF HERE]
+The anatomical pipeline uses a Human Connectome Project (HCP)-like approach to generate a highly accurate cortical surface reconstruction from high-resolution T1- and T2-weighted anatomical images. The specific processing steps are adapted from the HCP's PreFreesurer and PostFreesurfer pipelines.
 
+In preprocessing (`fpp.anat.preproc`), anatomical images are registered to one another, averaged, rigidly aligned with MNI152NLin6Asym space, and bias-corrected. This generates a high-resolution anatomical template space for each individual subject.
+
+After preprocessing, a cortical reconstruction is generated using Freesurfer's `recon-all`, with the `-hires` flag to accomodate submillimeter resolution when needed.
+
+In postprocessing (`fpp.anat.postproc`), the following steps are performed:
+1. Conversion of Freesurfer volumetric files to anatomical template space
+2. Mask definition: brain, gm, wm, csf
+3. Conversion of Freesurfer surface, metric, and label files to GIFTI/CIFTI format
+4. Generation of midthickness, inflated, and very inflated surfaces
+5. Surface-based registration to fsLR space, using Multimodal Surface Matching
+6. Generation of .spec files for wb\_view
+7. Resampling of HCP1200 atlas files and parcellations to Freesurfer native resolution (optional)
+
+In order to perform step 7, the [HCP multimodal parcellation data](https://balsa.wustl.edu/study/show/RVVG) must be added. The downloaded folder should be renamed `HCP_S1200_Atlas` and placed in the data folder with the FPP script directory.
 
 ### Functional preprocessing
 
