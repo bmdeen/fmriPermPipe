@@ -188,7 +188,7 @@ In postprocessing (`fpp.anat.postproc`), the following steps are performed:
 6. Generation of .spec files for wb\_view
 7. Resampling of HCP1200 atlas files and parcellations to Freesurfer native resolution (optional)
 
-In order to perform step 7, the [HCP multimodal parcellation data](https://balsa.wustl.edu/study/show/RVVG) must be added. The downloaded folder should be renamed `HCP_S1200_Atlas` and placed in the data folder with the FPP script directory.
+In order to perform step 7, the [HCP multimodal parcellation data](https://balsa.wustl.edu/study/show/RVVG) must be added. The downloaded folder should be renamed `HCP_S1200_Atlas` and placed in the data folder within the FPP script directory.
 
 ### Functional preprocessing
 
@@ -238,57 +238,57 @@ After running second-level modeling (within-subject, cross-run), correction for 
 
 FPP uses tools from numerous neuroimaging software packages, choosing the best tool available for each processing step. The below papers should be cited when the corresponding processing steps have been used.
 
-_Dicom conversion_<br />
-Li X, Morgan PS, Ashburner J, Smith J, Rorden C (2016) The first step for neuroimaging data analysis: DICOM to NIfTI conversion. J Neurosci Methods 264: 47-56. doi: 10.1016/j.jneumeth.2016.03.001
+_Dicom conversion_
+* Li X, Morgan PS, Ashburner J, Smith J, Rorden C (2016) The first step for neuroimaging data analysis: DICOM to NIfTI conversion. J Neurosci Methods 264: 47-56. doi: 10.1016/j.jneumeth.2016.03.001
 
-_Anatomical pipeline (fpp.anat.pre/postproc)_<br />
-Glasser MF, Sotiropoulos SN, Wilson JA, Coalson TS, Fischl B, Andersson JSL, Xu J, Jbabdi S, Webster M, Polimeni JR, Van Essen DC, Jenkinson M, Wu-Minn HCP Consortium (2013) The minimal preprocessing pipelines for the Human Connectome Project. NeuroImage 80: 105-124. doi: 10.1016/j.neuroimage.2013.04.127<br />
-Robinson EC, Jbabdi S, Glasser MF, Andersson J, Burgess GC, Harms MP, Smith SM, Van Essen DC, Jenkinson M (2014) MSM: a new flexible framework for Multimodal Surface Matching. NeuroImage 100: 414-26. doi: 10.1016/j.neuroimage.2014.05.069<br />
-Robinson EC, Garcia K, Glasser MF, Chen Z, Coalson TS, Makropoulos A, Bozek J, Wright R, Schuh A, Webster M, Hutter J (2018) Multimodal surface matching with higher-order smoothness constraints. NeuroImage 167: 453-65. doi: 10.1016/j.neuroimage.2017.10.037
+_Anatomical pipeline (fpp.anat.pre/postproc)_
+* Glasser MF, Sotiropoulos SN, Wilson JA, Coalson TS, Fischl B, Andersson JSL, Xu J, Jbabdi S, Webster M, Polimeni JR, Van Essen DC, Jenkinson M, Wu-Minn HCP Consortium (2013) The minimal preprocessing pipelines for the Human Connectome Project. NeuroImage 80: 105-124. doi: 10.1016/j.neuroimage.2013.04.127
+* Robinson EC, Jbabdi S, Glasser MF, Andersson J, Burgess GC, Harms MP, Smith SM, Van Essen DC, Jenkinson M (2014) MSM: a new flexible framework for Multimodal Surface Matching. NeuroImage 100: 414-26. doi: 10.1016/j.neuroimage.2014.05.06
+* Robinson EC, Garcia K, Glasser MF, Chen Z, Coalson TS, Makropoulos A, Bozek J, Wright R, Schuh A, Webster M, Hutter J (2018) Multimodal surface matching with higher-order smoothness constraints. NeuroImage 167: 453-65. doi: 10.1016/j.neuroimage.2017.10.037
 
-_Freesurfer recon-all_<br />
-Dale AM, Fischl B, Sereno MI (1999) Cortical surface-based analysis. I. Segmentation and surface reconstruction. NeuroImage 9: 179-194. doi: 10.1006/nimg.1998.0395
+_Freesurfer recon-all_
+* Dale AM, Fischl B, Sereno MI (1999) Cortical surface-based analysis. I. Segmentation and surface reconstruction. NeuroImage 9: 179-194. doi: 10.1006/nimg.1998.0395
 
-_Functional registration: boundary-based registration_<br />
-Greve DN, Fischl B (2009) Accurate and robust brain image alignment using boundary-based registration. NeuroImage 48(1): 63-72. doi: 10.1016/j.neuroimage.2009.06.060
+_Functional registration: boundary-based registration_
+* Greve DN, Fischl B (2009) Accurate and robust brain image alignment using boundary-based registration. NeuroImage 48(1): 63-72. doi: 10.1016/j.neuroimage.2009.06.060
 
-_Functional preprocessing: motion correction, linear registration_<br />
-Jenkinson M, Bannister P, Brady JM, Smith, SM (2002) Improved optimisation for the robust and accurate linear registration and motion correction of brain images. NeuroImage 17(2): 825-841. doi: 10.1016/s1053-8119(02)91132-8
+_Functional preprocessing: motion correction, linear registration_
+* Jenkinson M, Bannister P, Brady JM, Smith, SM (2002) Improved optimisation for the robust and accurate linear registration and motion correction of brain images. NeuroImage 17(2): 825-841. doi: 10.1016/s1053-8119(02)91132-8
 
-_Functional preprocessing: distortion correction_<br />
-Andersson JLR, Skare S, Ashburner J (2003) How to correct susceptibility distortions in spin-echo echo-planar images: application to diffusion tensor imaging. NeuroImage 20(2): 870-888. doi: 10.1016/S1053-8119(03)00336-7
+_Functional preprocessing: distortion correction_
+* Andersson JLR, Skare S, Ashburner J (2003) How to correct susceptibility distortions in spin-echo echo-planar images: application to diffusion tensor imaging. NeuroImage 20(2): 870-888. doi: 10.1016/S1053-8119(03)00336-7
 
-_Functional preprocessing: multi-echo ICA_<br />
-DuPre E, Salo T, Markello R, Kundu P, Whitaker K, & Handwerker D (2020) ME-ICA/tedana: 0.0.9a (Version 0.0.9a). Zenodo. doi: 10.5281/zenodo.3786890<br />
-Kundu P, Inati SJ, Evans JW, Luh WM, Bandettini PA (2011) Differentiating BOLD and non-BOLD signals in fMRI time series using multi-echo EPI. NeuroImage, 60: 1759-1770. doi: 10.1016/j.neuroimage.2011.12.028
+_Functional preprocessing: multi-echo ICA_
+* DuPre E, Salo T, Markello R, Kundu P, Whitaker K, & Handwerker D (2020) ME-ICA/tedana: 0.0.9a (Version 0.0.9a). Zenodo. doi: 10.5281/zenodo.3786890
+* Kundu P, Inati SJ, Evans JW, Luh WM, Bandettini PA (2011) Differentiating BOLD and non-BOLD signals in fMRI time series using multi-echo EPI. NeuroImage, 60: 1759-1770. doi: 10.1016/j.neuroimage.2011.12.028
 
-_Functional preprocessing: aCompCor nuisance signals_<br />
-Behzadi Y, Restom K, Liau J, Liu TT (2007) A component based noise correction method (CompCor) for BOLD and perfusion based fMRI. NeuroImage 37(1):9 0-101. doi: 10.1016/j.neuroimage.2007.04.042
+_Functional preprocessing: aCompCor nuisance signals_
+* Behzadi Y, Restom K, Liau J, Liu TT (2007) A component based noise correction method (CompCor) for BOLD and perfusion based fMRI. NeuroImage 37(1):9 0-101. doi: 10.1016/j.neuroimage.2007.04.042
 
-_Functional preprocessing: standardized DVARS nuisance signal_<br />
-Nichols TE (2017) Notes on creating a standardized version of DVARS. arXiv: 1704.01469.
+_Functional preprocessing: standardized DVARS nuisance signal_
+* Nichols TE (2017) Notes on creating a standardized version of DVARS. arXiv: 1704.01469.
 
-_Functional preprocessing: scrubbing artifact time points_<br />
-Power JD, Barnes KA, Snyder AZ, Schlaggar BL, Petersen SE (2012) Spurious but systematic correlations in functional connectivity MRI networks arise from subject motion. NeuroImage 59(3): 2142-54. doi: 10.1016/j.neuroimage.2011.10.018<br />
-Power JD, Mitra A, Laumann TO, Snyder AZ, Schlaggar BL, Petersen SE (2014) Methods to detect, characterize, and remove motion artifact in resting state fMRI. NeuroImage 84: 320-41. doi: 10.1016/j.neuroimage.2013.08.048
+_Functional preprocessing: scrubbing artifact time points_
+* Power JD, Barnes KA, Snyder AZ, Schlaggar BL, Petersen SE (2012) Spurious but systematic correlations in functional connectivity MRI networks arise from subject motion. NeuroImage 59(3): 2142-54. doi: 10.1016/j.neuroimage.2011.10.018
+* Power JD, Mitra A, Laumann TO, Snyder AZ, Schlaggar BL, Petersen SE (2014) Methods to detect, characterize, and remove motion artifact in resting state fMRI. NeuroImage 84: 320-41. doi: 10.1016/j.neuroimage.2013.08.048
 
-_Functional preprocessing: carpet plot_<br />
-Power JD (2017) A simple but useful way to assess fMRI scan qualities. NeuroImage 154: 150-8. doi: 10.1016/j.neuroimage.2016.08.009
+_Functional preprocessing: carpet plot_
+* Power JD (2017) A simple but useful way to assess fMRI scan qualities. NeuroImage 154: 150-8. doi: 10.1016/j.neuroimage.2016.08.009
 
-_Functional analysis: FILM modeling_<br />
-Woolrich MW, Ripley BD, Brady M, Smith SM (2001) Temporal autocorrelation in univariate linear modeling of fMRI data. NeuroImage 14(6): 1370–1386. doi: 10.1006/nimg.2001.0931
+_Functional analysis: FILM modeling_
+* Woolrich MW, Ripley BD, Brady M, Smith SM (2001) Temporal autocorrelation in univariate linear modeling of fMRI data. NeuroImage 14(6): 1370–1386. doi: 10.1006/nimg.2001.0931
 
-_Brain imaging data structure_<br />
-Gorgolewski KJ, Auer T, Calhoun VD, Craddock RC, Das S, Duff EP, Flandin G, Ghosh SS, Glatard T, Halchenko YO, Handwerker DA (2016) The brain imaging data structure, a format for organizing and describing outputs of neuroimaging experiments. Scientific Data 3(1):1-9. doi: 10.1038/sdata.2016.44
+_Brain imaging data structure_
+* Gorgolewski KJ, Auer T, Calhoun VD, Craddock RC, Das S, Duff EP, Flandin G, Ghosh SS, Glatard T, Halchenko YO, Handwerker DA (2016) The brain imaging data structure, a format for organizing and describing outputs of neuroimaging experiments. Scientific Data 3(1):1-9. doi: 10.1038/sdata.2016.44
 
-_Additional References Cited_<br />
-Coalson TS, Van Essen DC, Glasser MF (2018) The impact of traditional neuroimaging methods on the spatial localization of cortical areas. PNAS 115(27): E6356-65. doi: 10.1073/pnas.1801582115<br />
-Eklund A, Andersson M, Josephson C, Johannesson M, Knutsson H (2012) Does parametric fMRI analysis with SPM yield valid results?—An empirical study of 1484 rest datasets. NeuroImage 61(3): 565-78. doi: 10.1016/j.neuroimage.2012.03.093<br />
-Eklund A, Nichols TE, Knutsson H (2016) Cluster failure: Why fMRI inferences for spatial extent have inflated false-positive rates. PNAS 13(28):7900-5. doi: 10.1073/pnas.1602413113<br />
-Nichols TE, Holmes AP (2002) Nonparametric permutation tests for functional neuroimaging: a primer with examples. Human Brain Mapping 15(1): 1-25. doi: 10.1002/hbm.1058<br />
-Parker DB, Razlighi QR (2019) The benefit of slice timing correction in common fMRI preprocessing pipelines. Frontiers in Neuroscience 13:821. doi: 10.3389/fnins.2019.00821<br />
-Power JD, Plitt M, Kundu P, Bandettini PA, Martin A (2017) Temporal interpolation alters motion in fMRI scans: Magnitudes and consequences for artifact detection. PLOS One 12(9): e0182939. doi: 10.1371/journal.pone.0182939<br />
-Power JD, Plitt M, Gotts SJ, Kundu P, Voon V, Bandettini PA, Martin A (2018) Ridding fMRI data of motion-related influences: Removal of signals with distinct spatial and physical bases in multiecho data. PNAS 115(9): E2105-14. doi: 10.1073/pnas.1720985115
+_Additional References_
+* Coalson TS, Van Essen DC, Glasser MF (2018) The impact of traditional neuroimaging methods on the spatial localization of cortical areas. PNAS 115(27): E6356-65. doi: 10.1073/pnas.1801582115
+* Eklund A, Andersson M, Josephson C, Johannesson M, Knutsson H (2012) Does parametric fMRI analysis with SPM yield valid results?—An empirical study of 1484 rest datasets. NeuroImage 61(3): 565-78. doi: 10.1016/j.neuroimage.2012.03.093
+* Eklund A, Nichols TE, Knutsson H (2016) Cluster failure: Why fMRI inferences for spatial extent have inflated false-positive rates. PNAS 13(28):7900-5. doi: 10.1073/pnas.1602413113
+* Nichols TE, Holmes AP (2002) Nonparametric permutation tests for functional neuroimaging: a primer with examples. Human Brain Mapping 15(1): 1-25. doi: 10.1002/hbm.1058
+* Parker DB, Razlighi QR (2019) The benefit of slice timing correction in common fMRI preprocessing pipelines. Frontiers in Neuroscience 13:821. doi: 10.3389/fnins.2019.00821
+* Power JD, Plitt M, Kundu P, Bandettini PA, Martin A (2017) Temporal interpolation alters motion in fMRI scans: Magnitudes and consequences for artifact detection. PLOS One 12(9): e0182939. doi: 10.1371/journal.pone.0182939
+* Power JD, Plitt M, Gotts SJ, Kundu P, Voon V, Bandettini PA, Martin A (2018) Ridding fMRI data of motion-related influences: Removal of signals with distinct spatial and physical bases in multiecho data. PNAS 115(9): E2105-14. doi: 10.1073/pnas.1720985115
 
 
 
