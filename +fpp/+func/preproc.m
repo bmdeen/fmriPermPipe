@@ -497,6 +497,8 @@ pathsToDelete = [pathsToDelete outputPaths];
 % Remove voxels with zero value at any time point after registration from brain mask
 maskNonZeroPath = fpp.bids.changeName(outputPaths{1},{'echo','desc'},{[],'brainNonZero'},'mask');
 fpp.fsl.maths(outputPaths{end},['-Tmin -bin -mul ' maskPath],maskNonZeroPath);
+fpp.bids.jsonChangeValue(maskNonZeroPath,{'Sources','Type','Description'},{{outputPaths{1},maskPath},...
+    'Brain','Brain mask intersected with mask of nonzero voxels from this task/run.'});
 
 
 
