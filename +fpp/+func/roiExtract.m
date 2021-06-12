@@ -209,7 +209,7 @@ else
         statCoefsInput = [];
         zStatPathsInput = {};
         for t=1:nTasks
-            for r=defineROIRuns{t}
+            for r=1:nRunsEachTask(t)
                 zStatPathsInput{end+1} = zStatPaths{t}{r};
                 statCoefsInput(end+1) = statCoefs(t)/length(defineROIRuns{t});
             end
