@@ -58,7 +58,7 @@ statCoefs = [];
 roiDesc = '';
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
-varArgList = {'roiSize','sizeType','invertStats','maskPath','overwrite','statCoefs'};
+varArgList = {'roiSize','sizeType','invertStats','maskPath','overwrite','statCoefs','roiDesc'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
