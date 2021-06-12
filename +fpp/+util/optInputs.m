@@ -32,7 +32,7 @@ if ismember(lower(argName),lower({'expt','inputSuffix','outputSuffix','funcTempl
         'premat','midmat','mask','warp1','warp2','jacobian','confoundPath','outlierPath',...
         'analysisDir','fieldMapParamPath','topupWarpPath','topupJacobianPath','spinEchoPath',...
         'filtType','templateType','templateRes','anatTemplatePath','parcPath','sizeType',...
-        'templateSpace','referencePath','subcortSegPath','outputNiftiPath'}))
+        'templateSpace','referencePath','subcortSegPath','outputNiftiPath','roiDesc'}))
     if ischar(argVal)
         argGood = 1;
     else
@@ -161,6 +161,14 @@ elseif ismember(lower(argName),lower({'teVals','sliceTimes'}))
         argGood = 1;
     else
         errorMsg = ['Argument ' argName ' must be a vector of numbers > 0.'];
+    end
+    
+% Vector of values in [0,Inf)
+elseif ismember(lower(argName),lower({'statCoefs'}))
+    if isnumeric(argVal) && isvector(argVal) && sum(argVal==inf)==0
+        argGood = 1;
+    else
+        errorMsg = ['Argument ' argName ' must be a vector of numbers < Inf.'];
     end
     
 % 1- or 2- element vector of values in (0,Inf)

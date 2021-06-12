@@ -3,17 +3,22 @@
 %
 % Function to extract region-of-interest responses from a given task and
 % participant, using ROIs defined by maximally responsive coordinates from
-% a specific contrast in another task, within a search space. If the two
-% tasks are the same, a leave-one-run-out analysis is performed, to ensure
+% a specific contrast in another task (or other tasks), within a search
+% space. If the task to extract responses from is one of the tasks used to
+% define ROIs, a leave-one-run-out analysis is performed, to ensure
 % that separate data are used to define ROIs and extract responses.
 %
 % Arguments:
 % - extractResponseDir (string): modelperm directory for any run of the
 %       task used to extract responses.
-% - defineROIDir (string): modelperm directory for any run of the task used
-%       to define ROIs. The function assumes that extractResponseDir and
-%       defineROIDir share a parent directory.
-% - contrastName (string): name of the contrast to use for ROI definition
+% - defineROIDir (string or cell array of strings): modelperm directories
+%       for any one run of the task(s) used to define ROIs. If multiple
+%       tasks are used, statCoefs must be defined to specify how they
+%       should be averaged, and the tasks must have the same number of
+%       runs. The function assumes that extractResponseDir and defineROIDir
+%       share a parent directory.
+% - contrastName (string or cell array of strings): name of the contrast(s)
+%       to use for ROI definition.
 % - searchPath (string): path to the search space
 %
 % Variable arguments:
@@ -22,6 +27,9 @@
 % - sizeType ('pct' or 'num'): whether size is measured in # or % of coords
 % - invertStats (boolean, default = 0): whether to invert statistical map
 % - maskPath (string): path to brain mask, to intersect with search space
+% - statCoefs (numeric vector): coefficients for statistical map averaging
+% - roiDesc (string): ROI description. If specified, this replaces
+%       [defineROITask defineROIDesc contrastName] in the output ROI desc
 %
 % Outputs:
 % - psc: run x condition matrix of PSC (% signal change)
@@ -32,15 +40,25 @@ function [psc,condNames,runNames] = roiExtract(extractResponseDir,defineROIDir,c
 
 psc = [];
 
+% Convert defineROIDir and contrastName to cell arrays, if not already
+if ~iscell(defineROIDir), defineROIDir = {defineROIDir}; end
+nTasks = length(defineROIDir);
+if ~iscell(contrastName), contrastName = {contrastName}; end
+if length(contrastName)==1 && nTasks>1
+    contrastName = repmat(contrastName,[1 nTasks]);
+end
+
 % Variable argument defaults
 overwrite = 0;
 roiSize = 5;
 sizeType = 'pct';
 invertStats = 0;
 maskPath = '';
+statCoefs = [];
+roiDesc = '';
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
-varArgList = {'roiSize','sizeType','invertStats','maskPath','overwrite'};
+varArgList = {'roiSize','sizeType','invertStats','maskPath','overwrite','statCoefs'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
@@ -66,6 +84,9 @@ if invertStats
 else
     invertSuffix = '';
 end
+if isempty(statCoefs)
+    statCoefs = ones(length(defineROIDir),1);
+end
 
 % Get search space info
 [~,searchName,~] = fpp.util.fileParts(searchPath);
@@ -73,15 +94,17 @@ searchDesc = fpp.bids.checkNameValue(searchPath,'desc');
 
 % Get modelperm directory desc/task info
 [analysisDir,extractResponseName,~] = fpp.util.fileParts(extractResponseDir);
-[~,defineROIName,~] = fpp.util.fileParts(defineROIDir);
 extractResponseDesc = fpp.bids.checkNameValue(extractResponseName,'desc');
-defineROIDesc = fpp.bids.checkNameValue(defineROIName,'desc');
 extractResponseTask = fpp.bids.checkNameValue(extractResponseName,'task');
-defineROITask = fpp.bids.checkNameValue(defineROIName,'task');
+for t=1:nTasks
+    [~,defineROIName{t},~] = fpp.util.fileParts(defineROIDir{t});
+    defineROIDesc{t} = fpp.bids.checkNameValue(defineROIName{t},'desc');
+    defineROITask{t} = fpp.bids.checkNameValue(defineROIName{t},'task');
+end
 
 % If the same task is used to define ROIs and extract data, use a
 % leave-one-run-out analysis to avoid non-independence errors.
-if strcmp(extractResponseTask,defineROITask)
+if ismember(extractResponseTask,defineROITask)
     loro = 1;
 else
     loro = 0;
@@ -103,34 +126,43 @@ nRuns = length(extractResponseRuns);
 runNames = extractResponseRuns;
 
 % Find all defineROI directories, across runs, sort by run number
-dirs = fpp.util.regExpDir(analysisDir,regexprep(defineROIName,'run-[a-zA-Z0-9]+_','run-[a-zA-Z0-9]+_'));
-for d=1:length(dirs)
-    defineROIDirs{d} = [analysisDir '/' dirs(d).name];
-    defineROIRuns{d} = fpp.bids.checkNameValue(dirs(d).name,'run');
+nRunsEachTask = [];
+for t=1:nTasks
+    dirs = fpp.util.regExpDir(analysisDir,regexprep(defineROIName{t},'run-[a-zA-Z0-9]+_','run-[a-zA-Z0-9]+_'));
+    for d=1:length(dirs)
+        defineROIDirs{t}{d} = [analysisDir '/' dirs(d).name];
+        defineROIRuns{t}{d} = fpp.bids.checkNameValue(dirs(d).name,'run');
+    end
+    [~,sortInd] = sort(cellfun(@str2num,defineROIRuns{t}));  % Sort runs by run #
+    defineROIDirs{t} = defineROIDirs{t}(sortInd);
+    defineROIRuns{t} = defineROIRuns{t}(sortInd);
+    nRunsEachTask(end+1) = length(defineROIRuns{t});
 end
-[~,sortInd] = sort(cellfun(@str2num,defineROIRuns));  % Sort runs by run #
-defineROIDirs = defineROIDirs(sortInd);
-defineROIRuns = defineROIRuns(sortInd);
+if length(unique(nRunsEachTask))~=1
+    error('Different # of runs were found for defineROI model directories.');
+end
 
 % For leave-one-run-out analysis, make sure the same runs were identified
 % for defineROI and extractResponse directories
-if loro && (~isempty(setdiff(extractResponseRuns,defineROIRuns)) || ...
-        ~isempty(setdiff(defineROIRuns,extractResponseRuns)))
-    error('Different runs were found for defineROI and extractResponse model directories.');
+if loro && (~isempty(setdiff(extractResponseRuns,defineROIRuns{1})) || ...
+        ~isempty(setdiff(defineROIRuns{1},extractResponseRuns)))
+    error('Different # of runs were found for defineROI and extractResponse model directories.');
 end
 
 % Determine input z-stat map extension (can be NIFTI or CIFTI)
-paths = dir([defineROIDir '/' fpp.bids.changeName(defineROIName,'desc',...
-    [defineROIDesc 'OLS' contrastName],'zstat','') '.*nii*']);
+paths = dir([defineROIDir{1} '/' fpp.bids.changeName(defineROIName{1},'desc',...
+    [defineROIDesc{1} 'OLS' contrastName{1}],'zstat','') '.*nii*']);
 if isempty(paths), error('Could not find OLS z-stat map in defineROIDir.'); end
 [~,~,inputExt] = fpp.util.fileParts(paths(1).name);
 
 % Find all OLS z-stat maps to use for defining ROI
-for r=1:length(defineROIDirs)
-    zStatPaths{r} = [defineROIDirs{r} '/' fpp.bids.changeName(defineROIName,{'run','desc'},...
-        {defineROIRuns{r},[defineROIDesc 'OLS' contrastName]},'zstat',inputExt)];
-    if ~exist(zStatPaths{r},'file')
-        error(['Expected input z-statistic path ' zStatPaths{r} ' does not exist.']);
+for t=1:nTasks
+    for r=1:length(defineROIDirs{t})
+        zStatPaths{t}{r} = [defineROIDirs{t}{r} '/' fpp.bids.changeName(defineROIName{t},{'run','desc'},...
+            {defineROIRuns{t}{r},[defineROIDesc{t} 'OLS' contrastName{t}]},'zstat',inputExt)];
+        if ~exist(zStatPaths{t}{r},'file')
+            error(['Expected input z-statistic path ' zStatPaths{t}{r} ' does not exist.']);
+        end
     end
 end
 
@@ -138,16 +170,31 @@ end
 roiDir = [analysisDir '/../roi'];
 if ~exist(roiDir,'dir'), mkdir(roiDir); end
 
+% Define task/contrast component of ROI description
+if isempty(roiDesc)
+    for t=1:nTasks
+        roiDesc = [roiDesc defineROITask{t} defineROIDesc{t} contrastName{t}];
+    end
+end
+
 % Extract responses
 if loro
     for r=1:nRuns
         % Define ROI, using average statistical map from all but one run
-        loroSuffix = ['LORO' defineROIRuns{r}];
+        loroSuffix = ['LORO' defineROIRuns{1}{r}];
         roiPath = [roiDir '/' fpp.bids.changeName(searchName,'desc',...
-            [searchDesc defineROITask defineROIDesc contrastName invertSuffix numSuffix loroSuffix]) inputExt];
+            [searchDesc roiDesc invertSuffix numSuffix loroSuffix]) inputExt];
         if ~exist(roiPath,'file') || overwrite
-            fpp.util.defineROI(zStatPaths(setdiff(1:nRuns,r)),searchPath,roiPath,'roiSize',roiSize,...
-                'sizeType',sizeType,'invertStats',invertStats,'maskPath',maskPath);
+            zStatPathsInput = {};
+            statCoefsInput = [];
+            for t=1:nTasks
+                zStatPathsInput = [zStatPathsInput zStatPaths{t}(setdiff(1:nRuns,r))];
+                statCoefsInput = [statCoefsInput repmat(statCoefs(t),[1 nRuns-1])/(nRuns-1)];
+            end
+            
+            fpp.util.defineROI(zStatPathsInput,searchPath,roiPath,'roiSize',roiSize,...
+                'sizeType',sizeType,'invertStats',invertStats,'maskPath',maskPath,...
+                'statCoefs',statCoefsInput);
         end
         
         [psc(r,:),condNames] = fpp.func.roiExtractWorker(extractResponseDirs{r},roiPath);
@@ -155,10 +202,21 @@ if loro
 else
     % Define ROI, using average statistical map
     roiPath = [roiDir '/' fpp.bids.changeName(searchName,'desc',...
-        [searchDesc defineROITask defineROIDesc contrastName invertSuffix numSuffix]) inputExt];
+        [searchDesc roiDesc invertSuffix numSuffix]) inputExt];
     if ~exist(roiPath,'file') || overwrite
-        fpp.util.defineROI(zStatPaths,searchPath,roiPath,'roiSize',roiSize,...
-            'sizeType',sizeType,'invertStats',invertStats,'maskPath',maskPath);
+        
+        % Define inputs for each run
+        statCoefsInput = [];
+        zStatPathsInput = {};
+        for t=1:nTasks
+            for r=defineROIRuns{t}
+                zStatPathsInput{end+1} = zStatPaths{t}{r};
+                statCoefsInput(end+1) = statCoefs(t)/length(defineROIRuns{t});
+            end
+        end
+        fpp.util.defineROI(zStatPathsInput,searchPath,roiPath,'roiSize',roiSize,...
+            'sizeType',sizeType,'invertStats',invertStats,'maskPath',maskPath,...
+            'statCoefs',statCoefsInput);
     end
     
     % Extract responses for each run

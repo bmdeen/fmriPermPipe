@@ -23,6 +23,7 @@
 %       fpp.util.label2ROI.
 % - parcInds (numeric vector): indices of parcels to include in the search
 %       space.
+% - statCoefs (numeric vector): coefficients for statistical map averaging
 
 function defineROI(statPath,searchPath,outputPath,varargin)
 
@@ -33,12 +34,13 @@ invertStats = 0;
 maskPath = '';
 parcPath = '';
 parcInds = [];
+statCoefs = [];
 
 % Define wrapper function for fpp.bids.removeBidsDir (for cellfun functionality)
 removeBidsDir = @(x) fpp.bids.removeBidsDir(x);
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
-varArgList = {'roiSize','sizeType','statThresh','invertStats','maskPath','parcPath','parcInds'};
+varArgList = {'roiSize','sizeType','statThresh','invertStats','maskPath','parcPath','parcInds','statCoefs'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
@@ -54,6 +56,9 @@ if strcmpi(sizeType,'pct') && roiSize>100
 end
 if strcmpi(sizeType,'num')
     roiSize = round(roiSize);
+end
+if isempty(statCoefs) && iscell(statPath)
+    statCoefs = ones(length(statPath),1);
 end
 
 % Check whether input is NIFTI or CIFTI
@@ -94,12 +99,13 @@ if iscell(statPath)
         statStr = ['s' int2str(s)];
         flagText = [flagText ' -var ' statStr ' ' statPaths{s}];
         if s==1
-            weightEquation = [weightEquation statStr];
+            weightEquation = [weightEquation statStr '*' statCoefs(s)];
         else
-            weightEquation = [weightEquation '+' statStr];
+            weightEquation = [weightEquation '+' statStr '*' statCoefs(s)];
         end
     end
-    weightEquation = [weightEquation ')/' num2str(nStats)];
+    denom = sum(statCoefs); if denom<0, denom = 1; end
+    weightEquation = [weightEquation ')/' num2str(denom)];
     fpp.wb.command([imageType '-math'],[],weightEquation,statPath,flagText);
 end
 
