@@ -99,9 +99,9 @@ if iscell(statPath)
         statStr = ['s' int2str(s)];
         flagText = [flagText ' -var ' statStr ' ' statPaths{s}];
         if s==1
-            weightEquation = [weightEquation statStr '*' statCoefs(s)];
+            weightEquation = [weightEquation statStr '*' num2str(statCoefs(s))];
         else
-            weightEquation = [weightEquation '+' statStr '*' statCoefs(s)];
+            weightEquation = [weightEquation '+' statStr '*' num2str(statCoefs(s))];
         end
     end
     denom = sum(statCoefs); if denom<0, denom = 1; end
