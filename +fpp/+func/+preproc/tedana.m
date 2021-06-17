@@ -110,7 +110,7 @@ if useTedana
             mixTSV = rmfield(mixTSV,['ica_' fpp.util.numPad(i,nDigits)]);
         end
     end
-    fpp.bids.tsvWrite(mixPathOut,mixTSV);
+    bids.util.tsvwrite(mixPathOut,mixTSV);
     
 else
     
