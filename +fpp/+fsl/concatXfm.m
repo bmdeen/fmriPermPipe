@@ -3,6 +3,11 @@
 % Generates .json metadata for output transform.
 %
 % fpp.fsl.concatXfm(inputBtoC,inputAtoB,outputAtoC)
+%
+% Arguments:
+% - inputBtoC (string): path to second input transformation xfm.mat file
+% - inputAtoB (string): path to first input transformation xfm.mat file
+% - outputAtoC (string): path to output concatenated transformation
 
 function concatXfm(inputBtoC,inputAtoB,outputAtoC)
 

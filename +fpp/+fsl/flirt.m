@@ -4,6 +4,19 @@
 %
 % fpp.fsl.flirt(inputPath,referencePath,outputXfm,outputPath,varargin)
 %
+% Arguments:
+% - inputPath (string): path to input data, to transform
+% - referencePath (string): path to registration target image
+%
+% Optional arguments:
+% - outputXfm (string): path to output xfm.mat file
+% - outputPath (string): path to output transformed image
+%
+% Variable arguments:
+% - init, datatype, cost, searchcost, interp, sincwindow, sincwidth, dof,
+%   searchrx, searchry, searchrz, applyxfm, nosearch (see flirt
+%   documentation for further info)
+%
 % Note: doesn't include bbr or distortion correction functionality
 
 function flirt(inputPath,referencePath,outputXfm,outputPath,varargin)
@@ -51,7 +64,7 @@ for i=setdiff(1:length(varArgList),indArgIsBoolean)
 end
 % Add boolean additional variables
 for i=indArgIsBoolean
-    if ~isempty(eval(varArgList{i}))
+    if ~isempty(eval(varArgList{i})) && eval(varArgList{i})
         eval(['cmd = [cmd '' -' varArgList{i} '''];']);
     end
 end

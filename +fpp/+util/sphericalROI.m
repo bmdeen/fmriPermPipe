@@ -1,12 +1,15 @@
 
+% fpp.util.sphericalROI(brainPath,outPath,coords,r,maskPath)
+%
 % Function to create a spherical ROI around a coordinate.
 %
 % Arguments:
-% brainPath = path to brain image defining coordinate space (leave empty to use 2mm MNI space)
-% outPath = path to output ROI image
-% coords = image coordinates of ROI center (zero-indexed)
-% r = sphere radius in mm (optional, default 7.5mm)
-% maskPath = path to mask image to constrain ROI (optional)
+%   brainPath = path to brain image defining coordinate space (leave empty
+%       to use 2mm MNI space)
+%   outPath = path to output ROI image
+%   coords = image coordinates of ROI center (zero-indexed)
+%   r = sphere radius in mm (optional, default 7.5mm)
+%   maskPath = path to mask image to constrain ROI (optional)
 
 function sphericalROI(brainPath,outPath,coords,r,maskPath)
 

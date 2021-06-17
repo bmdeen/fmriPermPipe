@@ -1,6 +1,6 @@
 
 % Function to convert a NIFTI/CIFTI "label" or discrete segmentation image
-% to an ROI, bincluding multiple subregions. Wrapper for wb_command
+% to an ROI, including multiple subregions. Wrapper for wb_command
 % -volume-label-to-roi and -cifti-label-to-roi. Outputs mask.nii.gz or
 % mask.dscalar.nii file.
 %

@@ -9,12 +9,12 @@
 % fpp.func.preproc({'/pathToData/sub-01_dir-AP_run-01_epi.nii.gz',...
 %       '/pathToData/sub-01_dir-PA_run-01_epi.nii.gz'},'/bidsDir/sub-01/');
 % 
-% Required arguments:
+% Arguments:
 % - inputPaths (cell array of strings): paths to input spin-echo data,
 %       one path for each of two opposing phase-encode directions. The
 %       first must functional data in phase-encode direction.
-% - outputDir (string): path to output directory (subject/session dir, in
-%       BIDS filesystem)
+% - outputDir (string): path to output directory (subject/session dir in
+%       BIDS derivatives filesystem)
 % 
 % Variable arguments:
 % - overwrite (boolean; default=0): whether to overwrite files that have

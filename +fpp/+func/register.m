@@ -1,5 +1,5 @@
 
-% fpp.func.register(subjID,funcTemplatePath,inputT1Path,fsSubDir)
+% fpp.func.register(subjID,funcTemplatePath,inputT1Path,fsSubDir,varargin)
 % 
 % Script to register functional to anatomical images using bbregister, and
 % move parcellations/masks to functional template space. Should be run

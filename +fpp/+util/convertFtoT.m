@@ -1,4 +1,6 @@
 
+% fpp.util.convertFtoT(fMapPath,sigMapPath,outputPath)
+%
 % Function to take Freesurfer-style F.nii and sig.nii volumes, and generate
 % a t-statistic map. NOTE: F-statistic must have come from a single linear
 % contrast.

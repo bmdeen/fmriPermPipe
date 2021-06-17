@@ -1,6 +1,8 @@
 
 % Function to convert BIDS-format events.tsv file to FSL-format 3-column
 % regressor files.
+%
+% fpp.util.convertEventsTSV2FSL(inputTSVPath,outputStem)
 
 function convertEventsTSV2FSL(inputTSVPath,outputStem)
 

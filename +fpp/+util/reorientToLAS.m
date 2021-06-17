@@ -1,4 +1,6 @@
 
+% fpp.util.reorientToLAS(inputPath,outputPath)
+%
 % Function to reorient a 3D/4D MRI dataset to LAS orientation (radiological
 % convention).
 %

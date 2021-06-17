@@ -1,4 +1,6 @@
 
+% fpp.util.reorientToStd(inputPath,outputPath)
+%
 % Function to reorient a 3D/4D MRI dataset to LAS/RAS orientation via a
 % rotation, using FSL's fslreorient2std. Also modifies relevant fields in 
 % JSON metadata.

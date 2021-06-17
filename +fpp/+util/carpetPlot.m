@@ -3,7 +3,7 @@
 % an image, separated by image segment, and measures of data quality.
 %
 % fpp.util.carpetPlot(inputPath,maskPath,segmentMaskPaths,nuisanceSeries,...
-%   nuisanceNames,segmentColors,nuisanceColors)
+%   nuisanceNames[,segmentColors,nuisanceColors])
 %
 % Arguments:
 % - inputPath (string): path to input functional data
@@ -18,10 +18,12 @@
 %   mean, WM mean, CSF mean, Framewise Displacement, DVARS_std}
 % - nuisanceNames (cell array of strings): name of each nuisance signal
 % - outputPath (string): path to output image
-% - segmentColors (optional, cell array of color vectors): colors to
-%   label each segment
-% - nuisanceColors (optional, cell array of color vectors): colors to plot
-%   each nuisance time series
+%
+% Optional arguments:
+% - segmentColors (cell array of color vectors): colors to label each
+%   segment
+% - nuisanceColors (cell array of color vectors): colors to plot each
+%   nuisance time series
 %
 % For further information about the plot, see
 % https://www.jonathanpower.net/2017-ni-the-plot.html

@@ -7,10 +7,12 @@
 % - inputPath: path to input image
 % - cmd: fslmaths command text between input/output paths
 % - outputPath: path to output image
-% - outputDescription (optional): new value for JSON Description field
-% - appendDescription (boolean, optional): whether to append
-%       outputDescription to existing description
-% - odt (string,optional): data type (default: float)
+%
+% Optional arguments:
+% - outputDescription: new value for JSON Description field
+% - appendDescription (boolean): whether to append outputDescription
+%   to existing description
+% - odt (string): data type (default: float)
 
 function maths(inputPath,cmd,outputPath,outputDescription,appendDescription,odt)
 

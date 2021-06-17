@@ -6,10 +6,12 @@
 %
 % Arguments:
 %   inputPath (string) - filename to modify
+%
+% Optional arguments:
 %   keysToChange (cell array or string) - keys to modify
 %   newValues (cell array or string) - new values for each specified key
-%   newSuffix (string, optional) - new suffix
-%   newExtension (string, optional) - new file extension
+%   newSuffix (string) - new suffix
+%   newExtension (string) - new file extension (e.g., '.nii.gz')
 % 
 % Notes:
 % - Can remove entities by setting new value to [], and can build a BIDS 

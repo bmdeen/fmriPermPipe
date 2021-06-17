@@ -9,8 +9,10 @@
 % - inputPath (string): path to file to modify (data file, not .json file)
 % - fieldsToChange (cell array of strings): fields to edit
 % - newValues (cell array): new values for those fields
-% - appendValue (optional, boolean): whether to append new value to
-%       existing field value, via horizontal vector concatenation
+%
+% Optional arguments:
+% - appendValue (boolean): whether to append new value to existing field 
+%   value, via horizontal vector concatenation
 %
 % Dependencies: bids-matlab (required), bids-matlab-tools (recommended for
 % JSONio)

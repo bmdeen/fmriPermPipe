@@ -1,4 +1,6 @@
 
+% d = fpp.util.regExpDir(dirInput,regExp)
+%
 % Function to return contents of a directory that contain a certain MATLAB
 % regular expression (case-insensitive).
 

@@ -1,4 +1,6 @@
 
+% fpp.util.tsnrMap(inputPath,outputPath,outputDescription)
+%
 % Function to compute tSNR map from fMRI data.
 
 function tsnrMap(inputPath,outputPath,outputDescription)

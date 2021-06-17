@@ -1,4 +1,6 @@
 
+% fpp.util.writeCras(inputPath,crasPath)
+%
 % Function to write c_ras matrix from NIFTI header. Used to add intercept
 % to Freesurfer surface coordinates when converting to GIFTI.
 

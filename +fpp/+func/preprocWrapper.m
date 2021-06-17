@@ -12,7 +12,7 @@
 %
 % Example usage: fpp.func.preprocWrapper('/pathto/studyDirectory','SUB*','fwhm',4,'plotResults',0)
 % 
-% Required arguments:
+% Arguments:
 % - studyDir (string): path to study directory
 % - subjects (string or cell array of strings): list of subjects to
 %       analyze. Can use asterisk-based regular expression. Examples:

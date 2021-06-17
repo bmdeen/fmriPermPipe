@@ -12,7 +12,7 @@
 % fpp.func.preproc({'/pathToData/sub-01_task-faceloc_run-01_echo-1_bold.nii.gz',...
 %       '/pathToData/sub-01_task-faceloc_run-01_echo-2_bold.nii.gz'},'/bidsDir/sub-01/');
 % 
-% Required arguments:
+% Arguments:
 % - inputPaths (string or cell array of strings): paths to input fMRI data,
 %       one path for each echo.
 % - outputDir (string): path to output directory (subject/session dir, in

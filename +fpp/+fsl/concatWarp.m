@@ -5,9 +5,14 @@
 %
 % fpp.fsl.concatWarp(outputWarp,referencePath,varargin)
 %
-% Variable arguments: premat, warp1, midmat, warp2, postmat, jacobian,
-% jmin, jmax, constrainj, abs, rel, absout, relat (see FSL's convertwarp
-% for further explanation)
+% Arguments:
+% - outputWarp (string): path to output warp (xfm.nii.gz) file
+% - referencePath (string): path to registration target image
+%
+% Variable arguments:
+% - premat, warp1, midmat, warp2, postmat, jacobian, jmin, jmax,
+%   constrainj, abs, rel, absout, relat (see convertwarp documentation for
+%   further info)
 
 function concatWarp(outputWarp,referencePath,varargin)
 
@@ -41,7 +46,7 @@ for i=setdiff(1:length(varArgList),indArgIsBoolean)
 end
 % Add boolean additional variables
 for i=indArgIsBoolean
-    if ~isempty(eval(varArgList{i}))
+    if ~isempty(eval(varArgList{i})) && eval(varArgList{i})
         eval(['cmd = [cmd '' --' varArgList{i} '''];']);
     end
 end

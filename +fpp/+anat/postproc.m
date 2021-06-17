@@ -10,7 +10,7 @@
 % - inputT1Path (string): path to preprocessed anatomical image
 % - fsSubDir (string): freesurfer subject directory for this subject
 % 
-% Optional arguments:
+% Variable arguments:
 % - overwrite (boolean): whether to overwrite existing outputs
 %
 % This script is a modified version of the Human Connectome Project's

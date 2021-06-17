@@ -6,13 +6,21 @@
 % average multiple images if they exist, register image to MNI-like
 % ACPC alignment, register T2 to T1 image, and bias-correct.
 %
+% Arguments:
+% - inputT1Paths (cell array of strings): paths to input T1 images
+% - inputT2Paths (cell array of strings): paths to input T2 images
+% - outputDir (string): path to output directory
+% 
+% Variable arguments:
+% - overwrite (boolean): whether to overwrite existing outputs
+%
 % This script is a modified version of the Human Connectome Project's
 % Prefreesurfer pipeline (https://www.humanconnectome.org/software/hcp-mr-pipelines;
 % Glasser et al. 2013, "The minimal preprocessing pipelines for the Human 
 % Connectome Project").
 %
-% For hi-res data with T1w and T2w images, follow this script with
-% recon-all as follows (opts file should include "mris_inflate -n 30")
+% For hi-res (.7-.8mm) data with T1w and T2w images, follow this script
+% with recon-all as follows (opts file should include "mris_inflate -n 30")
 %
 % recon-all -s sub-${subject} -i ${anatDir}/sub-${subject}_space-individual_desc-preproc_T1w.nii.gz
 %     -all -hires -expert ${optsFile} -T2 ${anatDir}/sub-${subject}_space-individual_desc-preproc_T2w.nii.gz

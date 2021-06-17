@@ -2,7 +2,7 @@
 % Function to convert BIDS-format phase-encode direction (e.g. i, -j) to
 % string format (e.g. LR, PA).
 %
-% convertBidsPEDirToStr(inputPath,phaseEncodeDir)
+% fpp.util.convertBidsPEDirToStr(inputPath,phaseEncodeDir)
 %
 % Arguments:
 % - inputPath (string): input image

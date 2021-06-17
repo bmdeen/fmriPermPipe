@@ -1,4 +1,6 @@
 
+% fpp.util.orientString = getImageOrientation(inputPath)
+% 
 % Function to get the orientation (e.g. RAS, LAS) of an MRI image
 
 function orientString = getImageOrientation(inputPath)

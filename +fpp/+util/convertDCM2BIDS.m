@@ -1,4 +1,6 @@
 
+% fpp.util.convertDCM2BIDS(subject,dicomDir,outputDir,scanlogPath,overwrite)
+%
 % Function to convert DCMs from a single scan session to BIDS-formatted
 % NIFTI and JSON files (wrapper for dcm2niix).
 %

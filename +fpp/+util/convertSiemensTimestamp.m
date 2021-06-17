@@ -1,4 +1,6 @@
 
+% thisTimeOut = fpp.util.convertSiemensTimestamp(thisTime)
+%
 % Function to convert Siemens Vb timestamp to raw seconds (since midnight).
 %
 % Example input: 101609.885000, as in 10 hrs, 16 mins, 9s, and 885ms.

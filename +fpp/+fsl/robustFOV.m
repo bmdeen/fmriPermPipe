@@ -6,11 +6,13 @@
 % fpp.fsl.robustFOV(inputPath,outputPath,outputXfm)
 %
 % Arguments:
-% - inputPath: path to input image
-% - outputPath (optional): path to output (ROI) image
-% - outputXfm (optional): path to output xfm .mat file (ROI to full FOV xfm)
-% - outputXfmInverse (optional): path to inverse of output xfm .mat file
-%       (full FOV to ROI xfm)
+% - inputPath (string): path to input image
+%
+% Optional arguments:
+% - outputPath (string): path to output (ROI) image
+% - outputXfm (string): path to output xfm .mat file (ROI to full FOV xfm)
+% - outputXfmInverse (string): path to inverse of output xfm .mat file
+%   (full FOV to ROI xfm)
 
 function robustFOV(inputPath,outputPath,outputXfm,outputXfmInverse)
 

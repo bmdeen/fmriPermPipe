@@ -1,4 +1,6 @@
 
+% fpp.util.convertTtoZ(inputPath,outputPath,dof)
+%
 % Function to convert a t-statistic map to a z-statistic map
 
 function convertTtoZ(inputPath,outputPath,dof)

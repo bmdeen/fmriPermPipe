@@ -13,7 +13,7 @@
 %       appended to existing description
 %
 % inputPath and outputPath should be paths to individual files, while
-% argText/flagText can contain multiple flags, terms and/or paths.
+% argText and flagText can contain multiple flags, terms and/or paths.
 %
 % Run wb_command -help for more information on functionality.
 %

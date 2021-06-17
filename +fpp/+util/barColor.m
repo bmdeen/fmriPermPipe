@@ -1,5 +1,5 @@
 
-% [b,s,e] = barColor(X,[colorArray,errorVec,gapInd,dataPoints])
+% [b,s,e] = fpp.util.barColor(X[,colorArray,errorVec,gapInd,dataPoints])
 %
 % Function to plot a bar graph with specific bar colors, and overlaid
 % circles for individual data points.

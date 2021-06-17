@@ -4,6 +4,17 @@
 %
 % fpp.fsl.fnirt(inputPath,referencePath,varargin)
 %
+% Arguments:
+% - inputPath (string): path to input data
+% - referencePath (string): path to target image to warp to
+%
+% Variable arguments:
+% - aff, inwarp, intin, cout, iout, fout, jout, logout, config, refmask,
+%   inmask, minmet, miter, subsamp, warpres, infwhm, reffwhm, regmod,
+%   jacrange, intmod, biasres, numprec, interp, splineorder, intorder,
+%   imprefval, impinval, lambda, biaslambda, imprefm, impinm, ssqlambda,
+%   refderiv, estint (see fnirt documentation for further info)
+%
 % Main output, cout: warp field coefficient image.
 %
 % Note: scalar numeric arguments should be specified as numeric. All other

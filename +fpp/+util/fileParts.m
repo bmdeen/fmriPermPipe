@@ -1,4 +1,6 @@
 
+% [filepath,name,ext] = fpp.util.fileParts(filename)
+%
 % Wrapper for MATLAB's fileparts
 % - Accommodates .gz extension, e.g. in .nii.gz
 % - Accomodates GIFTI/CIFTI extensions, e.g. .surf.gii or .dscalar.nii

@@ -1,4 +1,6 @@
 
+% outStr = fpp.util.numPad(num,len)
+%
 % Function to convert integer to string padded with zeros
 
 function outStr = numPad(num,len)

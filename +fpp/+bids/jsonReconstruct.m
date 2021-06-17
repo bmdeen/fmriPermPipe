@@ -11,7 +11,9 @@
 % - inputPath (string): path to file to copy metadata from (data file, not
 %   .json file)
 % - outputPath (string): path to output file
-% - fieldsToKeep (optional, cell array of strings): JSON fields to copy
+%
+% Optional arguments:
+% - fieldsToKeep (cell array of strings): JSON fields to copy
 %    OR (string): label for image type, determining which fields to keep.
 %    Options: midprepFMRI, fMRI, Mask, Seg, MRI, Surf, Cifti, Xfm, Fmap,
 %    keepAll, keepAllPreproc

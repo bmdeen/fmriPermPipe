@@ -8,12 +8,15 @@
 % fpp.fsl.moveImage(inputPath,referencePath,outputPath,preMat,varargin)
 %
 % Arguments:
-% inputPath (string): path to input image
-% referencPath (string): path to reference image (registration target)
-% outputPath (string): path to output image
-% preMat (string): linear transformation to apply
-% 
+% - inputPath (string): path to input image
+% - referencPath (string): path to reference image (registration target)
+% - outputPath (string): path to output image
+%
 % Optional arguments:
+% - preMat (string): linear transformation to apply (necessary for linear
+%   transformation, optional for nonlinear)
+% 
+% Variable arguments:
 % - warp (string): path to warp coefficient image (cout from fnirt)
 % - postMat (string): path to linear transform to apply after warp
 % - interp (string): interpolation type (nn/nearestneighbour, trilinear, 

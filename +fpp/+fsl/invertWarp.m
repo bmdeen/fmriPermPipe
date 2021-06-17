@@ -8,11 +8,11 @@
 % - inputWarp (string): path to input warp coefficient file
 % - outputWarp (string): path to output warp coefficient file
 % - referencePath (string): path to the new reference image, i.e. the input
-%       of the inputWarp transform
+%   of the inputWarp transform
 %
-% Optional arguments:
+% Variable arguments:
 % - jmin, jmax, rel, abs, noconstraint (see invwarp documentation for
-%       further info)
+%   further info)
 
 function invertWarp(inputWarp,outputWarp,referencePath,varargin)
 
@@ -42,7 +42,7 @@ for i=setdiff(1:length(varArgList),indArgIsBoolean)
 end
 % Add boolean additional variables
 for i=indArgIsBoolean
-    if ~isempty(eval(varArgList{i}))
+    if ~isempty(eval(varArgList{i})) && eval(varArgList{i})
         eval(['cmd = [cmd '' --' varArgList{i} '''];']);
     end
 end
