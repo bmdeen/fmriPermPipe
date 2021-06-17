@@ -3,7 +3,7 @@
 % or dtseries file, and convert it to a coordinate by 1 vector or
 % coordinate by time matrix.
 %
-% [dataMat,hdr] = fpp.util.readDataMatrix(inputPath,maskPath)
+% [dataMat,hdr] = fpp.util.readDataMatrix(inputPath,maskVol)
 %
 % Arguments:
 %   - inputPath (string): path to NIFTI/CIFTI input file
