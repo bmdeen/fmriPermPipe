@@ -29,15 +29,14 @@
 function propertyValue = checkMRIProperty(propertyName,inputPath)
 
 propertyValue = [];
-if exist(fpp.bids.jsonPath(inputPath),'file')
-    jsonData = fpp.bids.getMetadata(inputPath);
-end
+jsonData = fpp.bids.getMetadata(inputPath);
+
 [inputDir,inputName,inputExt] = fpp.util.fileParts(inputPath);
 if isempty(inputDir), inputDir = pwd; end
 
 switch lower(propertyName)
     case 'tr'
-        if exist('jsonData','var') && isfield(jsonData,'RepetitionTime')
+        if isfield(jsonData,'RepetitionTime')
             propertyValue = jsonData.RepetitionTime;
         else
             [~, tr] = fpp.util.system(['fslval ' inputPath ' pixdim4']);
@@ -54,7 +53,7 @@ switch lower(propertyName)
             end
         end
     case 'te'
-        if exist('jsonData','var') && isfield(jsonData,'EchoTime')
+        if isfield(jsonData,'EchoTime')
             % Check for BIDS-formatted multi-echo data, return multiple TE values if so
             if any(regexp(inputPath,'_echo-[0-9]+_'))
                 % Get list of input paths
@@ -70,19 +69,19 @@ switch lower(propertyName)
             end
         end
     case 'pedir'
-        if exist('jsonData','var') && isfield(jsonData,'PhaseEncodingDirection')
+        if isfield(jsonData,'PhaseEncodingDirection')
             propertyValue = jsonData.PhaseEncodingDirection;
         end
     case 'pedirstr'
-        if exist('jsonData','var') && isfield(jsonData,'PhaseEncodingDirection')
+        if isfield(jsonData,'PhaseEncodingDirection')
             propertyValue = fpp.util.convertBidsPEDirToStr(inputPath,jsonData.PhaseEncodingDirection);
         end
     case 'sedir'
-        if exist('jsonData','var') && isfield(jsonData,'SliceEncodingDirection')
+        if isfield(jsonData,'SliceEncodingDirection')
             propertyValue = jsonData.SliceEncodingDirection;
         end
     case 'sedirstr'
-        if exist('jsonData','var') && isfield(jsonData,'SliceEncodingDirection')
+        if isfield(jsonData,'SliceEncodingDirection')
             imageOrientation = fpp.util.getImageOrientation(inputPath);
             orientationLabels = {'L','R','A','P','S','I'};
             orientationLabelsInverted = {'R','L','P','A','I','S'};
@@ -101,7 +100,7 @@ switch lower(propertyName)
             end
         end
     case 'topup'
-        if exist('jsonData','var')  && isfield(jsonData,'PhaseEncodingDirection') ...
+        if isfield(jsonData,'PhaseEncodingDirection') ...
         	&& isfield(jsonData,'TotalReadoutTime')
             switch jsonData.PhaseEncodingDirection(1)
                 case 'i'
