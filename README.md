@@ -26,7 +26,7 @@ Bash:
 * [FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/) v6.0
 * [Freesurfer](https://surfer.nmr.mgh.harvard.edu/) v7.1.1
 * [AFNI](https://afni.nimh.nih.gov/) v20+
-* [Connectome Workbench](https://www.humanconnectome.org/software/connectome-workbench) v1.4+
+* [Connectome Workbench](https://www.humanconnectome.org/software/connectome-workbench) v1.5+
 * [tedana](https://github.com/ME-ICA/tedana) v0.0.9a1
 * [MSM_HOCR](https://github.com/ecr05/MSM_HOCR)
 * dcm2niix, through [MRICroGL](https://www.nitrc.org/projects/mricrogl/) v1.2+

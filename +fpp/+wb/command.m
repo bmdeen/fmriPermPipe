@@ -192,7 +192,7 @@ if cmdInfo.NonstandardOutput(cmdInd) && ~cmdInfo.NonstandardInput(cmdInd)
 end
 
 % If output doesn't need JSON file, return
-if sum(strcmp(outputType,{'Zip','Text','Image','n/a'}))>0, return; end
+if sum(strcmp(outputType,{'Zip','Text','Image','n/a','Caret5'}))>0, return; end
 
 % Determine fields to keep in output json, based on output type
 % Note: most data types use midprepfmri option, which uses a general set of
@@ -270,7 +270,8 @@ if cmdInfo.NonstandardJsonDef(cmdInd)
                 'volume-label-to-surface-mapping','volume-parcel-resampling',...
                 'volume-parcel-resampling-generic','label-to-volume-mapping',...
                 'metric-to-volume-mapping','volume-affine-resample',...
-                'volume-warpfield-resample','cifti-resample','cifti-resample-dconn-memory'}
+                'volume-warpfield-resample','cifti-resample','cifti-resample-dconn-memory'...
+                'volume-resample'}
             if ismember(cmdType,{'volume-to-surface-mapping','volume-label-to-surface-mapping'})
                 newTemplate = allArgs{1};
             else

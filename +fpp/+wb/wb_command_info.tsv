@@ -2,6 +2,7 @@ Command	InputType	Args	OutputType	NonstandardJsonDef	NonstandardInput	Nonstandar
 add-to-spec-file	Spec	"Structure,File"	n/a	0	0	0
 annotation-resample	Annot	n/a	Annot	0	0	0
 border-export-color-table	Border	n/a	Text	0	0	0
+border-file-export-to-caret5	Border	n/a	Caret5	0	1	0
 border-length	Border	Surf	n/a	0	0	0
 border-merge	n/a	n/a	Border	0	1	0
 border-resample	Border	"CurrentSphere,NewSphere"	Border	1	0	0
@@ -183,6 +184,7 @@ volume-parcel-smoothing	Volume	"LabelVolume,Kernel"	Volume	0	0	0
 volume-reduce	Volume	Operation	Volume	0	0	0
 volume-remove-islands	Volume	n/a	Volume	0	0	0
 volume-reorient	Volume	OrientString	Volume	1	0	0
+volume-resample Volume	VolumeSpace,Method	Volume	1	0	0
 volume-rois-from-extrema	Volume	Limit	Volume	0	0	0
 volume-set-space	Volume	n/a	Volume	1	0	0
 volume-smoothing	Volume	Kernel	Volume	0	0	0
