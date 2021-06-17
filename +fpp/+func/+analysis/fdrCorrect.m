@@ -1,12 +1,29 @@
 
 % Function to FDR-correct z-statistic image, output thresholded image
 %
-% fpp.func.analysis.fdrCorrect(inputPath,outputPath,maskPath,qThresh,tails)
+% fpp.func.analysis.fdrCorrect(inputPath,outputPath[,maskPath,qThresh,tails])
+% 
+% Arguments:
+%   - inputPath (string): path to input z-statistic NIFTI/CIFTI file
+%   - outputPath (string): path to output (corrected) NIFTI/CIFTI file
+%
+% Optional arguments:
+%   - maskPath (string optional): path to 3D mask volume (NIFTI only)
+%   - qThresh (scalar): FDR q-threshold
+%   - tails (scalar): 1 or 2 tailed test
+% 
+% Outputs:
+%   - critZ: z-value cutoff
+%   - critP: p-value cutoff
 
-function fdrCorrect(inputPath,outputPath,maskPath,qThresh,tails)
+function [critZ,critP] = fdrCorrect(inputPath,outputPath,maskPath,qThresh,tails)
 
 method = 'pdep';    % pdep = Benjamini & Hochberg, dep = Benjamini & Yekutieli
 
+if ~exist('maskPath','var') || isempty(maskPath)
+    maskPath = '';
+    mask.vol = [];
+end
 if ~exist('qThresh','var') || ~(isnumeric(qThresh) && isscalar(qThresh) && ...
         qThresh<1 && qThresh>0)
     qThresh = .05;
@@ -16,10 +33,13 @@ if ~exist('tails','var') || ~(isnumeric(tails) && isscalar(tails) && ismember(ta
     tails = 2;
 end
 
-zMap = fpp.util.mriRead(inputPath);
-mask = fpp.util.mriRead(maskPath);
+% Load volumetric mask
+if ~isempty(maskPath)
+    mask = fpp.util.mriRead(maskPath);
+end
 
-zVec = zMap.vol(mask.vol(:)==1);
+[zVec,hdr] = fpp.util.readDataMatrix(inputPath,mask.vol);
+
 pVec = zeros(size(zVec));
 if tails==1
     pVec = normcdf(-zVec);
@@ -29,11 +49,12 @@ else
 end
 
 [h,critP,~,adjP] = fpp.func.analysis.fdrBH(pVec,qThresh,method);
-disp(['Critical P-value: ' num2str(critP)]);
+critZ = abs(icdf('norm',critP,0,1));
+% disp(['Critical P-value: ' num2str(critP)]);
 
 zVec(h==0) = 0;
-zMap.vol(mask.vol(:)==1) = zVec;
-fpp.util.mriWrite(zMap,outputPath);
+
+fpp.util.writeDataMatrix(zVec,hdr,outputPath,mask.vol);
 
 
 end
