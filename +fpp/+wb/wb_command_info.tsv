@@ -184,7 +184,7 @@ volume-parcel-smoothing	Volume	"LabelVolume,Kernel"	Volume	0	0	0
 volume-reduce	Volume	Operation	Volume	0	0	0
 volume-remove-islands	Volume	n/a	Volume	0	0	0
 volume-reorient	Volume	OrientString	Volume	1	0	0
-volume-resample Volume	VolumeSpace,Method	Volume	1	0	0
+volume-resample	Volumee	"VolumeSpace,Method"	Volume	1	0	0
 volume-rois-from-extrema	Volume	Limit	Volume	0	0	0
 volume-set-space	Volume	n/a	Volume	1	0	0
 volume-smoothing	Volume	Kernel	Volume	0	0	0
