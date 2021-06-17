@@ -2,7 +2,7 @@
 % Wrapper for tedana and t2smap; renames outputs based on input name, and
 % generates JSON metadata for outputs.
 %
-% fpp.func.preproc.tedana(inputPaths,outputPaths,outputDescription,useTedana)
+% fpp.func.preproc.tedana(inputPaths,outputPaths,maskPath,outputDescription,useTedana)
 %
 % Arguments:
 %   - inputPaths (cell array of strings): paths to input images for each
