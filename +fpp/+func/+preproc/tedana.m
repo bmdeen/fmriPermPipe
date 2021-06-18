@@ -60,22 +60,24 @@ if useTedana
     
     % Create output directory
     outputDirTedana = strrep(fpp.bids.changeName(outputPath,{'desc'},{[]}),'_bold.nii.gz','_tedana');
-    fpp.util.system(['mv ' outputDir '/figures ' outputDirTedana]);
+    fpp.util.system(['mkdir ' outputDirTedana]);
     outputPathTedana = [outputDirTedana '/' outputName outputExt];
     
     % Rename main outputs
     fpp.util.system(['mv ' outputDir '/t2svG.nii.gz ' strrep(outputPathTedana,'_bold.nii.gz','_T2star.nii.gz')]);
     fpp.util.system(['mv ' outputDir '/s0vG.nii.gz ' strrep(outputPathTedana,'_bold.nii.gz','_S0map.nii.gz')]);
     fpp.util.system(['mv ' outputDir '/dn_ts_OC.nii.gz ' outputPath]);
-    fpp.util.system(['mv ' outputDir '/ts_OC.nii.gz ' fpp.bids.changeName(outputPath,'desc','midprep4optcomb')]);
+    fpp.util.system(['mv ' outputDir '/ts_OC.nii.gz ' fpp.bids.changeName(outputPathTedana,'desc','midprep4optcomb')]);
+    fpp.util.system(['mv ' outputDir '/figures ' outputDirTedana '/figures']);
+    fpp.util.system(['mv ' outputDir '/tedana_report.html ' fpp.bids.changeName(outputPathTedana,'desc','tedanaICA','report','.html')]);
     
     % Define main json file
     fpp.bids.jsonReconstruct(inputPaths{1},outputPath,'midprepfmri');
     fpp.bids.jsonChangeValue(outputPath,{'Description','Sources','EchoTime','EchoNumber'},...
         {outputDescription,cellfun(removeBidsDir,inputPaths,'UniformOutput',false),teVals/1000,[]});
     % Define non-denoised json file
-    fpp.bids.jsonReconstruct(inputPaths{1},fpp.bids.changeName(outputPath,'desc','midprep4optcomb'),'midprepfmri');
-    fpp.bids.jsonChangeValue(fpp.bids.changeName(outputPath,'desc','midprep4optcomb'),{'Sources','EchoTime','EchoNumber'},...
+    fpp.bids.jsonReconstruct(inputPaths{1},fpp.bids.changeName(outputPathTedana,'desc','midprep4optcomb'),'midprepfmri');
+    fpp.bids.jsonChangeValue(fpp.bids.changeName(outputPathTedana,'desc','midprep4optcomb'),{'Sources','EchoTime','EchoNumber'},...
         {cellfun(removeBidsDir,inputPaths,'UniformOutput',false),teVals/1000,[]});
     
     % Rename component analysis results outputs
@@ -136,7 +138,7 @@ else
         {outputDescription,cellfun(removeBidsDir,inputPaths,'UniformOutput',false),teVals/1000,[]});
     
 end
-
+    
 % Delete unneeded results
 fpp.util.system(['rm -rf ' outputDir]);
 
