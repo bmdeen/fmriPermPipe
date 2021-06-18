@@ -1,10 +1,10 @@
 %
 % fpp.anat.postproc(subjID,inputT1Path,fsSubDir,varargin)
-%
+% 
 % Script to post-process anatomical data after Freesurfer reconstruction. 
 % Includes nifti/gifti conversion, brain/gm/wm/csf mask generation, 
 % MSM-based registration to fsLR space, and CIFTI and spec file generation.
-%
+% 
 % Arguments:
 % - subjID (string): subject ID
 % - inputT1Path (string): path to preprocessed anatomical image
@@ -12,7 +12,7 @@
 % 
 % Variable arguments:
 % - overwrite (boolean): whether to overwrite existing outputs
-%
+% 
 % This script is a modified version of the Human Connectome Project's
 % PostFreesurfer pipeline (https://www.humanconnectome.org/software/hcp-mr-pipelines;
 % Glasser et al. 2013, "The minimal preprocessing pipelines for the Human 
@@ -134,11 +134,13 @@ fpp.fsl.invertXfm(individual2FsnativeXfm,fsnative2IndividualXfm);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fprintf('%s\n',['Step 2, Convert volumetric files to individual - ' subjID]);
 fpp.util.system(['cp ' dataDir '/desc-freesurfer_lut.txt ' anatPreprocDir '/desc-freesurfer_lut.txt']);
+fpp.util.system(['cp ' dataDir '/desc-wbsubcortical_lut.txt ' anatPreprocDir '/desc-wbsubcortical_lut.txt']);
 parcs = {'wmparc','aparc+aseg','aparc.a2009s+aseg'};    % Volumetric parcs
+parcsOut = {'wmparc','aparcaseg','aparc09aseg'};        % Volumetric parcs output name
 % Convert parcs to individual
 for p=1:length(parcs)
     inputPath = [mriDir '/' parcs{p} '.nii.gz'];
-    outputPath = fpp.bids.changeName(inputT1Path,'desc',parcs{p},'dseg','.nii.gz');
+    outputPath = fpp.bids.changeName(inputT1Path,'desc',parcsOut{p},'dseg','.nii.gz');
     fpp.fs.mriConvert(strrep(inputPath,'.nii.gz','.mgz'),inputPath);  % Convert orig to .nii.gz
     fpp.fsl.moveImage(inputPath,inputT1Path,outputPath,fsnative2IndividualXfm,'interp','nn');
     fpp.wb.command('volume-label-import',outputPath,[anatPreprocDir '/desc-freesurfer_lut.txt'],outputPath,'-drop-unused-labels');
@@ -195,9 +197,14 @@ fpp.wb.command('volume-label-import',subcortSegMNIPath,[anatPreprocDir '/desc-fr
     subcortSegMNIPath,'-drop-unused-labels');
 % Subcortical dseg
 subcortSegIndivPath = fpp.bids.changeName(wmPath,'desc','subcortical');
-fpp.fsl.maths(wmPath,[' -uthr 100 -mul ' fpp.bids.changeName(roiPath,'desc','gm')],subcortSegIndivPath);
-fpp.wb.command('volume-label-import',subcortSegIndivPath,[anatPreprocDir '/desc-freesurfer_lut.txt'],...
-    subcortSegIndivPath,'-drop-unused-labels');
+tmpMaskPath = fpp.bids.changeName(wmPath,'desc','tmpAnatPostproc105134514318');
+fpp.fsl.maths(wmPath,[' -uthr 100 -mul ' fpp.bids.changeName(roiPath,'desc','gm')],subcortSegIndivPath);    % Subcortex only
+fpp.fsl.maths(subcortSegIndivPath,'-uthr 85 -thr 85 -bin',tmpMaskPath);                         % Remove optic chiasm
+fpp.fsl.maths(subcortSegIndivPath,['-uthr 30 -thr 30 -bin -add ' tmpMaskPath],tmpMaskPath);     % Remove left vessel
+fpp.fsl.maths(subcortSegIndivPath,['-uthr 62 -thr 62 -bin -add ' tmpMaskPath],tmpMaskPath);     % Remove right vessel
+fpp.fsl.maths(subcortSegIndivPath,['-sub ' tmpMaskPath],subcortSegIndivPath);
+fpp.wb.command('volume-label-import',subcortSegIndivPath,[anatPreprocDir '/desc-wbsubcortical_lut.txt'],subcortSegIndivPath);
+
 % Subcortical GM
 subcortROIPath = fpp.bids.changeName(roiPath,'desc','gmsubcortical');
 fpp.fsl.maths(subcortSegIndivPath,'-bin',subcortROIPath);
@@ -301,15 +308,16 @@ end
 %%% STEP 7: Convert Freesurfer parcellations to gifti
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 parcs = {'aparc','aparc.a2009s'};
+parcsOut = {'aparc','aparc09'};
 fprintf('%s\n',['Step 7, Convert parcellations to GIFTI         - ' subjID]);
 for h=1:2
     for p=1:length(parcs)
         inputPath = [fsSubDir '/label/' hemis{h} '.' parcs{p} '.annot'];
         inputSurfPath = [surfDir '/' hemis{h} '.white'];
-        outputPath = fpp.bids.changeName(midthickPaths{h},'desc',parcs{p},'dseg','.label.gii');
+        outputPath = fpp.bids.changeName(midthickPaths{h},'desc',parcsOut{p},'dseg','.label.gii');
         fpp.util.convertToGii({inputPath,inputSurfPath},outputPath,structures{h},[],{'Sources','Density','SpatialRef'},...
             {fpp.bids.removeBidsDir(inputPath),densityJson,fpp.bids.removeBidsDir(midthickPaths{h})});
-        fpp.wb.command('set-map-names',outputPath,[],[],['-map 1 ' subjID '_' Hemis{h} '_' parcs{p}]);
+        fpp.wb.command('set-map-names',outputPath,[],[],['-map 1 ' subjID '_' Hemis{h} '_' parcsOut{p}]);
         fpp.wb.command('gifti-label-add-prefix',outputPath,['"' Hemis{h} '_"'],outputPath);
         parcPaths{h}{p} = outputPath;
     end
@@ -413,7 +421,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fprintf('%s\n',['Step 9, Resample to fsLR                       - ' subjID]);
 surfaces = {'white','pial','midthickness'};
-parcs = {'aparc','aparc.a2009s','medialwall'};
+parcs = {'aparc','aparc09','medialwall'};
 for h=1:2
     % Resample individual-space surfaces to fsLR coordinates
     for s=1:length(surfaces)
@@ -469,7 +477,7 @@ spaces = {'individual','fsLR'};
 densities = {'native','32k'};
 metrics = {'sulc','thickness','curv','distortion','distortion','mask'};    % Metric files to convert to CIFTI
 mapNames = {'Sulc','Thickness','Curvature','ArealDistortionMSMSulc','EdgeDistortionMSMSulc','ROI'};
-parcs = {'aparc','aparc.a2009s','medialwall','medialwallAtlas'};
+parcs = {'aparc','aparc09','medialwall','medialwallAtlas'};
 roiSubjIDs = {subjID,[]};
 descs = {'','','','reg2fsLRareal','reg2fsLRedge','cortex'};
 paletteStrings = {'-pos-percent 2 98 -palette-name Gray_Interp -disp-pos true -disp-neg true -disp-zero true',...
@@ -639,7 +647,7 @@ sphereDensities = {'native','32k','32k'};
 metricSpaces = {'individual','fsLR','fsLR'};
 metrics = {'sulc','thickness','curv','distortion','distortion','sulc','thickness','curv'};    % Metric files to add to specs
 metricDescs = {'','','','reg2fsLRareal','reg2fsLRedge','HCP1200Atlas','HCP1200Atlas','HCP1200Atlas'};              % Metric descriptions
-parcs = {'medialwall','medialwallAtlas','aparc','aparc.a2009s','MMP','RSN','Gordon'};
+parcs = {'medialwall','medialwallAtlas','aparc','aparc09','MMP','RSN','Gordon'};
 if ~hcpDirExists
     surfaceSpaces = surfaceSpaces(1:2); % Only use S1200 space if atlas files exist
     metrics = metrics(1:5);
@@ -726,7 +734,7 @@ if ~isempty(inputT2Path)
     volumePaths = [volumePaths {inputT2Path,fpp.bids.changeName(inputT2Path,'desc','preprocBrain')}];
     nn = [nn 0 0];
 end
-parcs = {'wmparc','aparc+aseg','aparc.a2009s+aseg','subcortical','Gordon','MMP','RSN'};
+parcs = {'wmparc','aparcaseg','aparc09aseg','subcortical','Gordon','MMP','RSN'};
 for p=1:length(parcs)
     parcVolPath = fpp.bids.changeName(wmPath,'desc',parcs{p});
     if exist(parcVolPath,'file')
