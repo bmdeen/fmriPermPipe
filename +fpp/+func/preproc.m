@@ -75,11 +75,9 @@
 
 function preproc(inputPaths,outputDir,varargin)
 
-% TODO IMMEDIATELY:
-% - Add JSON files for additional TEDANA/ts2map outputs
-%
 % TODO NEXT:
-% - If deleteMidprep==1, remove "Sources" field of final outputs
+% - Add JSON files for additional TEDANA/ts2map outputs
+% - If deleteMidprep==1, remove "Sources" field of final outputs?
 % - Add suffix option for desc. Need to edit input/outputNameGeneric, and
 %   edit desc of output TEDANA folder (defitions both within preproc
 %   script, and tedana script - new tedanaDir optional argument for tedana
@@ -245,6 +243,7 @@ else
         error('funcTemplateSpace must be specified when funcTemplatePath lacks a BIDS space entity.')
     end
 end
+[~,funcTemplateName,~] = fpp.bids.fileParts(funcTemplatePath);
 
 if ~exist(funcTemplatePath,'file')
     error(['Functional template image ' funcTemplatePath ' does not exist. Run fpp.func.defineTemplate.']);
@@ -270,6 +269,7 @@ elseif strcmpi(templateType,'func')
 else
     error('Template type must be specified as func or anat.');
 end
+[~,templateName,~] = fpp.util.fileParts(templatePath);
 
 % Default temporal filter type
 if isempty(filtType)
@@ -281,12 +281,12 @@ if isempty(filtType)
 end
 
 % Define brain mask and segment paths
-maskPath = fpp.bids.changeName(templatePath,{'desc','echo'},{'brain',[]},'mask','.nii.gz');
-gmPath = fpp.bids.changeName(templatePath,{'desc','echo'},{'gm',[]},'mask','.nii.gz');
-wmPath = fpp.bids.changeName(templatePath,{'desc','echo'},{'wm',[]},'mask','.nii.gz');
-csfPath = fpp.bids.changeName(templatePath,{'desc','echo'},{'csf',[]},'mask','.nii.gz');
-wmEroPath = fpp.bids.changeName(templatePath,{'desc','echo'},{'wmero1',[]},'mask','.nii.gz');
-csfEroPath = fpp.bids.changeName(templatePath,{'desc','echo'},{'csfero1',[]},'mask','.nii.gz');
+maskPath = [anatPreprocDir '/' fpp.bids.changeName(templateName,{'desc','echo'},{'brain',[]},'mask','.nii.gz')];
+gmPath = [anatPreprocDir '/' fpp.bids.changeName(templatePath,{'desc','echo'},{'gm',[]},'mask','.nii.gz')];
+wmPath = [anatPreprocDir '/' fpp.bids.changeName(templatePath,{'desc','echo'},{'wm',[]},'mask','.nii.gz')];
+csfPath = [anatPreprocDir '/' fpp.bids.changeName(templatePath,{'desc','echo'},{'csf',[]},'mask','.nii.gz')];
+wmEroPath = [anatPreprocDir '/' fpp.bids.changeName(templatePath,{'desc','echo'},{'wmero1',[]},'mask','.nii.gz')];
+csfEroPath = [anatPreprocDir '/' fpp.bids.changeName(templatePath,{'desc','echo'},{'csfero1',[]},'mask','.nii.gz')];
 if ~exist(maskPath,'file')
     error(['Brain mask ' maskPath ' does not exist. Run fpp.func.register.']);
 end
@@ -460,9 +460,9 @@ if ~exist(xfmMocoTarget2FuncTemplate,'file') || ~exist(xfmFuncTemplate2MocoTarge
     fpp.fsl.invertXfm(xfmMocoTarget2FuncTemplate,xfmFuncTemplate2MocoTarget);
 end
 if strcmpi(templateType,'anat')
-    xfmFunc2AnatTemplate = fpp.bids.changeName(funcTemplatePath,...
+    xfmFunc2AnatTemplate = [anatPreprocDir '/' fpp.bids.changeName(funcTemplateName,...
         {'desc','space','res','echo','from','to','mode'},...
-        {[],[],[],[],funcTemplateSpace,'individual','image'},'xfm','.mat');
+        {[],[],[],[],funcTemplateSpace,'individual','image'},'xfm','.mat')];
     xfmMocoTarget2Template = fpp.bids.changeName(inputPaths{1},...
         {'desc','space','res','echo','from','to','mode'},...
         {[],[],[],[],'native','individual','image'},'xfm','.mat');

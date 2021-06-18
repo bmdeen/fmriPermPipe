@@ -75,7 +75,7 @@ origPath = [fsSubDir '/mri/orig.mgz'];
 individual2FsnativeXfm = fpp.bids.changeName(inputT1Path,{'desc','space','res','from','to','mode'},...
     {[],[],[],'individual','fsnative','image'},'xfm','.mat');
 fsnative2IndividualXfm = fpp.bids.changeName(individual2FsnativeXfm,{'from','to'},{'fsnative','individual'});
-func2IndividualXfm = fpp.bids.changeName(funcTemplatePath,{'desc','space','res','echo','from','to','mode'},...
+func2IndividualXfm = fpp.bids.changeName(inputT1Path,{'desc','space','res','echo','from','to','mode'},...
     {[],[],[],[],funcTemplateSpace,'individual','image'},'xfm','.mat');
 individual2FuncXfm = fpp.bids.changeName(func2IndividualXfm,{'from','to'},{'individual',funcTemplateSpace});
 func2FsnativeXfm = fpp.bids.changeName(func2IndividualXfm,'to','fsnative');
@@ -119,8 +119,8 @@ if ~exist(func2IndividualXfm,'file') || overwrite
     fpp.fsl.invertXfm(func2IndividualXfm,individual2FuncXfm);
     fpp.fsl.moveImage(funcTemplatePath,inputT1Path,[anatPreprocDir '/' ...
         fpp.bids.changeName(funcTemplateName,{'space','res'},{'individual',anatRes})],func2IndividualXfm);
-    fpp.fsl.moveImage(inputT1BrainPath,funcTemplatePath,[funcPreprocDir '/' fpp.bids.changeName(...
-        inputT1Name,{'space','res','desc'},{funcTemplateSpace,funcRes,'preprocBrain'})],individual2FuncXfm);
+    fpp.fsl.moveImage(inputT1BrainPath,funcTemplatePath,fpp.bids.changeName(inputT1Path,...
+        {'space','res','desc'},{funcTemplateSpace,funcRes,'preprocBrain'}),individual2FuncXfm);
 end
 
 
@@ -131,13 +131,14 @@ end
 fprintf('%s\n',['Step 2, Move masks/parcs to func space         - ' subjID]);
 % Move brain mask to func template space
 maskPath = fpp.bids.changeName(inputT1Path,'desc','brainFSdil1','mask','.nii.gz');
-maskPathFunc = fpp.bids.changeName(funcTemplatePath,{'desc','echo'},{'brain',[]},'mask','.nii.gz');
+maskPathFunc = [anatPreprocDir '/' fpp.bids.changeName(funcTemplateName,{'desc','echo'},{'brain',[]},'mask','.nii.gz')];
 fpp.fsl.moveImage(maskPath,funcTemplatePath,maskPathFunc,individual2FuncXfm,'interp','nn');
 % Move segment ROIs to func template space, and erode WM/CSF masks
 roiNames = {'gm','csf','wm','gmcortical','gmsubcortical'};
 for r=1:length(roiNames)
     roiPath = fpp.bids.changeName(inputT1Path,'desc',roiNames{r},'mask','.nii.gz');
-    roiPathFunc = fpp.bids.changeName(funcTemplatePath,{'desc','echo'},{roiNames{r},[]},'mask','.nii.gz');
+    roiPathFunc = [anatPreprocDir '/' fpp.bids.changeName(funcTemplateName,...
+        {'desc','echo'},{roiNames{r},[]},'mask','.nii.gz')];
     if exist(roiPath,'file') && (~exist(roiPathFunc,'file') || overwrite)
         fpp.fsl.moveImage(roiPath,funcTemplatePath,roiPathFunc,individual2FuncXfm,'interp','nn');
         if sum(strcmp(roiNames{r},{'csf','wm'}))>0
@@ -146,7 +147,7 @@ for r=1:length(roiNames)
     end
 end
 % Move parcellations to func template space
-parcs = {'wmparc','aparc+aseg','aparc.a2009s+aseg','MMP','RSN','Gordon'};
+parcs = {'wmparc','aparcaseg','aparc09aseg','MMP','RSN','Gordon'};
 for p=1:length(parcs)
     parcPath = fpp.bids.changeName(inputT1Path,'desc',parcs{p},'dseg','.nii.gz');
     parcPathFunc = fpp.bids.changeName(funcTemplatePath,{'desc','echo'},{parcs{p},[]},'dseg','.nii.gz');
