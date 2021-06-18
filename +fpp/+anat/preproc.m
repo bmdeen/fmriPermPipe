@@ -58,10 +58,10 @@ funcResolution = '2';           % Low-resolution registration target
 tmp = dir([fppFuncDir '/../../data']);
 dataDir = tmp(1).folder;
 standardName = 'MNI152NLin6ASym';
-standardPath = [dataDir '/space-MNI152Nlin6Asym_res-' anatResolution '_T1w.nii.gz'];
-standardPathFuncRes = [dataDir '/space-MNI152Nlin6Asym_res-' funcResolution '_T1w.nii.gz'];
+standardPath = [dataDir '/space-MNI152NLin6Asym_res-' anatResolution '_T1w.nii.gz'];
+standardPathFuncRes = [dataDir '/space-MNI152NLin6Asym_res-' funcResolution '_T1w.nii.gz'];
 % Use dilated MNI-space mask to provide an inclusive initial brain mask
-standardMask = [dataDir '/space-MNI152Nlin6Asym_res-' funcResolution '_desc-brainDilEdit_mask.nii.gz'];
+standardMask = [dataDir '/space-MNI152NLin6Asym_res-' funcResolution '_desc-brainDilEdit_mask.nii.gz'];
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
 varArgList = {'overwrite'};
