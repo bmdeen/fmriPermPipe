@@ -13,7 +13,9 @@ if iscell(inputPath)
         fpp.util.deleteImageAndJson(inputPath{i});
     end
 else
-    fpp.util.system(['rm -rf ' inputPath]);
+    if exist(inputPath,'file')
+        fpp.util.system(['rm -rf ' inputPath]);
+    end
     inputJsonPath = fpp.bids.jsonPath(inputPath);
     if exist(inputJsonPath,'file')
         fpp.util.system(['rm -rf ' inputJsonPath]);
