@@ -40,10 +40,7 @@ fpp.fsl.moveImage(inputPath,inputPath,outputPath,xfmFunc2SpinEcho,...
     'warp',topupWarpPath,'postmat',xfmSpinEcho2Func);
 fpp.fsl.moveImage(topupJacobianPath,inputPath,topupJacobian2FuncPath,xfmSpinEcho2Func);
 fpp.fsl.maths(outputPath,['-mul ' topupJacobian2FuncPath],outputPath);
-fpp.util.system(['rm -rf ' topupJacobian2FuncPath]);
-if exist(fpp.bids.jsonPath(topupJacobian2FuncPath),'file')
-    fpp.util.system(['rm -rf ' fpp.bids.jsonPath(topupJacobian2FuncPath)]);
-end
+fpp.util.deleteImageAndJson(topupJacobian2FuncPath);
 
 % Generate output JSON file
 fpp.bids.jsonReconstruct(inputPath,outputPath,'midprepfmri');

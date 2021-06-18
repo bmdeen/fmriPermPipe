@@ -236,9 +236,7 @@ for c=1:nContrasts
         fpp.util.system(mergeCmd2);
     end
     fpp.util.system(mergeCmd);
-    for i=1:mergeIters
-        fpp.util.system(['rm -rf ' concatContrastPaths{i}]);
-    end
+    fpp.util.deleteImageAndJson(concatContrastPaths);
     
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

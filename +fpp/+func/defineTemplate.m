@@ -130,13 +130,7 @@ if undistort
         fpp.func.preproc.undistort(outputPaths{e},outputPaths{e},spinEchoPath,...
             topupWarpPath,topupJacobianPath,xfmFunc2SpinEcho,xfmSpinEcho2Func);
     end
-    fpp.util.system(['rm -rf ' xfmFunc2SpinEcho ' ' xfmSpinEcho2Func]);
-    if exist(fpp.bids.jsonPath(xfmFunc2SpinEcho))
-        fpp.util.system(['rm -rf ' fpp.bids.jsonPath(xfmFunc2SpinEcho)]);
-    end
-    if exist(fpp.bids.jsonPath(xfmSpinEcho2Func))
-        fpp.util.system(['rm -rf ' fpp.bids.jsonPath(xfmSpinEcho2Func)]);
-    end
+    fpp.util.deleteImageAndJson({xfmFunc2SpinEcho,xfmSpinEcho2Func});
 end
 
 

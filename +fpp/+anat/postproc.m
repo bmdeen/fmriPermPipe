@@ -604,15 +604,7 @@ if exist(hcpAtlasDir,'dir')
        jsonDataVolParc = jsonDataVol;
        jsonDataVolParc.Description = parcDescriptions{p};
        bids.util.jsonencode(fpp.bids.jsonPath(parcVolPath),jsonDataParc,jsonOpts);
-       for h=1:2
-           fpp.util.system(['rm -rf ' parcSurfPaths{h} ' ' parcVolPaths{h}]);
-           if exist(fpp.bids.jsonPath(parcSurfPaths{h}),'file')
-               fpp.util.system(['rm -rf ' fpp.bids.jsonPath(parcSurfPaths{h})]);
-           end
-           if exist(fpp.bids.jsonPath(parcVolPaths{h}),'file')
-               fpp.util.system(['rm -rf ' fpp.bids.jsonPath(parcVolPaths{h})]);
-           end
-       end
+       fpp.util.deleteImageAndJson([parcSurfPaths parcVolPaths]);
     end
     for h=1:2                   % Border files
         outputPath = fpp.bids.changeName(sulcPaths{h},{'sub','space','den','desc'},...

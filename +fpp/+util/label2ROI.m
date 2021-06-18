@@ -50,11 +50,6 @@ if exist(fpp.bids.jsonPath(outputPath),'file')
 end
 
 % Remove temporary files
-for i=1:length(parcInds)
-    fpp.util.system(['rm -rf ' tmpPath{i}]);
-    if exist(fpp.bids.jsonPath(tmpPath{i}),'file')
-        fpp.util.system(['rm -rf ' fpp.bids.jsonPath(tmpPath{i})]);
-    end
-end
+fpp.util.deleteImageAndJson(tmpPath);
 
 end

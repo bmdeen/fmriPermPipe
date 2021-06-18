@@ -714,12 +714,7 @@ end
 %%% CLEANUP: Delete midprep files
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if deleteMidprep
-    for i=1:length(pathsToDelete)
-        fpp.util.system(['rm -rf ' pathsToDelete{i}]);
-        if exist(fpp.bids.jsonPath(pathsToDelete{i}),'file')
-            fpp.util.system(['rm -rf ' fpp.bids.jsonPath(pathsToDelete{i})]);
-        end
-    end
+    fpp.util.deleteImageAndJson(pathsToDelete);
 end
 
 
