@@ -159,7 +159,7 @@ fpp.fsl.maths(maskPath,'-bin',maskPath);
 % Goal: ensure that none of vmPFC gray matter is excluded, despite issues with FS recon in this area
 standard2IndividualXfm = fpp.bids.changeName(inputT1Path,{'from','to','mode','space','desc','res'},...
     {standardSpace,'individual','image','','',[]},'xfm','.nii.gz');
-vmPFCMaskPathStd = [dataDir '/space-MNI152Nlin6Asym_res-2_desc-vmPFCLarge_mask.nii.gz'];
+vmPFCMaskPathStd = [dataDir '/space-MNI152NLin6Asym_res-2_desc-vmPFCLarge_mask.nii.gz'];
 vmPFCMaskPath = fpp.bids.changeName(inputT1Path,{'desc'},{'vmPFCLarge'},'mask','.nii.gz');
 fpp.fsl.moveImage(vmPFCMaskPathStd,inputT1Path,vmPFCMaskPath,[],'warp',...
     standard2IndividualXfm,'rel',1,'interp','nn');
