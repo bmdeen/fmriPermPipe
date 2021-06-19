@@ -180,7 +180,7 @@ fpp.fsl.maths(maskPath,'-dilD',fpp.bids.changeName(maskPath,'desc','brainFSdil1'
 fprintf('%s\n',['Step 3, Generate segment masks                 - ' subjID]);
 roiNames = {'gm','wm','csf'};
 flagStrs = {'--gm','--ctx-wm','--ventricles'};
-parcVolPath = fpp.bids.changeName(wmPath,'desc','aparc+aseg');
+parcVolPath = fpp.bids.changeName(wmPath,'desc','aparcaseg');
 for r=1:length(roiNames)
     roiPath = fpp.bids.changeName(parcVolPath,'desc',roiNames{r},'mask');
     fpp.util.system(['mri_binarize --i ' parcVolPath ' --o ' roiPath ' ' flagStrs{r}]);
