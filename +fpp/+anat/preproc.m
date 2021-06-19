@@ -57,7 +57,7 @@ funcResolution = '2';           % Low-resolution registration target
 [fppFuncDir,~,~]		= fileparts(mfilename('fullpath'));			% path to the directory containing this script
 tmp = dir([fppFuncDir '/../../data']);
 dataDir = tmp(1).folder;
-standardName = 'MNI152NLin6ASym';
+standardName = 'MNI152NLin6Asym';
 standardPath = [dataDir '/space-MNI152NLin6Asym_res-' anatResolution '_T1w.nii.gz'];
 standardPathFuncRes = [dataDir '/space-MNI152NLin6Asym_res-' funcResolution '_T1w.nii.gz'];
 % Use dilated MNI-space mask to provide an inclusive initial brain mask

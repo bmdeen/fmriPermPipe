@@ -114,7 +114,7 @@ for h=1:2
     fsLRSpherePaths{h}{2} = strrep(fsLRSpherePaths{h}{1},'den-32k','den-164k');
 end
 
-standardSpace = 'MNI152NLin6ASym';
+standardSpace = 'MNI152NLin6Asym';
 standardPathFuncResBrain = [anatPreprocDir '/space-' standardSpace '_res-' funcResolution '_desc-brain_T1w.nii.gz'];
 
 
