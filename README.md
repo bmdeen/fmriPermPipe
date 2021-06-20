@@ -29,6 +29,7 @@ Bash:
 * [Connectome Workbench](https://www.humanconnectome.org/software/connectome-workbench) v1.5+
 * [tedana](https://github.com/ME-ICA/tedana) v0.0.9a1
 * [MSM_HOCR](https://github.com/ecr05/MSM_HOCR)
+* [ASHS](https://www.nitrc.org/projects/ashs/) v2.0.0 (if using MTL segmentation)
 * dcm2niix, through [MRICroGL](https://www.nitrc.org/projects/mricrogl/) v1.2+
 
 MATLAB:
@@ -176,6 +177,10 @@ Detailed descriptions of processing steps in the pipeline are provided below.
 The anatomical pipeline uses a Human Connectome Project (HCP)-like approach to generate a highly accurate cortical surface reconstruction from high-resolution T1- and T2-weighted anatomical images. The specific processing steps are adapted from the HCP's PreFreesurer and PostFreesurfer pipelines.
 
 In preprocessing (`fpp.anat.preproc`), anatomical images are registered to one another, averaged, rigidly aligned with MNI152NLin6Asym space, and bias-corrected. This generates a high-resolution anatomical template space for each individual subject.
+
+Optionally, if high-resolution coronal images of the medial temporal lobe were acquired, `fpp.anat.preprocCoronal` can be used to preprocess these images, and perform anatomical segmentation of hippocampal/parahippocampal structures using Automatic Segmentation of Hippocampal Subfields (ASHS). To perform ASHS, the [UPenn PMC Atlas data](https://balsa.wustl.edu/study/show/RVVG) (file 	
+ashs\_atlas\_upennpmc\_20170810.tar) must be added. The downloaded folder 	
+ashs\_atlas\_upennpmc\_20170810 should be placed in the data folder within the FPP script directory. The [ASHS software](https://www.nitrc.org/projects/ashs/) must also be downloaded and sourced.
 
 After preprocessing, a cortical reconstruction is generated using Freesurfer's `recon-all`, with the `-hires` flag to accomodate submillimeter resolution when needed.
 
