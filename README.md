@@ -178,9 +178,9 @@ The anatomical pipeline uses a Human Connectome Project (HCP)-like approach to g
 
 In preprocessing (`fpp.anat.preproc`), anatomical images are registered to one another, averaged, rigidly aligned with MNI152NLin6Asym space, and bias-corrected. This generates a high-resolution anatomical template space for each individual subject.
 
-Optionally, if high-resolution coronal images of the medial temporal lobe were acquired, `fpp.anat.preprocCoronal` can be used to preprocess these images, and perform anatomical segmentation of hippocampal/parahippocampal structures using Automatic Segmentation of Hippocampal Subfields (ASHS). To perform ASHS, the [UPenn PMC Atlas data](https://balsa.wustl.edu/study/show/RVVG) (file 	
+Optionally, if high-resolution coronal images of the medial temporal lobe were acquired, `fpp.anat.preprocCoronal` can be used to preprocess these images, and perform anatomical segmentation of hippocampal/parahippocampal structures using Automatic Segmentation of Hippocampal Subfields (ASHS). To perform ASHS, the [UPenn PMC Atlas data](https://www.nitrc.org/frs/?group_id=370) (file 	
 ashs\_atlas\_upennpmc\_20170810.tar) must be added. The downloaded folder 	
-ashs\_atlas\_upennpmc\_20170810 should be placed in the data folder within the FPP script directory. The [ASHS software](https://www.nitrc.org/projects/ashs/) must also be downloaded and sourced.
+ashs\_atlas\_upennpmc\_20170810 should be placed in the data folder within the FPP script directory. The [ASHS software](https://www.nitrc.org/projects/ashs/) (v2.0.0) must also be downloaded and sourced.
 
 After preprocessing, a cortical reconstruction is generated using Freesurfer's `recon-all`, with the `-hires` flag to accomodate submillimeter resolution when needed.
 
