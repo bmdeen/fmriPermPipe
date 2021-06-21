@@ -53,7 +53,7 @@ if isempty(inputDir), inputDir = pwd; end
 [anatPreprocDir,~,~] = fpp.util.fileParts(preprocT2Path);
 if isempty(anatPreprocDir), inputDir = pwd; end
 if strcmp(anatPreprocDir(end),'/'), anatPreprocDir = anatPreprocDir(1:end-1); end
-subjID = fpp.bids.checkNameProperty(inputName,'sub');
+subjID = fpp.bids.checkNameValue(inputName,'sub');
 % anatResolution = fpp.bids.checkNameValue(preprocT2Path,'res');
 
 % Define registration outputs
