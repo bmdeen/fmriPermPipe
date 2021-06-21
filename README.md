@@ -81,8 +81,8 @@ Steps:
 2. Run Freesurfer's `recon-all` (details below)
 3. `fpp.anat.postproc` - Postprocess anatomical images
 4. `fpp.fmap.preproc` - Preprocess spin-echo "field map" images (optional)
-5. `func.defineTemplate` - Define functional template image
-6. `func.register` - Register functional template to anatomical
+5. `fpp.func.defineTemplate` - Define functional template image
+6. `fpp.func.register` - Register functional template to anatomical
 7. `fpp.func.preproc` - Preprocess functional data
 8. `fpp.func.removeNuisance` - Remove additional nuisance signals (optional)
 9. `fpp.func.surfaceResample` - Resample data to cortical surface (optional)
