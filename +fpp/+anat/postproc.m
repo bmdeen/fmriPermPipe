@@ -204,6 +204,7 @@ fpp.fsl.maths(subcortSegIndivPath,['-uthr 30 -thr 30 -bin -mul -1 -add ' tmpMask
 fpp.fsl.maths(subcortSegIndivPath,['-uthr 62 -thr 62 -bin -mul -1 -add ' tmpMaskPath],tmpMaskPath);     % Remove right vessel
 fpp.fsl.maths(subcortSegIndivPath,['-mul ' tmpMaskPath ' -thr 0'],subcortSegIndivPath);
 fpp.wb.command('volume-label-import',subcortSegIndivPath,[anatPreprocDir '/desc-wbsubcortical_lut.txt'],subcortSegIndivPath);
+fpp.util.deleteImageAndJson(tmpMaskPath);
 % Subcortical GM
 subcortROIPath = fpp.bids.changeName(roiPath,'desc','gmsubcortical');
 fpp.fsl.maths(subcortSegIndivPath,'-bin',subcortROIPath);
