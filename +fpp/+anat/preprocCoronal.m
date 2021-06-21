@@ -64,8 +64,9 @@ preprocT2InCoronalPath = fpp.bids.changeName(preprocT2Path,{'space','res'},{'nat
 preprocT1Path = fpp.bids.changeName(preprocT2Path,[],[],'T1w');
 preprocT1InCoronalPath = fpp.bids.changeName(preprocT1Path,{'space','res'},{'nativeCoronal',''});
 
-% Check if output exists.
-if exist(preprocT2InCoronalPath,'file') && ~overwrite
+% Check if outputs exist.
+outputSegIndivPath = fpp.bids.changeName(preprocT2Path,'desc','ashs','dseg');
+if exist(preprocT2InCoronalPath,'file') && exist(outputSegIndivPath,'file') && ~overwrite
     return;
 end
 
@@ -168,7 +169,6 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% STEP 4: Move ASHS ROIs to individual space
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-outputSegIndivPath = fpp.bids.changeName(preprocT2Path,'desc','ashs','dseg');
 fpp.fsl.moveImage(outputSegPath,preprocT2Path,outputSegIndivPath,coronal2IndividualXfm,'interp','nn');
 % Convert dseg to subregion masks
 for i=1:length(segInd)
