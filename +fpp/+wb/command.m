@@ -104,10 +104,10 @@ if cmdInfo.NonstandardInput(cmdInd) && cmdInfo.NonstandardOutput(cmdInd)
             inputOpts = {'-from-world','-from-itk','-from-flirt','-from-fnirt'};
             outputOpts = {'-to-world','-to-itk','-to-flirt','-to-fnirt'};
             for i=1:length(allArgs)
-                if strcmp(allArgs{i},inputOpts)
+                if sum(strcmp(allArgs{i},inputOpts))>0
                     inputInd = i+1;
                 end
-                if strcmp(allArgs{i},outputOpts)
+                if sum(strcmp(allArgs{i},outputOpts))>0
                     outputInd = i;
                 end
             end
@@ -116,7 +116,7 @@ if cmdInfo.NonstandardInput(cmdInd) && cmdInfo.NonstandardOutput(cmdInd)
                 '-cifti-version-convert'};
             types = {'Border','Volume','Cifti'};
             for i=1:length(allArgs)
-                if strcmp(allArgs{i},cmdOpts)
+                if sum(strcmp(allArgs{i},cmdOpts))>0
                     inputInd = i+1;
                     outputInd = i+3;
                     inputType = types(strcmp(allArgs{i},cmdOpts));
