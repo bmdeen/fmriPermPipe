@@ -251,6 +251,9 @@ _Anatomical pipeline_
 * Robinson EC, Jbabdi S, Glasser MF, Andersson J, Burgess GC, Harms MP, Smith SM, Van Essen DC, Jenkinson M (2014) MSM: a new flexible framework for Multimodal Surface Matching. NeuroImage 100: 414-26. doi: 10.1016/j.neuroimage.2014.05.06
 * Robinson EC, Garcia K, Glasser MF, Chen Z, Coalson TS, Makropoulos A, Bozek J, Wright R, Schuh A, Webster M, Hutter J (2018) Multimodal surface matching with higher-order smoothness constraints. NeuroImage 167: 453-65. doi: 10.1016/j.neuroimage.2017.10.037
 
+_Anatomical pipeline: hippocampal segmentation_
+* Yushkevich PA, Pluta J, Wang H, Ding SL, Xie L, Gertje E, Mancuso L, Kliot D, Das SR and Wolk DA (2014)  Automated Volumetry and Regional Thickness Analysis of Hippocampal Subfields and Medial Temporal Cortical Structures in Mild Cognitive Impairment. Human Brain Mapping 36(1): 258-287. doi: 10.1002/hbm.22627
+
 _Freesurfer recon-all_
 * Dale AM, Fischl B, Sereno MI (1999) Cortical surface-based analysis. I. Segmentation and surface reconstruction. NeuroImage 9: 179-194. doi: 10.1006/nimg.1998.0395
 
