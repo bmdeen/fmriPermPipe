@@ -4,7 +4,7 @@
 % Preprocesses high-inplane-resolution coronal T2-weighted anatomical
 % images, intended for medial temporal lobe structural analysis. Register
 % and average multiple images if they exist, register image to individual
-% space, and generate ASHS-based hippocampal segmentation. A typical
+% space, and generate ASHS-based hippocampal/MTL segmentation. A typical
 % resolution for input images would be .5x.5x1.5mm.
 %
 % Arguments:
@@ -54,7 +54,7 @@ if isempty(inputDir), inputDir = pwd; end
 if isempty(anatPreprocDir), inputDir = pwd; end
 if strcmp(anatPreprocDir(end),'/'), anatPreprocDir = anatPreprocDir(1:end-1); end
 subjID = fpp.bids.checkNameValue(inputName,'sub');
-% anatResolution = fpp.bids.checkNameValue(preprocT2Path,'res');
+anatResolution = fpp.bids.checkNameValue(preprocT2Path,'res');
 
 % Define registration outputs
 coronal2IndividualXfm = fpp.bids.changeName(preprocT2Path,{'desc','space','res','from','to','mode'},...
@@ -75,9 +75,9 @@ end
 for i=1:length(inputCoronalPaths)
     [~,inputCoronalNames{i},~] = fpp.util.fileParts(inputCoronalPaths{i});
     outputCoronalPaths{i} = [anatPreprocDir '/' fpp.bids.changeName(inputCoronalNames{i},'acq','HighResCoronal','T2w','.nii.gz')];
-%     fpp.util.copyImageAndJson(inputCoronalPaths{i},outputCoronalPaths{i},'mri');
-%     fpp.bids.jsonChangeValue(outputCoronalPaths{i},{'Description','RawSources'},...
-%         {'Raw data copied to derivative directory.',fpp.bids.removeBidsDir(inputCoronalPaths{i})});
+    fpp.util.copyImageAndJson(inputCoronalPaths{i},outputCoronalPaths{i},'mri');
+    fpp.bids.jsonChangeValue(outputCoronalPaths{i},{'Description','RawSources'},...
+        {'Raw data copied to derivative directory.',fpp.bids.removeBidsDir(inputCoronalPaths{i})});
 end
 inputCoronalPathsRaw = outputCoronalPaths;
 
@@ -91,28 +91,28 @@ pathsToDelete = inputCoronalPathsRaw;
 fprintf('%s\n',['Step 1, Register and average anatomicals       - ' inputNameGeneric]);
 inputCoronalPaths = outputCoronalPaths;
 outputCoronalPath = fpp.bids.changeName(inputCoronalPaths{1},{'run','space'},{[],'nativeCoronal'});
-% addCmd = '';
-% for i=2:length(inputCoronalPaths)
-%     outputCoronalPaths{i} = fpp.bids.changeName(inputCoronalPaths{i},'space','nativeCoronal');
-%     xfmThisRun2FirstRun = fpp.bids.changeName(inputCoronalPaths{i},{'run','from','to','mode'},...
-%     {'',['CoronalIm' fpp.util.numPad(i,2)],'nativeCoronal','image'},'xfm','.mat');
-%     fpp.fsl.flirt(inputCoronalPaths{i},inputCoronalPaths{1},xfmThisRun2FirstRun,outputCoronalPaths{i},...
-%         'dof',6,'interp','sinc');
-%     fpp.bids.jsonChangeValue(outputCoronalPaths{i},{'Description','Sources'},...
-%         {'Raw data, registered to first anatomical with sinc interpolation.',...
-%         fpp.bids.removeBidsDir(inputCoronalPaths{i})});
-%     addCmd = [addCmd '-add ' outputCoronalPaths{i} ' '];
-%     pathsToDelete = [pathsToDelete outputCoronalPaths{i} xfmThisRun2FirstRun];
-% end
-% if length(inputCoronalPaths)>1
-%     addCmd = [addCmd '-div ' int2str(length(inputCoronalPaths))];
-%     fpp.fsl.maths(inputCoronalPaths{1},addCmd,outputCoronalPath);
-%     fpp.bids.jsonChangeValue(outputCoronalPath,{'Description','Sources','RawSources','SpatialRef'},...
-%         {'Raw data, averaged across runs.',cellfun(removeBidsDir,outputCoronalPaths,'UniformOutput',false),...
-%         cellfun(removeBidsDir,inputCoronalPathsRaw,'UniformOutput',false),removeBidsDir(outputCoronalPath)});
-% else
-%     fpp.util.copyImageAndJson(inputCoronalPaths{1},outputCoronalPath,'mri');
-% end
+addCmd = '';
+for i=2:length(inputCoronalPaths)
+    outputCoronalPaths{i} = fpp.bids.changeName(inputCoronalPaths{i},'space','nativeCoronal');
+    xfmThisRun2FirstRun = fpp.bids.changeName(inputCoronalPaths{i},{'run','from','to','mode'},...
+    {'',['CoronalIm' fpp.util.numPad(i,2)],'nativeCoronal','image'},'xfm','.mat');
+    fpp.fsl.flirt(inputCoronalPaths{i},inputCoronalPaths{1},xfmThisRun2FirstRun,outputCoronalPaths{i},...
+        'dof',6,'interp','sinc');
+    fpp.bids.jsonChangeValue(outputCoronalPaths{i},{'Description','Sources'},...
+        {'Raw data, registered to first anatomical with sinc interpolation.',...
+        fpp.bids.removeBidsDir(inputCoronalPaths{i})});
+    addCmd = [addCmd '-add ' outputCoronalPaths{i} ' '];
+    pathsToDelete = [pathsToDelete outputCoronalPaths{i} xfmThisRun2FirstRun];
+end
+if length(inputCoronalPaths)>1
+    addCmd = [addCmd '-div ' int2str(length(inputCoronalPaths))];
+    fpp.fsl.maths(inputCoronalPaths{1},addCmd,outputCoronalPath);
+    fpp.bids.jsonChangeValue(outputCoronalPath,{'Description','Sources','RawSources','SpatialRef'},...
+        {'Raw data, averaged across runs.',cellfun(removeBidsDir,outputCoronalPaths,'UniformOutput',false),...
+        cellfun(removeBidsDir,inputCoronalPathsRaw,'UniformOutput',false),removeBidsDir(outputCoronalPath)});
+else
+    fpp.util.copyImageAndJson(inputCoronalPaths{1},outputCoronalPath,'mri');
+end
 
 
 
@@ -120,12 +120,12 @@ outputCoronalPath = fpp.bids.changeName(inputCoronalPaths{1},{'run','space'},{[]
 %%% STEP 2: Registration to individual space
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fprintf('%s\n',['Step 2, Register to individual space           - ' inputNameGeneric]);
-% fpp.fsl.flirt(outputCoronalPath,preprocT2Path,coronal2IndividualXfm,[],'dof',6);   % Initial FLIRT-based xfm
-% fpp.fsl.invertXfm(coronal2IndividualXfm,individual2CoronalXfm);
-% fpp.fsl.moveImage(preprocT2Path,outputCoronalPath,preprocT2InCoronalPath,individual2CoronalXfm,'interp','sinc');
-% fpp.fsl.moveImage(preprocT1Path,outputCoronalPath,preprocT1InCoronalPath,individual2CoronalXfm,'interp','sinc');
-% fpp.bids.jsonChangeValue(preprocT2InCoronalPath,'Description','Raw data, averaged, in NativeCoronal space.');
-% fpp.bids.jsonChangeValue(preprocT1InCoronalPath,'Description','Raw data, averaged, in NativeCoronal space.');
+fpp.fsl.flirt(outputCoronalPath,preprocT2Path,coronal2IndividualXfm,[],'dof',6);   % Initial FLIRT-based xfm
+fpp.fsl.invertXfm(coronal2IndividualXfm,individual2CoronalXfm);
+fpp.fsl.moveImage(preprocT2Path,outputCoronalPath,preprocT2InCoronalPath,individual2CoronalXfm,'interp','sinc');
+fpp.fsl.moveImage(preprocT1Path,outputCoronalPath,preprocT1InCoronalPath,individual2CoronalXfm,'interp','sinc');
+fpp.bids.jsonChangeValue(preprocT2InCoronalPath,'Description','Raw data, averaged, in NativeCoronal space.');
+fpp.bids.jsonChangeValue(preprocT1InCoronalPath,'Description','Raw data, averaged, in NativeCoronal space.');
 
 
 
