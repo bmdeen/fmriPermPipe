@@ -165,7 +165,9 @@ isStat = 0;
 if contains(inputNiftiPath,{'tstat.nii','zstat.nii'}) && ~isLabel, isStat = 1; end
 
 % Register image to high-res individual space, if necessary
-tmpNiftiPath = [outputDir '/' inputName '_tmpSurfaceResample21093520813502.nii.gz'];
+inputDesc = fpp.bids.checkNameValue(inputName,'desc');
+tmpNiftiPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
+    [inputDesc 'tmpSurfaceResample21093520813502']) '.nii.gz'];
 if ~isempty(premat)
     fpp.fsl.moveImage(inputNiftiPath,referencePath,tmpNiftiPath,premat,'interp',interpStr);
     if ~isempty(outputNiftiPath) && isempty(referenceFuncResPath) && isempty(referenceNonlinPath)
@@ -175,13 +177,15 @@ else
     fpp.util.copyImageAndJson(inputNiftiPath,tmpNiftiPath);
 end
 if isLabel  % For labels, re-import label table text file to resampled output
-    tmpLUTPath = [outputDir '/' inputName '_tmpSurfaceResample21093520813502_lut.txt'];
+    tmpLUTPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
+        [inputDesc 'tmpSurfaceResample21093520813502'],'lut') '.txt'];
     fpp.wb.command('volume-label-export-table',inputNiftiPath,'1',tmpLUTPath);
     fpp.wb.command('volume-label-import',tmpNiftiPath,tmpLUTPath,tmpNiftiPath);
 end
 
 % Convert to low-res individual space, if necessary
-tmpNiftiVolumePath = [outputDir '/' inputName '_tmpSurfaceResample21093520813502_volume.nii.gz'];
+tmpNiftiPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
+    [inputDesc 'tmpSurfaceResample21093520813502SubSmp']) '.nii.gz'];
 if ~isempty(referenceFuncResPath)
     if isempty(premat)
         premat = [dataDir '/eye.mat'];  % Use identity matrix if converting from high-res to low-res individual
@@ -202,8 +206,8 @@ end
 
 % Resample volume (high-res individual) to surface
 for h=1:2
-    tmpGiftiPaths{h} = [outputDir '/' inputName '_hemi-' hemis{h}...
-        '_tmpSurfaceResample21093520813502.' giftiType '.gii'];
+    tmpGiftiPaths{h} = [outputDir '/' fpp.bids.changeName(inputName,{'desc','hemi'},...
+        {[inputDesc 'tmpSurfaceResample21093520813502'],hemis{h}}) '.' giftiType '.gii'];
     if isLabel
         fpp.wb.command('volume-label-to-surface-mapping',tmpNiftiPath,inputSurfacePaths{h}{1},tmpGiftiPaths{h},...
             ['-ribbon-constrained ' inputSurfacePaths{h}{2} ' ' inputSurfacePaths{h}{3}]);
