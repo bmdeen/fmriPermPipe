@@ -19,6 +19,8 @@
 % Variable arguments:
 % - warp (string): path to warp coefficient image (cout from fnirt)
 % - postMat (string): path to linear transform to apply after warp
+% - isLabel (boolean): whether to treat image like workbench label file,
+%       and copy label table
 % - interp (string): interpolation type (nn/nearestneighbour, trilinear, 
 %       sinc, spline)
 % - datatype, mask, superlevel, paddingsize, abs, rel ,superlevel, 
@@ -26,18 +28,19 @@
 
 function moveImage(inputPath,referencePath,outputPath,preMat,varargin)
 
-% Define variable defaults
-warp = [];                  % Prevent confusion with MATLAB warp fcn
-interp = [];                % Initialize to avoid conflict with the function
+% Define variable defaults. These two must be initialized to prevent
+% confusion with MATLAB functions.
+warp = [];
+interp = [];
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
-varArgList = {'warp','datatype','postmat','mask','interp','superlevel','paddingsize',...
+varArgList = {'isLabel','warp','datatype','postmat','mask','interp','superlevel','paddingsize',...
                 'abs','rel','super','usesqform'};
-indArgIsBoolean = 8:11;
+indArgIsBoolean = 9:12;
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
-        if ischar(argVal)
+        if ischar(argVal) || strcmp(varArgList{i},'isLabel')
             eval([varArgList{i} ' = argVal;']);
         else
             eval([varArgList{i} ' = num2str(argVal);']);
@@ -46,6 +49,8 @@ for i=1:length(varArgList)
         eval([varArgList{i} ' = [];']);
     end
 end
+
+if isempty(isLabel), isLabel = 0; end
 
 if ~isempty(warp)
     % Build applywarp command
@@ -63,7 +68,7 @@ if ~isempty(warp)
     end
 
     % Add non-boolean additional variables
-    for i=setdiff(1:length(varArgList),indArgIsBoolean)
+    for i=setdiff(2:length(varArgList),indArgIsBoolean)
         if ~isempty(eval(varArgList{i}))
             eval(['cmd = [cmd '' --' varArgList{i} '=' eval(varArgList{i}) '''];']);
         end
@@ -87,7 +92,7 @@ else
         ' -applyxfm -init ' preMat];
     
     % Add non-boolean additional variables
-    for i=setdiff(1:length(varArgList),indArgIsBoolean)
+    for i=setdiff(2:length(varArgList),indArgIsBoolean)
         if ~isempty(eval(varArgList{i}))
             eval(['cmd = [cmd '' -' varArgList{i} ' ' eval(varArgList{i}) '''];']);
         end
@@ -102,6 +107,14 @@ end
 
 % Run flirt or applywarp command
 fpp.util.system(cmd);
+
+% Copy label table, for Workbench label files
+if isLabel
+    tmpLUT = fpp.bids.changeName(outputPath,'desc','tmpMoveImage209851343149','lut','.txt');
+    fpp.wb.command('volume-label-export-table',inputPath,'1',tmpLUT);
+    fpp.wb.command('volume-label-import',outputPath,tmpLUT,outputPath);
+    fpp.util.system(['rm -rf ' tmpLUT]);
+end
 
 % Write json output files
 if ~isempty(fpp.bids.getMetadata(inputPath)) && exist('outputPath','var')

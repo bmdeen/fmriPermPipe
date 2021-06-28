@@ -174,7 +174,7 @@ if exist(ashsPath,'file')
     coronal2FuncXfm = fpp.bids.changeName(individual2FsnativeXfm,{'from','to'},{'nativeCoronal',funcTemplateSpace});
     fpp.fsl.concatXfm(individual2CoronalXfm,func2IndividualXfm,func2CoronalXfm);
     fpp.fsl.invertXfm(func2CoronalXfm,coronal2FuncXfm);
-    fpp.fsl.moveImage(ashsPath,funcTemplatePath,ashsFuncPath,coronal2FuncXfm,'interp','nn');
+    fpp.fsl.moveImage(ashsPath,funcTemplatePath,ashsFuncPath,coronal2FuncXfm,'interp','nn','isLabel',1);
     % Convert dseg to subregion masks, in func template space
     for i=1:length(segInd)
         for h=1:length(hemis)

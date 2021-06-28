@@ -733,10 +733,12 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fprintf('%s\n',['Step 12, Downsample to functional resolution   - ' subjID]);
 volumePaths = {inputT1Path,fpp.bids.changeName(inputT1Path,'desc','preprocBrain')};
-nn = [0 0]; % Whether to use nearest neighbor interpolation
+nn = [0 0];         % Whether to use nearest neighbor interpolation
+isLabel = [0 0];    % Whether to convert label table
 if ~isempty(inputT2Path)
     volumePaths = [volumePaths {inputT2Path,fpp.bids.changeName(inputT2Path,'desc','preprocBrain')}];
     nn = [nn 0 0];
+    isLabel = [isLabel 0 0];
 end
 parcs = {'wmparc','aparcaseg','aparc09aseg','subcortical','Gordon','MMP','RSN','ashs'};
 for p=1:length(parcs)
@@ -745,6 +747,7 @@ for p=1:length(parcs)
         volumePaths{end+1} = parcVolPath;
     end
     nn = [nn 1];
+    isLabel = [isLabel 1];
 end
 maskNames = {'brainFS','brainFSdil1','gm','csf','wm','gmcortical','gmsubcortical'};
 for m=1:length(maskNames)
@@ -753,6 +756,7 @@ for m=1:length(maskNames)
         volumePaths{end+1} = maskVolPath;
     end
     nn = [nn 1];
+    isLabel = [isLabel 0];
 end
 for v=1:length(volumePaths)
     inputPath = volumePaths{v};
@@ -766,7 +770,7 @@ for v=1:length(volumePaths)
         interpStr = 'trilinear';
     end
     fpp.fsl.moveImage(inputPath,standardPathFuncResBrain,outputPath,...
-        [dataDir '/eye.mat'],'interp',interpStr);
+        [dataDir '/eye.mat'],'interp',interpStr,'isLabel',isLabel(v));
 end
 % Erode downsampled wm and csf masks by 1 voxel
 maskNames = {'wm','csf'};

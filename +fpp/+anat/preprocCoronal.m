@@ -184,7 +184,8 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if exist(ashsDir,'dir')
     fprintf('%s\n',['Step 4, Move MTL segments to individual space  - ' inputNameGeneric]);
-    fpp.fsl.moveImage(outputSegPath,preprocT2Path,outputSegIndivPath,coronal2IndividualXfm,'interp','nn');
+    fpp.fsl.moveImage(outputSegPath,preprocT2Path,outputSegIndivPath,...
+        coronal2IndividualXfm,'interp','nn','isLabel',1);
     % Convert dseg to subregion masks
     for i=1:length(segInd)
         for h=1:length(hemis)
