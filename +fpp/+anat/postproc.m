@@ -418,12 +418,12 @@ for h=1:2
         [anatPreprocDir '/desc-medialwall_lut.txt'],parcPaths{h}{end});
     
     % Define atlas ROI in fsLR space
-    maskAtlasFSLRPaths{h} = [anatPreprocDir '/hemi-' Hemis{h} '_space-fsLR_den-32k_desc-cortexAtlas_mask.shape.gii'];
-    parcFSLRPaths{h}{1} = fpp.bids.changeName(maskAtlasFSLRPaths{h},'desc','medialwallAtlas','dseg','.label.gii');
-    fpp.wb.command('metric-math',[],'1 - var',fpp.bids.changeName(maskAtlasFSLRPaths{h},'desc','medialwallAtlas'),...
-        ['-var var ' maskAtlasFSLRPaths{h}]);
-    fpp.wb.command('metric-label-import',fpp.bids.changeName(maskAtlasFSLRPaths{h},'desc','medialwallAtlas'),...
-        [anatPreprocDir '/desc-medialwall_lut.txt'],parcFSLRPaths{h}{end});
+    maskAtlasFsLRPaths{h} = [anatPreprocDir '/hemi-' Hemis{h} '_space-fsLR_den-32k_desc-cortexAtlas_mask.shape.gii'];
+    parcFsLRPaths{h}{1} = fpp.bids.changeName(maskAtlasFsLRPaths{h},'desc','medialwallAtlas','dseg','.label.gii');
+    fpp.wb.command('metric-math',[],'1 - var',fpp.bids.changeName(maskAtlasFsLRPaths{h},'desc','medialwallAtlas'),...
+        ['-var var ' maskAtlasFsLRPaths{h}]);
+    fpp.wb.command('metric-label-import',fpp.bids.changeName(maskAtlasFsLRPaths{h},'desc','medialwallAtlas'),...
+        [anatPreprocDir '/desc-medialwall_lut.txt'],parcFsLRPaths{h}{end});
 end
 
 
@@ -517,8 +517,8 @@ for s=1:length(spaces)
     end
     for p=1:length(parcs)
         if strcmp(parcs{p},'medialwallAtlas') && strcmp(spaces{s},'fsLR')   % No subject label for medialwallAtlas file in fsLR space
-            inputPathL = parcFSLRPaths{1}{1};
-            inputPathR = parcFSLRPaths{2}{1};
+            inputPathL = parcFsLRPaths{1}{1};
+            inputPathR = parcFsLRPaths{2}{1};
         else
             inputPathL = fpp.bids.changeName(parcPaths{1}{p},{'space','den'},{spaces{s},densities{s}});
             inputPathR = fpp.bids.changeName(inputPathL,'hemi','R');
