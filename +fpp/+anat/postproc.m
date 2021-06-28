@@ -772,6 +772,7 @@ for v=1:length(volumePaths)
     end
     fpp.fsl.moveImage(inputPath,standardPathFuncResBrain,outputPath,...
         [dataDir '/eye.mat'],'interp',interpStr,'isLabel',isLabel(v));
+    fpp.bids.jsonChangeValue(outputPath,'SpatialRef',fpp.bids.removeBidsDir(volumePaths{1}));
 end
 % Erode downsampled wm and csf masks by 1 voxel
 maskNames = {'wm','csf'};
