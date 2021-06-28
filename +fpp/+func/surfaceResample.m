@@ -123,6 +123,7 @@ if ~isempty(warp) && isempty(referenceNonlinPath)
 elseif isempty(warp) && ~isempty(referenceNonlinPath)
     error('If referenceNonlinPath is specified, warp (registration warp.nii.gz file) must also be specified.');
 end
+if ~iscell(mapNames), mapNames = {mapNames}; end
 
 % Load fsLR sphere files, if needed
 regFsLR = 0;
