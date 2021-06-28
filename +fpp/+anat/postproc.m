@@ -809,8 +809,8 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if ashsExists
     fprintf('%s\n',['Step 12.5, Resample ASHS seg to surface        - ' subjID]);
-    ashsCiftiPath = fpp.bids.changeName(ashsPath,'den','native',[],'.dlabel.nii');
-    ashsCiftiFsLRPath = fpp.bids.changeName(ashsPath,'den','32k',[],'.dlabel.nii');
+    ashsCiftiPath = fpp.bids.changeName(ashsPath,{'res','den'},{funcResolution,'native'},[],'.dlabel.nii');
+    ashsCiftiFsLRPath = fpp.bids.changeName(ashsPath,{'res','den'},{funcResolution,'32k'},[],'.dlabel.nii');
     for h=1:2
         inputSurfacePaths{h} = {midthickPaths{h},fpp.bids.changeName(midthickPaths{h},[],[],'white'),...
             fpp.bids.changeName(midthickPaths{h},[],[],'pial')};
