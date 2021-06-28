@@ -68,12 +68,8 @@
 function surfaceResample(inputNiftiPath,inputSurfacePaths,surfaceROIPaths,outputCiftiPath,varargin)
 
 % TO ADD:
-% - Deal with volume sampling for data resampled to fsLR. Option to
-%       downsample data to 2mm, or nonlinear registration to MNI.
-% - Option to exclude local CoefVar outliers from 4D data (a la HCP pipeline)?
+% - Option to exclude local CoefVar outliers from 4D data (like HCP pipeline)?
 % - Related: input cortical GM ROI option
-% - Resample subcortical to CIFTI properly. Need to modify labels of input
-%       segmentation.
 
 % Constants
 hemis = {'L','R'};
@@ -83,6 +79,9 @@ structures = {'CORTEX_LEFT','CORTEX_RIGHT'};
 [fppFuncDir,~,~]		= fileparts(mfilename('fullpath'));			% path to the directory containing this script
 tmp = dir([fppFuncDir '/../../data']);
 dataDir = tmp(1).folder;
+
+% Define wrapper function for fpp.bids.removeBidsDir (for cellfun functionality)
+removeBidsDir = @(x) fpp.bids.removeBidsDir(x);
 
 % Variable arguments
 isLabel = 0;
@@ -278,6 +277,13 @@ if fwhm>0
     fpp.wb.command('cifti-smoothing',outputCiftiPath,[num2str(sigmaSm) ' '...
         num2str(sigmaSm) ' COLUMN'],outputCiftiSmPath,['-left-surface '...
         outputMidthickPaths{1} ' -right-surface ' outputMidthickPaths{2}]);
+end
+
+% Modify json metadata
+if exist(fpp.bids.jsonPath(outputCiftiPath))
+    fpp.bids.jsonChangeValue(outputCiftiPath,'Sources',cellfun(removeBidsDir,...
+        [inputNiftiPath inputSurfacePaths{1}{1} inputSurfacePaths{2}{1} surfaceROIPaths...
+        sphereRegFsLRPaths  midthickFsLRPaths],'UniformOutput',false));
 end
 
 % Delete temporary paths
