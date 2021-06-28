@@ -184,7 +184,7 @@ if isLabel  % For labels, re-import label table text file to resampled output
 end
 
 % Convert to low-res individual space, if necessary
-tmpNiftiPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
+tmpNiftiVolumePath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
     [inputDesc 'tmpSurfaceResample21093520813502SubSmp']) '.nii.gz'];
 if ~isempty(referenceFuncResPath)
     if isempty(premat)
