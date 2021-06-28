@@ -89,7 +89,9 @@ if iscell(statPath)
     statAvg = 1;
     statPaths = statPath;
     [statDir,statName,~] = fpp.util.fileParts(statPaths{1});
-    statPath = [statDir '/' statName '_tmpDefineROI2098315310985' inputExt];
+    statDesc = fpp.bids.checkNameValue(statName,'desc');
+    statPath = [statDir '/' fpp.bids.changeName(statName,'desc',[statDesc...
+        'tmpDefineROI2098315310985']) inputExt];
     nStats = length(statPaths);
     
     % Average maps using wb_command volume-math/cifti-math

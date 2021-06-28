@@ -9,6 +9,7 @@
 function label2ROI(parcPath,parcInds,outputPath)
 
 [outputDir,outputName,~] = fpp.util.fileParts(outputPath);
+outputDesc = fpp.bids.checkNameValue(outputName,'desc');
 if isempty(outputDir)
     outputDir = pwd;
 end
@@ -26,7 +27,8 @@ flagText = '';
 
 % Generate ROIs for each specified label.
 for i=1:length(parcInds)
-    tmpPath{i} = [outputDir '/' outputName '_tmpLabel2ROI' int2str(i) '_20398511243890' inputExt];
+    tmpPath{i} = [outputDir '/' fpp.bids.changeName(outputName,'desc',[outputDesc...
+        'tmpLabel2ROI' int2str(i) '20398511243890']) inputExt];
     if strcmp(inputType,'volume')
         % Use fslmaths in case input isn't formatted as a Connectome Workbench label volume
         fpp.fsl.maths(parcPath,['-uthr ' int2str(parcInds(i)) ' -thr ' int2str(parcInds(i)) ' -bin'],tmpPath{i});

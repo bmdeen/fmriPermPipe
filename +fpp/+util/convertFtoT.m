@@ -37,4 +37,9 @@ fpp.util.system(['fslmaths ' fileRoot '-posTVals.nii.gz -sub ' fileRoot '-negTVa
 fpp.util.system(['rm -rf ' fileRoot '-posVals.nii.gz ' fileRoot '-negVals.nii.gz ' ...
     fileRoot '-posTVals.nii.gz ' fileRoot '-negTVals.nii.gz']);
 
+% Write output json metadata
+if ~isempty(fpp.bids.getMetadata(fMapPath))
+    fpp.bids.jsonReconstruct(fMapPath,outputPath);
+end
+
 end
