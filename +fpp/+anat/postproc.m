@@ -205,7 +205,7 @@ subcortSegIndivPath = fpp.bids.changeName(wmPath,'desc','subcortical');
 tmpMaskPath = fpp.bids.changeName(wmPath,'desc','tmpAnatPostproc105134514318');
 fpp.fsl.maths(wmPath,[' -uthr 100 -mul ' fpp.bids.changeName(roiPath,'desc','gm')],subcortSegIndivPath);    % Subcortex only
 fpp.fsl.maths(subcortSegIndivPath,'-bin',tmpMaskPath);
-fpp.fsl.maths(subcortSegIndivPath,'-uthr 85 -thr 85 -bin -mul -2 -add ',tmpMaskPath);                         % Remove optic chiasm
+fpp.fsl.maths(subcortSegIndivPath,['-uthr 85 -thr 85 -bin -mul -2 -add ' tmpMaskPath],tmpMaskPath);                         % Remove optic chiasm
 fpp.fsl.maths(subcortSegIndivPath,['-uthr 30 -thr 30 -bin -mul -2 -add ' tmpMaskPath],tmpMaskPath);     % Remove left vessel
 fpp.fsl.maths(subcortSegIndivPath,['-uthr 62 -thr 62 -bin -mul -2 -add ' tmpMaskPath],tmpMaskPath);     % Remove right vessel
 fpp.fsl.maths(subcortSegIndivPath,['-mul ' tmpMaskPath ' -thr 0'],subcortSegIndivPath);
