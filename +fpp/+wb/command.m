@@ -251,6 +251,7 @@ if ~isempty(inputPath)
                     end
                 end
             end
+            rawSources = unique(rawSources);
             if ~isempty(rawSources)
                 fpp.bids.jsonChangeValue(outputPath{i},'RawSources',rawSources);
             end
