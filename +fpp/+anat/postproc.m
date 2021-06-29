@@ -832,7 +832,7 @@ if ashsExists
         {[],'individual','native'},'brain','.spec');
     fpp.wb.command('add-to-spec-file',specPath,'INVALID',ashsCiftiPath);
     specPath = fpp.bids.changeName(midthickPaths{1},{'hemi','space','den'},...
-        {[],'fsLR','native'},'brain','.spec');
+        {[],'individual','32k'},'brain','.spec');
     fpp.wb.command('add-to-spec-file',specPath,'INVALID',ashsCiftiFsLRPath);
 end
 
