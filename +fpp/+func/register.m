@@ -168,6 +168,7 @@ end
 ashsPath = fpp.bids.changeName(inputT1Path,'desc','ashs','dseg','.nii.gz');
 if exist(ashsPath,'file')
     fprintf('%s\n',['Step 2.5, Move ASHS parc to func space            - ' subjID]);
+    hemis = {'L','R'};
     ashsFuncPath = fpp.bids.changeName(funcTemplatePath,{'desc','echo'},{'ashs',[]},'dseg','.nii.gz');
     individual2CoronalXfm = fpp.bids.changeName(individual2FsnativeXfm,{'from','to'},{'individual','nativeCoronal'});
     func2CoronalXfm = fpp.bids.changeName(individual2FsnativeXfm,{'from','to'},{funcTemplateSpace,'nativeCoronal'});
