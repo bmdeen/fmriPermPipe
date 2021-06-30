@@ -163,11 +163,11 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% STEP 3: Move ASHS parcellation from nativeCoronal to func template
+%%% STEP 2.5: Move ASHS parcellation from nativeCoronal to func template
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ashsPath = fpp.bids.changeName(inputT1Path,'desc','ashs','dseg','.nii.gz');
 if exist(ashsPath,'file')
-    fprintf('%s\n',['Step 3, Move ASHS parc to func space            - ' subjID]);
+    fprintf('%s\n',['Step 2.5, Move ASHS parc to func space            - ' subjID]);
     ashsFuncPath = fpp.bids.changeName(funcTemplatePath,{'desc','echo'},{'ashs',[]},'dseg','.nii.gz');
     individual2CoronalXfm = fpp.bids.changeName(individual2FsnativeXfm,{'from','to'},{'individual','nativeCoronal'});
     func2CoronalXfm = fpp.bids.changeName(individual2FsnativeXfm,{'from','to'},{funcTemplateSpace,'nativeCoronal'});
