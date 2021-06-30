@@ -60,7 +60,6 @@ anatResolution = fpp.bids.checkNameValue(preprocT2Path,'res');
 coronal2IndividualXfm = fpp.bids.changeName(preprocT2Path,{'desc','space','res','from','to','mode'},...
     {[],[],[],'nativeCoronal','individual','image'},'xfm','.mat');
 individual2CoronalXfm = fpp.bids.changeName(coronal2IndividualXfm,{'from','to'},{'individual','nativeCoronal'});
-individual2CoronalXfmITK = fpp.bids.changeName(individual2CoronalXfm,'desc','ITKFormat');
 preprocT2InCoronalPath = fpp.bids.changeName(preprocT2Path,{'space','res'},{'nativeCoronal',''});
 preprocT1Path = fpp.bids.changeName(preprocT2Path,[],[],'T1w');
 preprocT1InCoronalPath = fpp.bids.changeName(preprocT1Path,{'space','res'},{'nativeCoronal',''});
