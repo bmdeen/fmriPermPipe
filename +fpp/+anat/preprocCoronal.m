@@ -74,7 +74,8 @@ end
 % Copy raw data/metadata, convert to .nii.gz if necessary
 for i=1:length(inputCoronalPaths)
     [~,inputCoronalNames{i},~] = fpp.util.fileParts(inputCoronalPaths{i});
-    outputCoronalPaths{i} = [anatPreprocDir '/' fpp.bids.changeName(inputCoronalNames{i},'acq','HighResCoronal','T2w','.nii.gz')];
+    outputCoronalPaths{i} = [anatPreprocDir '/' fpp.bids.changeName(inputCoronalNames{i},...
+        'acq','HighResCoronal','T2w','.nii.gz')];
     fpp.util.copyImageAndJson(inputCoronalPaths{i},outputCoronalPaths{i},'mri');
     fpp.bids.jsonChangeValue(outputCoronalPaths{i},{'Description','RawSources'},...
         {'Raw data copied to derivative directory.',fpp.bids.removeBidsDir(inputCoronalPaths{i})});
@@ -122,7 +123,7 @@ end
 fprintf('%s\n',['Step 2, Register to individual space           - ' inputNameGeneric]);
 fpp.fsl.flirt(outputCoronalPath,preprocT2Path,coronal2IndividualXfm,[],'dof',6);   % Initial FLIRT-based xfm
 fpp.fsl.invertXfm(coronal2IndividualXfm,individual2CoronalXfm);
-fpp.fsl.moveImage(preprocT2Path,outputCoronalPath,preprocT2InCoronalPath,individual2CoronalXfm,'interp','sinc');
+% fpp.fsl.moveImage(preprocT2Path,outputCoronalPath,preprocT2InCoronalPath,individual2CoronalXfm,'interp','sinc');
 fpp.fsl.moveImage(preprocT1Path,outputCoronalPath,preprocT1InCoronalPath,individual2CoronalXfm,'interp','sinc');
 fpp.bids.jsonChangeValue(preprocT2InCoronalPath,'Description','Raw data, averaged, in NativeCoronal space.');
 fpp.bids.jsonChangeValue(preprocT1InCoronalPath,'Description','Raw data, averaged, in NativeCoronal space.');
