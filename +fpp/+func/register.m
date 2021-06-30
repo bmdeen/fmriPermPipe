@@ -154,7 +154,8 @@ end
 parcs = {'wmparc','aparcaseg','aparc09aseg','MMP','RSN','Gordon'};
 for p=1:length(parcs)
     parcPath = fpp.bids.changeName(inputT1Path,'desc',parcs{p},'dseg','.nii.gz');
-    parcPathFunc = fpp.bids.changeName(funcTemplatePath,{'desc','echo'},{parcs{p},[]},'dseg','.nii.gz');
+    parcPathFunc = [anatPreprocDir '/'  fpp.bids.changeName(funcTemplateName,...
+        {'desc','echo'},{parcs{p},[]},'dseg','.nii.gz')];
     if exist(parcPath,'file') && (~exist(parcPathFunc,'file') || overwrite)
         fpp.fsl.moveImage(parcPath,funcTemplatePath,parcPathFunc,individual2FuncXfm,'interp','nn');
     end
@@ -169,7 +170,8 @@ ashsPath = fpp.bids.changeName(inputT1Path,'desc','ashs','dseg','.nii.gz');
 if exist(ashsPath,'file')
     fprintf('%s\n',['Step 2.5, Move ASHS parc to func space            - ' subjID]);
     hemis = {'L','R'};
-    ashsFuncPath = fpp.bids.changeName(funcTemplatePath,{'desc','echo'},{'ashs',[]},'dseg','.nii.gz');
+    ashsFuncPath = [anatPreprocDir '/' fpp.bids.changeName(funcTemplateName,...
+        {'desc','echo'},{'ashs',[]},'dseg','.nii.gz')];
     individual2CoronalXfm = fpp.bids.changeName(individual2FsnativeXfm,{'from','to'},{'individual','nativeCoronal'});
     func2CoronalXfm = fpp.bids.changeName(individual2FsnativeXfm,{'from','to'},{funcTemplateSpace,'nativeCoronal'});
     coronal2FuncXfm = fpp.bids.changeName(individual2FsnativeXfm,{'from','to'},{'nativeCoronal',funcTemplateSpace});
