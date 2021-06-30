@@ -65,7 +65,8 @@ funcRes = fpp.bids.checkNameValue(funcTemplateName,'res');
 anatRes = fpp.bids.checkNameValue(inputT1Path,'res');
 
 % Check if output exists.
-finalOutputPath = fpp.bids.changeName(funcTemplatePath,{'desc','echo'},{'brain',[]},'mask','.nii.gz');
+finalOutputPath = [anatPreprocDir '/' fpp.bids.changeName(funcTemplateName,...
+    {'desc','echo'},{'brain',[]},'mask','.nii.gz')];
 if exist(finalOutputPath,'file') && ~overwrite
     return;
 end
