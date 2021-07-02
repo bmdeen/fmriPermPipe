@@ -19,6 +19,10 @@
 
 function register(subjID,funcTemplatePath,inputT1Path,fsSubDir,varargin)
 
+% NOTE: Script currently assumes (for the sake of determining the name of
+% ASHS segmentation) that coronal image names don't have any BIDS key-value
+% pairs beyond T1 image names other than acq.
+
 % Check system configuration
 fpp.util.checkConfig;
 
@@ -167,7 +171,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% STEP 2.5: Move ASHS parcellation from nativeCoronal to func template
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ashsPath = fpp.bids.changeName(inputT1Path,'desc','ashs','dseg','.nii.gz');
+ashsPath = fpp.bids.changeName(inputT1Path,{'space','res','desc'},{'nativeCoronal','','ashs'},'dseg','.nii.gz');
 if exist(ashsPath,'file')
     fprintf('%s\n',['Step 2.5, Move ASHS parc to func space            - ' subjID]);
     hemis = {'L','R'};
