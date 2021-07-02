@@ -67,7 +67,7 @@ if useTedana
     fpp.util.system(['mv ' outputDir '/t2svG.nii.gz ' strrep(outputPathTedana,'_bold.nii.gz','_T2star.nii.gz')]);
     fpp.util.system(['mv ' outputDir '/s0vG.nii.gz ' strrep(outputPathTedana,'_bold.nii.gz','_S0map.nii.gz')]);
     fpp.util.system(['mv ' outputDir '/dn_ts_OC.nii.gz ' outputPath]);
-    fpp.util.system(['mv ' outputDir '/ts_OC.nii.gz ' fpp.bids.changeName(outputPathTedana,'desc','midprep4optcomb')]);
+    fpp.util.system(['mv ' outputDir '/ts_OC.nii.gz ' fpp.bids.changeName(outputPath,'desc','midprep4optcomb')]);
     fpp.util.system(['mv ' outputDir '/figures ' outputDirTedana '/figures']);
     fpp.util.system(['mv ' outputDir '/tedana_report.html ' fpp.bids.changeName(outputPathTedana,'desc','tedanaICA','report','.html')]);
     
