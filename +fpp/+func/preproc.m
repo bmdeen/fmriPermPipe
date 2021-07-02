@@ -243,7 +243,7 @@ else
         error('funcTemplateSpace must be specified when funcTemplatePath lacks a BIDS space entity.')
     end
 end
-[~,funcTemplateName,~] = fpp.bids.fileParts(funcTemplatePath);
+[~,funcTemplateName,~] = fpp.util.fileParts(funcTemplatePath);
 
 if ~exist(funcTemplatePath,'file')
     error(['Functional template image ' funcTemplatePath ' does not exist. Run fpp.func.defineTemplate.']);
