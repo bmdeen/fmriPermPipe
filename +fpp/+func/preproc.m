@@ -282,16 +282,16 @@ end
 
 % Define brain mask and segment paths
 maskPath = [anatPreprocDir '/' fpp.bids.changeName(templateName,{'desc','echo'},{'brain',[]},'mask','.nii.gz')];
-gmPath = [anatPreprocDir '/' fpp.bids.changeName(templatePath,{'desc','echo'},{'gm',[]},'mask','.nii.gz')];
-wmPath = [anatPreprocDir '/' fpp.bids.changeName(templatePath,{'desc','echo'},{'wm',[]},'mask','.nii.gz')];
-csfPath = [anatPreprocDir '/' fpp.bids.changeName(templatePath,{'desc','echo'},{'csf',[]},'mask','.nii.gz')];
-wmEroPath = [anatPreprocDir '/' fpp.bids.changeName(templatePath,{'desc','echo'},{'wmero1',[]},'mask','.nii.gz')];
-csfEroPath = [anatPreprocDir '/' fpp.bids.changeName(templatePath,{'desc','echo'},{'csfero1',[]},'mask','.nii.gz')];
+gmPath = [anatPreprocDir '/' fpp.bids.changeName(templateName,{'desc','echo'},{'gm',[]},'mask','.nii.gz')];
+wmPath = [anatPreprocDir '/' fpp.bids.changeName(templateName,{'desc','echo'},{'wm',[]},'mask','.nii.gz')];
+csfPath = [anatPreprocDir '/' fpp.bids.changeName(templateName,{'desc','echo'},{'csf',[]},'mask','.nii.gz')];
+wmEroPath = [anatPreprocDir '/' fpp.bids.changeName(templateName,{'desc','echo'},{'wmero1',[]},'mask','.nii.gz')];
+csfEroPath = [anatPreprocDir '/' fpp.bids.changeName(templateName,{'desc','echo'},{'csfero1',[]},'mask','.nii.gz')];
 if ~exist(maskPath,'file')
     error(['Brain mask ' maskPath ' does not exist. Run fpp.func.register.']);
 end
 
-% Define generic labels for input/output images
+% Define generic labels for input/output imagesName
 inputNameGeneric = strrep(fpp.bids.changeName(inputName,'echo',[]),'_bold','');
 outputNameGeneric = strrep(fpp.bids.changeName(inputName,{'echo','space'},{[],templateSpace}),'_bold','');
 
