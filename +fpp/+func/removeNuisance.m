@@ -13,6 +13,9 @@
 % - confoundPath (string): path to confound TSV file
 % - confoundNames (cell array of strings): names of signals in confound TSV
 %       to remove
+% - outputDescription: new value for JSON Description field
+% - appendDescription (boolean): whether to append outputDescription
+%       to existing description
 % - outlierPath (string): path to outlier TSV file
 % - disdaqPath (string): path to text file with disdaq volume indices
 % - disdaqs (numeric vector): disdaq indices; overrides disdaqPath
@@ -36,6 +39,8 @@ overwrite = 0;           % Whether to overwrite output
 maskPath = [];           % Path to brain mask
 confoundPath = fpp.bids.changeName(inputPath,'desc',[],'confounds','.tsv'); % Path to confound TSV file
 confoundNames = {};
+outputDescription = '';
+appendDescription = 0;
 
 % Variable arguments: volumes to remove
 outlierPath = fpp.bids.changeName(inputPath,{'space','desc'},{[],[]},'outliers','.tsv'); % Path to outlier TSV file
@@ -116,5 +121,18 @@ funcMat = funcMat';
 
 % Write output
 fpp.util.writeDataMatrix(funcMat,hdr,outputPath,maskData.vol);
+
+% Reconstruct json metadata
+if ~isempty(fpp.bids.getMetadata(inputPath))
+    if ~strcmp(inputPath,outputPath)
+        fpp.bids.jsonReconstruct(inputPath,outputPath);
+    end
+    if ~isempty(outputDescription)
+        fpp.bids.jsonChangeValue(outputJsonPath,'Description',outputDescription,appendDescription);
+    end
+    if ~strcmp(inputPath,outputPath)
+        fpp.bids.jsonChangeValue(outputPath,'Sources',fpp.bids.removeBidsDir(inputPath));
+    end
+end
 
 end
