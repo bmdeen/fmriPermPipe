@@ -24,7 +24,7 @@ end
 
 % Define output path if it doesn't exist
 if ~exist('outputPath','var') || isempty(outputPath)
-    outputPath = [inputDir '/' fpp.bids.changeName(inputPath,[],[],'tsnr',outputExt)];
+    outputPath = fpp.bids.changeName(inputPath,[],[],'tsnr',outputExt);
 end
 [outputDir,~,~] = fpp.util.fileParts(outputPath);
 if isempty(outputDir), outputDir = pwd; end
