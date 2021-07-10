@@ -50,7 +50,8 @@ removeBadVols = 1;          % Whether to remove artifact time points before comp
                             % Should be used if bad volumes are being censored at analysis step
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
-varArgList = {'overwrite','confoundPath','confoundNames','outlierPath','disdaqPath','disdaqs','removeBadVols','maskPath'};
+varArgList = {'overwrite','confoundPath','confoundNames','outlierPath','disdaqPath',...
+    'disdaqs','removeBadVols','maskPath','outputDescription','appendDescription'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
