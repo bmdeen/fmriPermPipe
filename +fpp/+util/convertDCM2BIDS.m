@@ -202,10 +202,10 @@ for i=1:length(scanlog.series)
         for e=1:length(meFiles)
             values{end} = int2str(e);
             inputNiftiPath = [niixDir '/' meFiles(e).name];
-            inputJsonPath = strrep(inputNiftiPath,'.nii.gz','.json');
+            inputJsonPath = fpp.bids.jsonPath(inputNiftiPath);
             outputNiftiPath = [outputSubDir '/' fpp.bids.changeName('',keys,values,imageType,'.nii.gz')];
             outputNiftiPathsRelative{i,e} = strrep(outputNiftiPath,[outputDir '/'],'');
-            outputJsonPath = strrep(outputNiftiPath,'.nii.gz','.json');
+            outputJsonPath = fpp.bids.jsonPath(outputNiftiPath);
             if ~exist(outputNiftiPath,'file') || overwrite
                 fpp.util.system(['cp ' inputNiftiPath ' ' outputNiftiPath]);
                 fpp.util.system(['cp ' inputJsonPath ' ' outputJsonPath]);
@@ -229,10 +229,10 @@ for i=1:length(scanlog.series)
         else
             inputNiftiPath = [niixDir '/' int2str(scanlog.series(i)) '.nii.gz'];
         end
-        inputJsonPath = strrep(inputNiftiPath,'.nii.gz','.json');
+        inputJsonPath = fpp.bids.jsonPath(inputNiftiPath);
         outputNiftiPath = [outputSubDir '/' fpp.bids.changeName('',keys,values,imageType,'.nii.gz')];
         outputNiftiPathsRelative{i,1} = strrep(outputNiftiPath,[outputDir '/'],'');
-        outputJsonPath = strrep(outputNiftiPath,'.nii.gz','.json');
+        outputJsonPath = fpp.bids.jsonPath(outputNiftiPath);
         if ~exist(outputNiftiPath,'file') || overwrite
             fpp.util.system(['cp ' inputNiftiPath ' ' outputNiftiPath]);
             fpp.util.system(['cp ' inputJsonPath ' ' outputJsonPath]);
