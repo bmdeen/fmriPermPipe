@@ -498,7 +498,8 @@ pathsToDelete = [pathsToDelete outputPaths];
 maskNonZeroPath = fpp.bids.changeName(outputPaths{1},{'echo','desc'},{[],'brainNonZero'},'mask');
 fpp.fsl.maths(outputPaths{end},['-Tmin -bin -mul ' maskPath],maskNonZeroPath);
 fpp.bids.jsonReconstruct(outputPaths{end},maskNonZeroPath,'mri');
-fpp.bids.jsonChangeValue(maskNonZeroPath,{'Sources','Type','Description','SkullStripped'},{{outputPaths{1},maskPath},...
+fpp.bids.jsonChangeValue(maskNonZeroPath,{'Sources','Type','Description','SkullStripped'},...
+    {{fpp.bids.removeBidsDir(outputPaths{1}),fpp.bids.removeBidsDir(maskPath)},...
     'Brain','Brain mask intersected with mask of nonzero voxels from this task/run.',[]});
 
 
