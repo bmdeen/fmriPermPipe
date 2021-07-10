@@ -193,10 +193,10 @@ if ~isempty(referenceFuncResPath)
         premat = [dataDir '/eye.mat'];  % Use identity matrix if converting from high-res to low-res individual
     end
     fpp.fsl.moveImage(inputNiftiPath,referenceFuncResPath,tmpNiftiVolumePath,...
-        premat,'interp',interpStr,'isLabel',1);
+        premat,'interp',interpStr,'isLabel',isLabel);
 elseif ~isempty(referenceNonlinPath) && ~isempty(warp)
     fpp.fsl.moveImage(inputNiftiPath,referenceNonlinPath,tmpNiftiVolumePath,...
-        premat,'interp',interpStr,'warp',warp,'isLabel',1);
+        premat,'interp',interpStr,'warp',warp,'isLabel',isLabel);
 else
     tmpNiftiVolumePath = tmpNiftiPath;
 end
