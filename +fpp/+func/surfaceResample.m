@@ -36,17 +36,19 @@
 %       This is default for 3D images; func is default for 4D.
 % - subcortSegPath (string): path to subcortical segmentation label image,
 %       in individual or standard space. If specified, CIFTI will include
-%       subcortical volumetric in addition to surface data.
+%       subcortical volumetric in addition to surface data. Should be in
+%       space/resolution of output volumetric data (referencePath,
+%       referenceFuncResPath, or referenceNonlinPath).
 % - premat (string): FSL-style linear transformation to apply to volumetric
 %       data before surface sampling. Should be used if data are not in
 %       individual space.
+% - outputNiftiPath (string): path to volumetric output image.
 % - referencePath (string): path to reference image in individual space,
 %       target of premat registration. Required if premat is specified.
 % - referenceFuncResPath (string): Low resolution individual space image.
 %       Volumetric data will be downsampled to this space, while surface
 %       data will be resampled directly from the high-resolution reference.
 %       Mutually exclusive with referencePathNonlinPath.
-% - outputNiftiPath (string): path to volumetric output image.
 % - warp (string): path to warp file specifying transformation from
 %       individual to standard image
 % - referenceNonlinPath (string): path to standard image to warp to.
