@@ -129,7 +129,7 @@ if ~isempty(fpp.bids.getMetadata(inputPath))
         fpp.bids.jsonReconstruct(inputPath,outputPath);
     end
     if ~isempty(outputDescription)
-        fpp.bids.jsonChangeValue(outputJsonPath,'Description',outputDescription,appendDescription);
+        fpp.bids.jsonChangeValue(outputPath,'Description',outputDescription,appendDescription);
     end
     if ~strcmp(inputPath,outputPath)
         fpp.bids.jsonChangeValue(outputPath,'Sources',fpp.bids.removeBidsDir(inputPath));
