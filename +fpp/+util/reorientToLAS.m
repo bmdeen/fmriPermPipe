@@ -53,12 +53,12 @@ else
 end
 fpp.util.system(['rm -rf ' tmpDir]);
 
-% Convert orientation of accompanying JSON file if it exist
-inputJsonPath = strrep(inputPath,inputExt,'.json');
-if exist(inputJsonPath,'file')
-    outputJsonPath = strrep(outputPath,outputExt,'.json');
-    fpp.util.system(['cp ' inputJsonPath ' ' outputJsonPath]);
-    fpp.bids.jsonReorient(outputJsonPath,inputOrientation,'LAS')
+% Convert orientation of accompanying JSON metadata if it exists
+if ~isempty(fpp.bids.getMetadata(inputPath))
+    if ~strcmp(inputPath,outputPath)
+        fpp.bids.jsonReconstruct(inputPath,outputPath);
+    end
+    fpp.bids.jsonReorient(outputPath,inputOrientation,'LAS');
 end
 
 end
