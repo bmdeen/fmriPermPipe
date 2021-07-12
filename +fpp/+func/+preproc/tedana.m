@@ -76,8 +76,8 @@ if useTedana
     fpp.bids.jsonChangeValue(outputPath,{'Description','Sources','EchoTime','EchoNumber'},...
         {outputDescription,cellfun(removeBidsDir,inputPaths,'UniformOutput',false),teVals/1000,[]});
     % Define non-denoised json file
-    fpp.bids.jsonReconstruct(inputPaths{1},fpp.bids.changeName(outputPathTedana,'desc','midprep4optcomb'),'midprepfmri');
-    fpp.bids.jsonChangeValue(fpp.bids.changeName(outputPathTedana,'desc','midprep4optcomb'),{'Sources','EchoTime','EchoNumber'},...
+    fpp.bids.jsonReconstruct(inputPaths{1},fpp.bids.changeName(outputPath,'desc','midprep4optcomb'),'midprepfmri');
+    fpp.bids.jsonChangeValue(fpp.bids.changeName(outputPath,'desc','midprep4optcomb'),{'Sources','EchoTime','EchoNumber'},...
         {cellfun(removeBidsDir,inputPaths,'UniformOutput',false),teVals/1000,[]});
     
     % Rename component analysis results outputs
