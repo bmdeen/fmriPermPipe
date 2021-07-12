@@ -88,7 +88,7 @@ removeBidsDir = @(x) fpp.bids.removeBidsDir(x);
 
 % Variable arguments
 isLabel = 0;
-isShape = 1;
+isShape = 0;
 subcortSegPath = [];
 premat = [];
 maskPath = [];
@@ -152,7 +152,7 @@ end
 giftiType = 'shape';
 dims = fpp.util.checkMRIProperty('dims',inputNiftiPath);
 tr = fpp.util.checkMRIProperty('tr',inputNiftiPath);
-if length(dims)>3 && ~isempty(tr) && ~isShape
+if length(dims)>3 && ~isShape
     giftiType = 'func';
 end
 if isLabel
