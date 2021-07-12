@@ -42,6 +42,8 @@
 % - premat (string): FSL-style linear transformation to apply to volumetric
 %       data before surface sampling. Should be used if data are not in
 %       individual space.
+% - maskPath (string): path to brain or gray matter mask in input space.
+%       This mask will be used as a volumetric ROI for surface resampling.
 % - outputNiftiPath (string): path to volumetric output image.
 % - referencePath (string): path to reference image in individual space,
 %       target of premat registration. Required if premat is specified.
@@ -71,7 +73,6 @@ function surfaceResample(inputNiftiPath,inputSurfacePaths,surfaceROIPaths,output
 
 % TO ADD:
 % - Option to exclude local CoefVar outliers from 4D data (like HCP pipeline)?
-% - Related: input cortical GM ROI option
 
 % Constants
 hemis = {'L','R'};
@@ -90,6 +91,7 @@ isLabel = 0;
 isShape = 1;
 subcortSegPath = [];
 premat = [];
+maskPath = [];
 referencePath = [];
 fwhm = 0;
 surfDilation = 0;
@@ -106,7 +108,7 @@ mapNames = {};
 varArgList = {'subcortSegPath','premat','referencePath','fwhm','isLabel',...
     'surfDilation','volDilation','outputNiftiPath','sphereRegFsLRPaths',...
     'midthickFsLRPaths','referenceFuncResPath','warp','referenceNonlinPath',...
-    'mapNames','isShape'};
+    'mapNames','isShape','maskPath'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
@@ -170,13 +172,21 @@ if contains(inputNiftiPath,{'tstat.nii','zstat.nii'}) && ~isLabel, isStat = 1; e
 inputDesc = fpp.bids.checkNameValue(inputName,'desc');
 tmpNiftiPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
     [inputDesc 'tmpSurfaceResample21093520813502']) '.nii.gz'];
+tmpMaskPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
+    [inputDesc 'tmpSurfaceResampleMask21093520813502']) '.nii.gz'];
 if ~isempty(premat)
     fpp.fsl.moveImage(inputNiftiPath,referencePath,tmpNiftiPath,premat,'interp',interpStr);
     if ~isempty(outputNiftiPath) && isempty(referenceFuncResPath) && isempty(referenceNonlinPath)
         fpp.util.copyImageAndJson(tmpNiftiPath,outputNiftiPath);
     end
+    if ~isempty(maskPath)
+        fpp.fsl.moveImage(maskPath,referencePath,tmpMaskPath,premat,'interp','nn');
+    end
 else
     fpp.util.copyImageAndJson(inputNiftiPath,tmpNiftiPath);
+    if ~isempty(maskPath)
+        fpp.util.copyImageAndJson(maskPath,tmpMaskPath);
+    end
 end
 if isLabel  % For labels, re-import label table text file to resampled output
     tmpLUTPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
@@ -210,12 +220,17 @@ end
 for h=1:2
     tmpGiftiPaths{h} = [outputDir '/' fpp.bids.changeName(inputName,{'desc','hemi'},...
         {[inputDesc 'tmpSurfaceResample21093520813502'],hemis{h}}) '.' giftiType '.gii'];
+    if ~isempty(maskPath)
+        volROIStr = [' -volume-roi ' tmpMaskPath];
+    else 
+        volROIStr = '';
+    end
     if isLabel
         fpp.wb.command('volume-label-to-surface-mapping',tmpNiftiPath,inputSurfacePaths{h}{1},tmpGiftiPaths{h},...
-            ['-ribbon-constrained ' inputSurfacePaths{h}{2} ' ' inputSurfacePaths{h}{3}]);
+            ['-ribbon-constrained ' inputSurfacePaths{h}{2} ' ' inputSurfacePaths{h}{3} volROIStr]);
     else
         fpp.wb.command('volume-to-surface-mapping',tmpNiftiPath,inputSurfacePaths{h}{1},tmpGiftiPaths{h},...
-            ['-ribbon-constrained ' inputSurfacePaths{h}{2} ' ' inputSurfacePaths{h}{3}]);
+            ['-ribbon-constrained ' inputSurfacePaths{h}{2} ' ' inputSurfacePaths{h}{3} volROIStr]);
     end
     fpp.wb.command('set-structure',tmpGiftiPaths{h},structures{h});
 end
@@ -296,5 +311,8 @@ end
 fpp.util.deleteImageAndJson(tmpNiftiPath);
 for h=1:2, fpp.util.deleteImageAndJson(tmpGiftiPaths{h}); end
 if isLabel && exist(tmpLUTPath), fpp.util.system(['rm -rf ' tmpLUTPath]); end
+if ~isempty(maskPath)
+    fpp.util.deleteImageAndJson(tmpMaskPath);
+end
 
 end
