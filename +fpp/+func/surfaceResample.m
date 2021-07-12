@@ -309,10 +309,9 @@ end
 
 % Delete temporary paths
 fpp.util.deleteImageAndJson(tmpNiftiPath);
+fpp.util.deleteImageAndJson(tmpNiftiVolumePath);
+fpp.util.deleteImageAndJson(tmpMaskPath);
 for h=1:2, fpp.util.deleteImageAndJson(tmpGiftiPaths{h}); end
 if isLabel && exist(tmpLUTPath), fpp.util.system(['rm -rf ' tmpLUTPath]); end
-if ~isempty(maskPath)
-    fpp.util.deleteImageAndJson(tmpMaskPath);
-end
 
 end
