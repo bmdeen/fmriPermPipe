@@ -33,7 +33,8 @@ if ismember(lower(argName),lower({'expt','inputSuffix','outputSuffix','funcTempl
         'analysisDir','fieldMapParamPath','topupWarpPath','topupJacobianPath','spinEchoPath',...
         'filtType','templateType','templateRes','anatTemplatePath','parcPath','sizeType',...
         'templateSpace','referencePath','subcortSegPath','outputNiftiPath','roiDesc',...
-        'referenceFuncResPath','referenceNonlinPath','mapNames','outputDescription'}))
+        'referenceFuncResPath','referenceNonlinPath','mapNames','outputDescription',...
+        'tedPCA'}))
     if ischar(argVal)
         argGood = 1;
     else
@@ -101,10 +102,18 @@ elseif ismember(lower(argName),lower({'echoesToUse'}))
     
 % Vector of integers in (0,Inf)
 elseif ismember(lower(argName),lower({'runList','conList','outlierInd','parcInds'}))
-    if isnumeric(argVal) && isvector(argVal) && sum(mod(argVal,1)==0)==length(argVal) && sum(argVal==0)==0
+    if isnumeric(argVal) && isvector(argVal) && sum(mod(argVal,1)==0)==length(argVal) && sum(argVal<=0)==0
         argGood = 1;
     else
         errorMsg = ['Argument ' argName ' must be a vector of integers > 0.'];
+    end
+    
+% Vector of integers in [0,Inf)
+elseif ismember(lower(argName),lower({'manAcc'}))
+    if isnumeric(argVal) && isvector(argVal) && sum(mod(argVal,1)==0)==length(argVal) && sum(argVal<0)==0
+        argGood = 1;
+    else
+        errorMsg = ['Argument ' argName ' must be a vector of integers >= 0.'];
     end
     
 % Vector of boolean values

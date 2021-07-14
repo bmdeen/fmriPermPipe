@@ -14,10 +14,16 @@
 %   - useTedana (boolean): whether to use tedana or just t2smap
 %   - teVals (vector of values in (0,Inf)): TE values (ms) for multi-echo 
 %       data (default: read from json)
+%
+% Variable arguments:
+% - tedPCA (string): tedpca input, determines method for PCA comp
+%       selection. Options: mdl, kic, aic (more to less aggressive)
+% - manAcc (vector of integers in [0,Inf)): components to manually accept,
+%       if re-running
 
-function tedana(inputPaths,outputPath,maskPath,outputDescription,useTedana,teVals)
+function tedana(inputPaths,outputPath,maskPath,outputDescription,useTedana,teVals,varargin)
 
-% Handle optional variable
+% Process optional arguments
 if ~exist('useTedana','var') || isempty(useTedana)
     useTedana = 1;
 end
@@ -26,6 +32,19 @@ if ~exist('outputDescription','var')
 end
 if ~exist('teVals','var') || isempty(teVals)
     teVals = fpp.util.checkMRIProperty('TE',inputPaths{1});
+end
+
+% Variable arguments
+tedPCA = 'mdl';                 % tedpca input, method to select components. Options: mdl, kic, aic
+manAcc = [];                    % Components to manually accept, if rerunning.
+
+% Edit variable arguments.  Note: optInputs checks for proper input.
+varArgList = {'tedPCA','manAcc'};
+for i=1:length(varArgList)
+    argVal = fpp.util.optInputs(varargin,varArgList{i});
+    if ~isempty(argVal)
+        eval([varArgList{i} ' = argVal;']);
+    end
 end
 
 % Check output directory, add _bold.nii.gz if missing
@@ -56,7 +75,14 @@ if useTedana
     
     % Run tedana
     fpp.util.system(['tedana -d ' inputPathStr{1} ' -e ' sprintf('%f ',teVals) ' --out-dir ' ...
-        outputDir ' --mask ' maskPath ' --verbose']);
+        outputDir ' --mask ' maskPath ' --verbose --tedpca ' tedPCA]);
+    
+    % Rerun tedana with manually accepted components, if specified
+    if ~isempty(manAcc)
+        fpp.util.system(['tedana -d ' inputPathStr{1} ' -e ' sprintf('%f ',teVals) ' --out-dir ' ...
+            outputDir ' --mask ' maskPath ' --verbose --mix ' outputDir '/ica_mixing.tsv '...
+            '--ctab ' outputDir '/ica_decomposition.json --manacc ' int2str(manAcc)]);
+    end
     
     % Create output directory
     outputDirTedana = strrep(fpp.bids.changeName(outputPath,{'desc'},{[]}),'_bold.nii.gz','_tedana');
