@@ -77,17 +77,19 @@ if useTedana
     fpp.util.system(['tedana -d ' inputPathStr{1} ' -e ' sprintf('%f ',teVals) ' --out-dir ' ...
         outputDir ' --mask ' maskPath ' --verbose --tedpca ' tedPCA]);
     
-    % Rerun tedana with manually accepted components, if specified
-    if ~isempty(manAcc)
-        fpp.util.system(['tedana -d ' inputPathStr{1} ' -e ' sprintf('%f ',teVals) ' --out-dir ' ...
-            outputDir ' --mask ' maskPath ' --verbose --mix ' outputDir '/ica_mixing.tsv '...
-            '--ctab ' outputDir '/ica_decomposition.json --manacc ' int2str(manAcc)]);
-    end
-    
     % Create output directory
     outputDirTedana = strrep(fpp.bids.changeName(outputPath,{'desc'},{[]}),'_bold.nii.gz','_tedana');
     fpp.util.system(['mkdir ' outputDirTedana]);
     outputPathTedana = [outputDirTedana '/' outputName outputExt];
+    
+    % Rerun tedana with manually accepted components, if specified
+    if ~isempty(manAcc)
+        fpp.util.system(['mv ' outputDir '/tedana_report.html ' fpp.bids.changeName(outputPathTedana,...
+            'desc','tedanaICAFirstPass','report','.html')]);
+        fpp.util.system(['tedana -d ' inputPathStr{1} ' -e ' sprintf('%f ',teVals) ' --out-dir ' ...
+            outputDir ' --mask ' maskPath ' --verbose --mix ' outputDir '/ica_mixing.tsv '...
+            '--ctab ' outputDir '/ica_decomposition.json --manacc ' int2str(manAcc)]);
+    end
     
     % Rename main outputs
     fpp.util.system(['mv ' outputDir '/t2svG.nii.gz ' strrep(outputPathTedana,'_bold.nii.gz','_T2star.nii.gz')]);
