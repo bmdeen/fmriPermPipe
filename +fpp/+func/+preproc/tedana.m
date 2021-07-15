@@ -107,7 +107,12 @@ if useTedana
         {cellfun(removeBidsDir,inputPaths,'UniformOutput',false),teVals/1000,[]});
     
     % Rename component analysis results outputs
-    fpp.util.system(['mv ' outputDir '/tedana_*.tsv ' fpp.bids.changeName(outputPathTedana,'desc','tedanaICA','log','.tsv')]);
+    logFiles = dir([outputDir '/tedana_*.tsv']);    % If manacc was specified, two log files will exist
+    if length(logFiles)==1, logNames = {'tedanaICA'};
+    else logNames = {'tedanaICAFirstPass','tedanaICA'}; end
+    for f=1:min(length(logFiles),2)
+        fpp.util.system(['mv ' outputDir '/' logFiles(f).name ' ' fpp.bids.changeName(outputPathTedana,'desc',logNames{f},'log','.tsv')]);
+    end
     fpp.util.system(['mv ' outputDir '/betas_OC.nii.gz ' fpp.bids.changeName(outputPathTedana,'desc','tedanaICA','betas')]);
     if exist([outputDir '/feats_OC2.nii.gz'],'file')
         fpp.util.system(['mv ' outputDir '/feats_OC2.nii.gz ' fpp.bids.changeName(outputPathTedana,'desc','tedanaICAzscore','components')]);
