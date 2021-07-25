@@ -526,6 +526,9 @@ if useTedana
     steps{2} = steps{1};
     steps{1}(end+1:end+2) = {'brain masking (Freesurfer-based)','multi-echo ICA denoising (tedana)'};
     steps{2}(end+1:end+2) = {'brain masking (Freesurfer-based)','optimal multi-echo combination (tedana''s t2smap)'};  % For optcomb output
+    if ~isempty(manAcc)
+        steps{1}{end} = 'multi-echo ICA denoising (tedana), with manual reclassification';
+    end
     inputPaths = outputPaths;
     outputPathsNew{1} = fpp.bids.changeName(inputPaths{1},{'echo','desc'},{[],'midprep4tedana'});
     outputPathsNew{2} = fpp.bids.changeName(outputPathsNew{1},'desc','midprep4optcomb');
