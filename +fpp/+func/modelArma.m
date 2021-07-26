@@ -261,7 +261,7 @@ nuisRegrMat = bsxfun(@minus,nuisRegrMat,mean(nuisRegrMat));
 
 % Define and create output directory
 if isempty(analysisDir)
-    analysisDir = [inputDir '/../analysis'];
+    analysisDir = strrep(inputDir,'/func','/analysis'); % Note: using inputDir/../analysis doesn't work for AFNI
 end
 outputDir = [analysisDir '/' outputName];
 outputAfniDir = [outputDir '/afni'];
@@ -393,7 +393,7 @@ if ~isempty(maskPath)
 end
 
 % Run 3dREMLfit
-disp(['Running 3dREMLfit - ' outputName]);
+disp(['Running 3dREMLfit    - ' outputName]);
 fpp.util.system(cmd);
 
 
