@@ -382,7 +382,7 @@ fpp.util.system(cmd);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 designPath = [designPrefix '.xmat.1D'];
-remlPrefix = [outputAfniDir '/' outputPrefix '_reml'];
+remlPrefix = [outputAfniDir '/' outputPrefix '_remlbuck'];
 remlVarPrefix = [outputAfniDir '/' outputPrefix '_remlvar'];
 cmd = ['3dREMLfit -matrix ' designPath ' -input ' inputPath...
     ' -tout -noFDR -nobout -Rbuck ' remlPrefix ' -Rvar ' remlVarPrefix];
@@ -409,8 +409,10 @@ remlVarPath = [remlVarPrefix '.nii.gz'];
 % Convert REMLfit outputs to .nii.gz
 fpp.util.system(['3dAFNItoNIFTI ' remlPrefix '+orig.BRIK']);
 fpp.fs.mriConvert(remlPath(1:end-3),remlPath);
+fpp.util.system(['rm -rf ' remlPath(1:end-3)]);
 fpp.util.system(['3dAFNItoNIFTI ' remlVarPrefix '+orig.BRIK']);
 fpp.fs.mriConvert(remlVarPath(1:end-3),remlVarPath);
+fpp.util.system(['rm -rf ' remlVarPath(1:end-3)]);
 % Move remlvar file to outputDir
 remlVarNewPath = [outputDir '/' outputPrefix '_remlvar.nii.gz'];
 fpp.util.system(['mv ' remlVarPath ' ' remlVarNewPath]);
@@ -439,8 +441,8 @@ for con=1:nContrasts
     outputZStatPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
         [outputSuffix contrastNames{con}],'zstat',outputExt)];
     
-    fpp.util.system(['fslroi ' remlPath ' ' outputConPath ' ' int2str(nRegrs+1+(con-1)*2) ' 1']);
-    fpp.util.system(['fslroi ' remlPath ' ' outputTStatPath ' ' int2str(nRegrs+con*2) ' 1']);
+    fpp.util.system(['fslroi ' remlPath ' ' outputConPath ' ' int2str(2*nRegrs+1+(con-1)*2) ' 1']);
+    fpp.util.system(['fslroi ' remlPath ' ' outputTStatPath ' ' int2str(2*nRegrs+con*2) ' 1']);
     fpp.fsl.maths(outputConPath,['-div ' outputTStatPath],outputConStdDevPath);
     fpp.fsl.maths(outputConStdDevPath,'-sqr',outputConVarPath);
     fpp.util.system(['rm -rf ' outputConStdDevPath]);
@@ -460,7 +462,7 @@ outputErrorVarPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputS
 fpp.util.system(['fslroi ' remlVarPath ' ' outputErrorStdDevPath ' 3 1']);
 fpp.fsl.maths(outputErrorStdDevPath,'-sqr',outputErrorVarPath);
 fpp.util.system(['rm -rf ' outputErrorStdDevPath]);
-    
+
 % Autocorrelation
 outputACPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'autocorrelation',outputExt)];
 fpp.util.system(['fslroi ' remlVarPath ' ' outputErrorStdDevPath ' 2 1']);
