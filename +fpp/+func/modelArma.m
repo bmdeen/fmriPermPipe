@@ -274,6 +274,8 @@ if exist(outputDir,'dir')
     end
 end
 mkdir(outputAfniDir);
+curDir = pwd;
+cd(outputAfniDir);
 outputMat = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'RegressionData','.mat')];
 
 % Write full confound TSV file
@@ -476,5 +478,6 @@ end
 
 % Delete AFNI directory
 if deleteAfni, fpp.util.system(['rm -rf ' outputAfniDir]); end
+cd(curDir);
 
 end
