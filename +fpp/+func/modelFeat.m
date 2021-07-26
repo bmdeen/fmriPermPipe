@@ -9,7 +9,7 @@
 %   '/pathToData/sub-01_task-faceloc_run-01_events.tsv','/pathToData/task-faceloc_contrastmatrix.tsv')
 %
 % Arguments:
-%   - inputPath (string): path to input preprocessed data (NIFTI/CIFTI)
+%   - inputPath (string): path to input preprocessed data (NIFTI)
 %   - eventsPath (string): path to events.tsv file
 %   - contrastMatrixPath (string): path to contrastmatrix.tsv file.
 %
@@ -65,6 +65,9 @@
 
 function modelFeat(inputPath,eventsPath,contrastMatrixPath,varargin)
 
+% TO ADD
+% - CIFTI functionality!!
+
 % Check system configuration
 fpp.util.checkConfig;
 
@@ -111,7 +114,7 @@ writeResiduals = 0;         % Whether to write 4-D residual image
 varArgList = {'overwrite','outputSuffix','permuteRest','tempFilt','filtCutoff',...
     'filtOrder','hrfType','upsampledTR','writeResiduals','permIters','plotResults',...
     'randSeed','condNames','confoundPath','confoundNames','confoundFilt','outlierPath',...
-    'contrastNames','filtType','analysisDir','useTedana'};
+    'contrastNames','filtType','analysisDir','useTedana','deleteFeat'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
@@ -141,12 +144,14 @@ outputName = fpp.bids.changeName(inputName,'desc',outputSuffix,'modelfeat','');
 numVols = fpp.util.checkMRIProperty('vols',inputPath);
 tr = fpp.util.checkMRIProperty('tr',inputPath);
 totalVoxels = prod(fpp.util.checkMRIProperty('dims',inputPath));
-exptDuration = tr*numVols;
 if mod(tr/2,upsampledTR)~=0
     error(['TR/2 must be a multiple of upsampledTR - ' outputName]);
 end
-if ~ismember(lower(inputExt),{'.nii.gz','.nii','.dtseries.nii'})
-    error(['inputPath must be a NIFTI or CIFTI dtseries file - ' outputName]);
+% if ~ismember(lower(inputExt),{'.nii.gz','.nii','.dtseries.nii'})
+%     error(['inputPath must be a NIFTI or CIFTI dtseries file - ' outputName]);
+% end
+if ~ismember(lower(inputExt),{'.nii.gz','.nii'})
+    error(['inputPath must be a NIFTI file - ' outputName]);
 end
 isCifti = 0;
 if strcmpi(inputExt,'.dtseries.nii')
@@ -200,7 +205,7 @@ else
     contrastInd = 1:length(contrastNames);
 end
 for c=1:nConds
-    contrastMat(:,end+1) = eval(['contrastData.Coef' int2str(c) '(contrastInd)']);
+    contrastMat(:,end+1) = contrastData.(['Coef' int2str(c)])(contrastInd);
 end
 nContrasts = size(contrastMat,1);
 
