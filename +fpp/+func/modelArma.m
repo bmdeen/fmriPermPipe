@@ -457,7 +457,7 @@ fprintf(fid,'%d',dof);
 fclose(fid);
 
 % Error variance
-outputErrorStdDevPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'errorvariance',outputExt)];
+outputErrorStdDevPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'errorstddev',outputExt)];
 outputErrorVarPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'errorvariance',outputExt)];
 fpp.util.system(['fslroi ' remlVarPath ' ' outputErrorStdDevPath ' 3 1']);
 fpp.fsl.maths(outputErrorStdDevPath,'-sqr',outputErrorVarPath);
@@ -465,7 +465,7 @@ fpp.util.system(['rm -rf ' outputErrorStdDevPath]);
 
 % Autocorrelation
 outputACPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'autocorrelation',outputExt)];
-fpp.util.system(['fslroi ' remlVarPath ' ' outputErrorStdDevPath ' 2 1']);
+fpp.util.system(['fslroi ' remlVarPath ' ' outputACPath ' 2 1']);
 
 % Residuals
 if writeResiduals
