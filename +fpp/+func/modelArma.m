@@ -1,6 +1,6 @@
 
 % fpp.func.modelArma(inputPath,eventsPath,contrastMatrixPath,varargin)
-%
+% 
 % Step 1 of a two-step process (modelArma, model2nd) to perform a
 % General Linear Model based analysis of fMRI data using AFNI's 3dREMLfit,
 % modeling autocorrelation with an ARMA(1,1) model. Should be run after
@@ -13,12 +13,12 @@
 %   - inputPath (string): path to input preprocessed data (NIFTI/CIFTI)
 %   - eventsPath (string): path to events.tsv file
 %   - contrastMatrixPath (string): path to contrastmatrix.tsv file.
-%
+% 
 % Example contrastmatrix.tsv file:
 %   Name    Coef1   Coef2
 %   FacesVsObjects  1   -1
 %   ObjectsVsFaces  -1  1
-%
+% 
 % Variable arguments:
 %   - overwrite (boolean; default=0): whether to overwrite files that have
 %       already been written by this function.
@@ -54,8 +54,8 @@
 %       modelarma dir
 %   - plotResults (boolean; default=0): whether to display result plots
 %   - writeResiduals (boolean; default=0): whether to output GLM residuals
-%
-%
+% 
+% 
 % Critical outputs:
 % - contrast: contrast ("contrast of parameter estimate") images
 % - beta: parameter estimate (beta) images
@@ -356,7 +356,7 @@ end
 cmd = [cmd regrStr];
 
 % Define contrast info string for 3dDeconvolve command
-conStr = [' -num_glt ' nContrasts];
+conStr = [' -num_glt ' int2str(nContrasts)];
 for con=1:nContrasts
     conStr = [conStr ' -gltsym ''SYM:'];
     for c=1:nConds
