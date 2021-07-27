@@ -29,7 +29,7 @@ if isCifti
 else
     hdr = fpp.util.mriRead(inputPath);
     dims = size(hdr.vol);
-    if length(dims)==3
+    if length(dims)<=3
         dataMat = hdr.vol(:);
     else
         dataMat = reshape(hdr.vol,[prod(dims(1:3)) dims(4)]);
