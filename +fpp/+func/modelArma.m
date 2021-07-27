@@ -492,8 +492,8 @@ if writeResiduals
     fpp.util.system(['mv ' residPath ' ' outputResidPath]);
     
     % Convert NIFTI to CIFTI
-    outputCiftiPath = fpp.bids.changeName(residPath,[],[],[],'.dscalar.nii');
-    fpp.wb.command('cifti-convert',[],[],[],['-from-nifti ' residPath ' '...
+    outputCiftiPath = fpp.bids.changeName(outputResidPath,[],[],[],'.dscalar.nii');
+    fpp.wb.command('cifti-convert',[],[],[],['-from-nifti ' outputResidPath ' '...
         inputPathOrig ' ' outputCiftiPath]);
 end
 
