@@ -23,6 +23,7 @@
 %   - overwrite (boolean; default=0): whether to overwrite files that have
 %       already been written by this function.
 %   - maskPath (string): path to brain mask image to use for analysis
+%       (NIFTI only)
 %   - outputSuffix (string): suffix for output directory. Can be used to
 %       run the script multiple times with different options.
 %   - analysisDir (string): analysis output dir will be written in this dir
@@ -145,7 +146,6 @@ outputName = fpp.bids.changeName(inputName,'desc',outputSuffix,'modelarma','');
 outputPrefix = strrep(outputName,'_modelarma','');
 numVols = fpp.util.checkMRIProperty('vols',inputPath);
 tr = fpp.util.checkMRIProperty('tr',inputPath);
-totalVoxels = prod(fpp.util.checkMRIProperty('dims',inputPath));
 if mod(tr/2,upsampledTR)~=0
     error(['TR/2 must be a multiple of upsampledTR - ' outputName]);
 end
@@ -155,15 +155,7 @@ end
 isCifti = 0;
 if strcmpi(inputExt,'.dtseries.nii')
     isCifti = 1;
-end
-if isCifti
-    outputExt = '.dscalar.nii';
-    outputExtSeries = '.dtseries.nii';
-    imageType = 'cifti';
-else
-    outputExt = '.nii.gz';
-    outputExtSeries = '.nii.gz';
-    imageType = 'volume';
+    maskPath = '';
 end
 
 % Define event timing and condition names
@@ -247,13 +239,15 @@ inputDesc = fpp.bids.checkNameValue(inputName,'desc');
 if useTedana && sum(regexpi(inputDesc,'NoTedana'))==0
     tedanaTSVPath = [inputDir '/' fpp.bids.changeName(inputName,'desc','','tedana','')...
         '/' fpp.bids.changeName(inputName,'desc','tedanaICARejected','mixing','.tsv')];
-    tedana = bids.util.tsvread(tedanaTSVPath);
-    tedanaNames = fieldnames(tedana)';
-    for i=1:length(tedanaNames)
-        confound.(tedanaNames{i}) = tedana.(tedanaNames{i});
-        nuisRegrMat(:,end+1) = tedana.(tedanaNames{i});
+    if exist(tedanaTSVPath,'file')
+        tedana = bids.util.tsvread(tedanaTSVPath);
+        tedanaNames = fieldnames(tedana)';
+        for i=1:length(tedanaNames)
+            confound.(tedanaNames{i}) = tedana.(tedanaNames{i});
+            nuisRegrMat(:,end+1) = tedana.(tedanaNames{i});
+        end
+        regrNames = [regrNames,tedanaNames];
     end
-    regrNames = [regrNames,tedanaNames];
 end
 
 % Demean nuisance regressors, after adding tedana regressors
@@ -277,6 +271,13 @@ mkdir(outputAfniDir);
 curDir = pwd;
 cd(outputAfniDir);
 outputMat = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'RegressionData','.mat')];
+
+% Convert CIFTI to NIFTI for subsequent processing
+if isCifti
+    inputPathOrig = inputPath;
+    inputPath = [outputDir '/' inputName '.nii.gz'];
+    fpp.wb.command('cifti-convert',[],[],[],['-to-nifti ' inputPathOrig ' ' inputPath]);
+end
 
 % Write full confound TSV file
 confoundOutputPath = [outputDir '/' fpp.bids.changeName(outputName,'desc',...
@@ -347,7 +348,8 @@ save(outputMat,'regressors3Col','X','condNames','tr','inputPath',...
 
 % 3dDeconvolve command
 designPrefix = [outputAfniDir '/' outputPrefix '_design'];
-cmd = ['3dDeconvolve -input ' inputPath ' -x1D_stop -polort 0 -bucket ' designPrefix];
+cmd = ['3dDeconvolve -nodata ' int2str(numVols) ' ' int2str(tr)...
+    ' -x1D_stop -polort 0 -bucket ' designPrefix];
 
 % Define regressor info string for 3dDeconvolve command
 regrStr = [' -num_stimts ' int2str(nRegrs)];
@@ -406,40 +408,50 @@ fpp.util.system(cmd);
 remlPath = [remlPrefix '.nii.gz'];
 remlVarPath = [remlVarPrefix '.nii.gz'];
 
-% Convert REMLfit outputs to .nii.gz
-fpp.util.system(['3dAFNItoNIFTI ' remlPrefix '+orig.BRIK']);
+% Determine AFNI space
+afniSpaceOptions = {'orig','acpc','tlrc'};
+for i=1:length(afniSpaceOptions)
+    if exist([remlPrefix '+' afniSpaceOptions{i} '.BRIK'],'file')
+        afniSpace = afniSpaceOptions{i};
+    end
+end
+
+% Convert REMLfit outputs from AFNI to .nii.gz
+fpp.util.system(['3dAFNItoNIFTI ' remlPrefix '+' afniSpace '.BRIK']);
 fpp.fs.mriConvert(remlPath(1:end-3),remlPath);
 fpp.util.system(['rm -rf ' remlPath(1:end-3)]);
-fpp.util.system(['3dAFNItoNIFTI ' remlVarPrefix '+orig.BRIK']);
+fpp.util.system(['3dAFNItoNIFTI ' remlVarPrefix '+' afniSpace '.BRIK']);
 fpp.fs.mriConvert(remlVarPath(1:end-3),remlVarPath);
 fpp.util.system(['rm -rf ' remlVarPath(1:end-3)]);
 % Move remlvar file to outputDir
 remlVarNewPath = [outputDir '/' outputPrefix '_remlvar.nii.gz'];
 fpp.util.system(['mv ' remlVarPath ' ' remlVarNewPath]);
 remlVarPath = remlVarNewPath;
+outputMapPaths = {};
 
 for c=1:nConds
     % Beta values
     outputBetaPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
-        [outputSuffix condNames{c}],'beta',outputExt)];
+        [outputSuffix condNames{c}],'beta','.nii.gz')];
     fpp.util.system(['fslroi ' remlPath ' ' outputBetaPath ' ' int2str(1+(c-1)*2) ' 1']);
+    outputMapPaths = [outputMapPaths outputBetaPath];
 end
 for con=1:nContrasts
     % Contrast values
     outputConPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
-        [outputSuffix contrastNames{con}],'contrast',outputExt)];
+        [outputSuffix contrastNames{con}],'contrast','.nii.gz')];
     % Contrast std dev
     outputConStdDevPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
-        [outputSuffix contrastNames{con}],'contraststddev',outputExt)];
+        [outputSuffix contrastNames{con}],'contraststddev','.nii.gz')];
     % Contrast variance
     outputConVarPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
-        [outputSuffix contrastNames{con}],'contrastvariance',outputExt)];
+        [outputSuffix contrastNames{con}],'contrastvariance','.nii.gz')];
     % T-stats
     outputTStatPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
-        [outputSuffix contrastNames{con}],'tstat',outputExt)];
+        [outputSuffix contrastNames{con}],'tstat','.nii.gz')];
     % Z-stats
     outputZStatPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
-        [outputSuffix contrastNames{con}],'zstat',outputExt)];
+        [outputSuffix contrastNames{con}],'zstat','.nii.gz')];
     
     fpp.util.system(['fslroi ' remlPath ' ' outputConPath ' ' int2str(2*nRegrs+1+(con-1)*2) ' 1']);
     fpp.util.system(['fslroi ' remlPath ' ' outputTStatPath ' ' int2str(2*nRegrs+con*2) ' 1']);
@@ -447,7 +459,7 @@ for con=1:nContrasts
     fpp.fsl.maths(outputConStdDevPath,'-sqr',outputConVarPath);
     fpp.util.system(['rm -rf ' outputConStdDevPath]);
     fpp.util.convertTtoZ(outputTStatPath,outputZStatPath,dof);
-    
+    outputMapPaths = [outputMapPaths outputConPath outputConVarPath outputTStatPath outputZStatPath];
 end
 
 % DoF
@@ -457,29 +469,73 @@ fprintf(fid,'%d',dof);
 fclose(fid);
 
 % Error variance
-outputErrorStdDevPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'errorstddev',outputExt)];
-outputErrorVarPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'errorvariance',outputExt)];
+outputErrorStdDevPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'errorstddev','.nii.gz')];
+outputErrorVarPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'errorvariance','.nii.gz')];
 fpp.util.system(['fslroi ' remlVarPath ' ' outputErrorStdDevPath ' 3 1']);
 fpp.fsl.maths(outputErrorStdDevPath,'-sqr',outputErrorVarPath);
 fpp.util.system(['rm -rf ' outputErrorStdDevPath]);
+outputMapPaths = [outputMapPaths outputErrorVarPath];
 
 % Autocorrelation
-outputACPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'autocorrelation',outputExt)];
+outputACPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'autocorrelation','.nii.gz')];
 fpp.util.system(['fslroi ' remlVarPath ' ' outputACPath ' 2 1']);
+outputMapPaths = [outputMapPaths outputACPath];
 
 % Residuals
 if writeResiduals
     residPath = [residPrefix '.nii.gz'];
     outputResidPath = [outputDir '/' fpp.bids.changeName(inputName,...
-        'desc',[outputSuffix 'Residuals'],'bold',outputExt)];
-    fpp.util.system(['3dAFNItoNIFTI ' residPrefix '+orig.BRIK ' residPath(1:end-3)]);
+        'desc',[outputSuffix 'Residuals'],'bold','.nii.gz')];
+    fpp.util.system(['3dAFNItoNIFTI ' residPrefix '+' afniSpace '.BRIK ' residPath(1:end-3)]);
     fpp.fs.mriConvert(residPath(1:end-3),residPath);
     fpp.util.system(['rm -rf ' residPath(1:end-3)]);
     fpp.util.system(['mv ' residPath ' ' outputResidPath]);
+    
+    % Convert NIFTI to CIFTI
+    outputCiftiPath = fpp.bids.changeName(residPath,[],[],[],'.dscalar.nii');
+    fpp.wb.command('cifti-convert',[],[],[],['-from-nifti ' residPath ' '...
+        inputPathOrig ' ' outputCiftiPath]);
+end
+
+% Design matrix
+fpp.util.system(['mv ' designPath ' ' outputDir '/' outputPrefix '_design.xmat.1D']);
+
+% Convert NIFTI to CIFTI
+if isCifti
+    % Generate mean func CIFTI dscalar file - template for output stat CIFTIs
+    inputMeanPath = fpp.bids.changeName(inputPath,'desc','tmpAfniMean',[],'.dscalar.nii');
+    fpp.wb.command('cifti-reduce',inputPath,'MEAN',inputMeanPath);
+    
+    % Generate multi-volume CIFTI dscalar file - template for remlvar
+    inputMeanRepeatPath = fpp.bids.changeName(inputMeanPath,'desc','tmpAfniMeanRepeat');
+    remlVarVols = fpp.util.checkMRIProperty('Vols',remlVarPath);
+    repeatCmd = '';
+    for i=1:remlVarVols
+        repeatCmd = [repeatCmd '-cifti ' inputMeanPath ' '];
+    end
+    fpp.wb.command('cifti-merge',[],[],inputMeanRepeatPath,repeatCmd);
+    
+    % Convert NIFTI to CIFTI
+    for i=1:length(outputMapPaths)
+        outputCiftiPath = fpp.bids.changeName(outputMapPaths{i},[],[],[],'.dscalar.nii');
+        fpp.wb.command('cifti-convert',[],[],[],['-from-nifti ' outputMapPaths{i}...
+            ' ' inputMeanPath ' ' outputCiftiPath]);
+        if sum(strcmp(outputCiftiPath,{'zstat.dscalar.nii','tstat.dscalar.nii'}))>0
+            fpp.wb.command('cifti-palette',outputCiftiPath,'MODE_USER_SCALE',outputCiftiPath,...
+                '-pos-user 2.5 6 -neg-user -2.5 -6 -palette-name FSL -disp-pos true');
+        end
+    end
+    outputCiftiPath = fpp.bids.changeName(remlVarPath,[],[],[],'.dscalar.nii');
+    fpp.wb.command('cifti-convert',[],[],[],['-from-nifti ' remlVarPath ' '...
+        inputMeanRepeatPath ' ' outputCiftiPath]);
+    
+    % Delete NIFTI and template CIFTI files
+    fpp.util.deleteImageAndJson({inputMeanPath,inputMeanRepeatPath});
+    fpp.util.system(['rm -rf ' outputDir '/*.nii.gz']);
 end
 
 % Delete AFNI directory
-if deleteAfni, fpp.util.system(['rm -rf ' outputAfniDir]); end
 cd(curDir);
+if deleteAfni, fpp.util.system(['rm -rf ' outputAfniDir]); end
 
 end
