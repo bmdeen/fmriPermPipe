@@ -140,6 +140,8 @@ if cmdInfo.NonstandardInput(cmdInd) && cmdInfo.NonstandardOutput(cmdInd)
                     break;
                 end
             end
+        case 'cifti-convert'
+            return; % Function currently doesn't handle json conversion for cifti-convert
     end
     inputPath = allArgs(inputInd);
     outputPath = allArgs(outputInd);

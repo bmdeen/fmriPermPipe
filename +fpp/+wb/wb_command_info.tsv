@@ -13,7 +13,7 @@ cifti-average	n/a	n/a	Cifti	0	1	0
 cifti-average-dense-roi	n/a	n/a	Cifti	0	1	0
 cifti-average-roi-correlation	n/a	n/a	Cifti	0	1	0
 cifti-change-mapping	Cifti	Direction	Cifti	0	0	0
-cifti-convert	n/a	n/a	Cifti	0	1	0
+cifti-convert	n/a	n/a	Cifti	0	1	1
 cifti-correlation	Cifti	n/a	Cifti	0	0	0
 cifti-correlation-gradient	Cifti	n/a	Cifti	0	0	0
 cifti-create-dense-from-template	Cifti	n/a	Cifti	0	1	0
