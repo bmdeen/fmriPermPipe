@@ -1,16 +1,17 @@
 %
 % propertyValue = fpp.util.checkMRIProperty(propertyName,inputPath)
 %
-% Function to check property of input MR image, using sidecar JSON file if
-% it exists, or alternative method if available. Returns null if it can't
-% find a way to check the property.
+% Function to check property of input MR image or CIFTI dtseries file,
+% using JSON metadata if it exists, or alternative method if available.
+% Returns null if it can't find a way to check the property. Only TR and
+% Vols can be checked for dtseries files.
 %
 % Arguments:
 % - propertyName (string): property to check
 %   Options:
 %   + TR - Repetition time (s)
 %   + TE - Echo time (ms), in vector form for multi-echo data
-%   + Vols - # of volumes in 4D dataset
+%   + Vols - # of volumes in 4D dataset or CIFTI dtseries
 %   + Dims - 3D or 4D image dimensions
 %   + VoxelSize - voxel sizes in each dimension (mm)
 %   + PEDir - Phase-encode direction, BIDS format (e.g. "j-")
@@ -38,6 +39,16 @@ switch lower(propertyName)
     case 'tr'
         if isfield(jsonData,'RepetitionTime')
             propertyValue = jsonData.RepetitionTime;
+        elseif strcmp(inputExt,'.dtseries.nii')
+            [~,fileInfo] = fpp.util.system(['wb_command -file-information ' inputPath]);
+            lbInd = regexp(fileInfo,'\n');
+            trInd = regexp(fileInfo,'Map Interval Step:              ');
+            trInLbInd = find(sort([lbInd trInd])==trInd);   % Index of first line break after TR line
+            tr = fileInfo(trInd+32:lbInd(trInLbInd)-1);
+%             tuInd = regexp(fileInfo,'Map Interval Units:             ');
+%             tuInLbInd = find(sort([lbInd tuInd])==tuInd);
+%             tu = fileInfo(tuInd+32:lbInd(tuInLbInd)-1);   % To check time unit. currently assuming seconds.
+            propertyValue = str2num(tr);
         else
             [~, tr] = fpp.util.system(['fslval ' inputPath ' pixdim4']);
             [~, tu] = fpp.util.system(['fslval ' inputPath ' time_units']);
@@ -120,8 +131,17 @@ switch lower(propertyName)
             propertyValue = jsonData.SliceTiming;
         end
     case 'vols'
-        [~,vols] = fpp.util.system(['fslval ' inputPath ' dim4']);
-        propertyValue = str2num(strtrim(vols));
+        if strcmp(inputExt,'.dtseries.nii')
+            [~,fileInfo] = fpp.util.system(['wb_command -file-information ' inputPath]);
+            lbInd = regexp(fileInfo,'\n');
+            volsInd = regexp(fileInfo,'Number of Maps:                 ');
+            volsInLbInd = find(sort([lbInd volsInd])==volsInd);
+            vols = fileInfo(volsInd+32:lbInd(volsInLbInd)-1);   % Index of first line break after vols line
+            propertyValue = str2num(vols);
+        else
+            [~,vols] = fpp.util.system(['fslval ' inputPath ' dim4']);
+            propertyValue = str2num(strtrim(vols));
+        end
     case 'dims'
         [~,dim1] = fpp.util.system(['fslval ' inputPath ' dim1']);
         propertyValue(1) = str2num(strtrim(dim1));
