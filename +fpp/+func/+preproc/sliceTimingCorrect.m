@@ -1,13 +1,18 @@
 
 % Function to apply slice timing correction using FSL's slicetimer.
-% Second two arguments are optional, will be read from data by default.
 %
 % [errorMsg,outputPaths] = fpp.func.preproc.sliceTimingCorrect(inputPaths,...
 %   sliceTimes,tr,outputDescShort,outputDescLong)
 %
 % Arguments:
-% - inputPaths (cell array of strings): paths to input data
-% - sliceTimes
+% - inputPaths (string or cell array of strings): paths to input data
+%
+% Optional arguments:
+% - sliceTimes (vector): slices times, in same unit as TR (default: read
+%   from json file)
+% - tr (scalar): repetition time (default: read from data)
+% - outputDescShort (string): desc field of output filename
+% - outputDescLong (string): output json Description
 
 function [errorMsg,outputPaths] = sliceTimingCorrect(inputPaths,sliceTimes,tr,outputDescShort,outputDescLong)
 
@@ -19,15 +24,18 @@ function [errorMsg,outputPaths] = sliceTimingCorrect(inputPaths,sliceTimes,tr,ou
 errorMsg = [];
 outputPaths = [];
 
+if ~iscell(inputPaths)
+    inputPaths = {inputPaths};
+end
 % Check slice timing info and TR, if not specified
-if isempty(sliceTimes)
+if ~exist('sliceTimes','var') || isempty(sliceTimes)
     sliceTimes = fpp.util.checkMRIProperty('ST',inputPaths{1});
     if isempty(sliceTimes)
         errorMsg = 'ERROR: slice timing info could not be determined.';
         return;
     end
 end
-if isempty(tr)
+if ~exist('tr','var') || isempty(tr)
     tr = fpp.util.checkMRIProperty('TR',inputPaths{1});
     if isempty(tr)
         errorMsg = 'ERROR: TR could not be determined.';
@@ -44,6 +52,7 @@ end
 
 % Write ST info to temporary text file
 [inputDir,~,~] = fpp.util.fileParts(inputPaths{1});
+if isempty(inputDir), inputDir = pwd; end
 stFilePath = [inputDir '/tmp_slice_timing_file.txt'];
 fid = fopen(stFilePath,'w+');
 fprintf(fid,'%f\n',.5-sliceTimes/tr);
