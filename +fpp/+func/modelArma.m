@@ -504,7 +504,7 @@ fpp.util.system(['mv ' designPath ' ' outputDir '/' outputPrefix '_design.xmat.1
 if isCifti
     % Generate mean func CIFTI dscalar file - template for output stat CIFTIs
     inputMeanPath = fpp.bids.changeName(inputPath,'desc','tmpAfniMean',[],'.dscalar.nii');
-    fpp.wb.command('cifti-reduce',inputPath,'MEAN',inputMeanPath);
+    fpp.wb.command('cifti-reduce',inputPathOrig,'MEAN',inputMeanPath);
     
     % Generate multi-volume CIFTI dscalar file - template for remlvar
     inputMeanRepeatPath = fpp.bids.changeName(inputMeanPath,'desc','tmpAfniMeanRepeat');
