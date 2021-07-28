@@ -3,20 +3,20 @@
 %
 % Function to extract region-of-interest responses from a given task and
 % participant, using ROIs defined by maximally responsive coordinates from
-% a specific contrast in another task (or other tasks), within a search
-% space. If the task to extract responses from is one of the tasks used to
-% define ROIs, a leave-one-run-out analysis is performed, to ensure
-% that separate data are used to define ROIs and extract responses.
+% a specific contrast in the same or other tasks, within a search space. If
+% the task to extract responses from is one of the tasks used to define
+% ROIs, a leave-one-run-out analysis is performed, to ensure that separate
+% data are used to define ROIs and extract responses.
 %
 % Arguments:
 % - extractResponseDir (string): modelperm directory for any run of the
 %       task used to extract responses.
 % - defineROIDir (string or cell array of strings): modelperm directories
 %       for any one run of the task(s) used to define ROIs. If multiple
-%       tasks are used, statCoefs must be defined to specify how they
-%       should be averaged, and the tasks must have the same number of
-%       runs. The function assumes that extractResponseDir and defineROIDir
-%       share a parent directory.
+%       tasks are used, statCoefs can be used to specify how they should be
+%       averaged, and the tasks must have the same number of runs. The
+%       function assumes that extractResponseDir and defineROIDir share a
+%       parent directory.
 % - contrastName (string or cell array of strings): name of the contrast(s)
 %       to use for ROI definition.
 % - searchPath (string): path to the search space
