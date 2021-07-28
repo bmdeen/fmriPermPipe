@@ -57,6 +57,8 @@
 %       order.
 %   - plotResults (boolean; default=0): whether to display result plots
 %   - writeResiduals (boolean; default=0): whether to output GLM residuals
+%   - deletePerms (boolean; default=0): whether to delete permuted contrast
+%       images when script finishes.
 %
 %
 % Critical outputs:
@@ -87,6 +89,7 @@ contrastNames = {};         % Contrast names
 randSeed = sum(100*clock);  % Random number generator seed
 maskPath = '';              % Path to brain mask (NIFTI/CIFTI)
 analysisDir = '';           % Base dir for analysis output directories
+deletePerms = 0;            % Whether to delete permuted contrasts
 
 % Confound file parameters
 confoundPath = fpp.bids.changeName(inputPath,'desc',[],'confounds','.tsv'); % Path to confounds.tsv file
@@ -125,7 +128,7 @@ charLimit = 100000;         % Character limit for bash commands
 varArgList = {'overwrite','outputSuffix','permuteRest','tempFilt','filtCutoff',...
     'filtOrder','hrfType','upsampledTR','writeResiduals','permIters','plotResults',...
     'randSeed','condNames','maskPath','confoundPath','confoundNames','outlierPath',...
-    'outlierInd','contrastNames','filtType','analysisDir'};
+    'outlierInd','contrastNames','filtType','analysisDir','deletePerms'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
@@ -481,7 +484,7 @@ if permIters>0
             mergeCmd = [mergeCmd ' ' concatContrastPaths{i}];
             mergeCmd2 = ['fslmerge -t ' concatContrastPaths{i} ' '];
             for j=(1+(i-1)*contrastsPerMerge):min(permIters,i*contrastsPerMerge)
-                outputContrastPathPerm = [permsDir '/' fpp.bids.changeName(outputName,'desc',...
+                outputContrastPathPerm = [permsDir '/iter' int2str(j) '/' fpp.bids.changeName(outputName,'desc',...
                     ['iter' int2str(j) outputSuffix contrastNames{c}],'contrast','.nii.gz')];
                 mergeCmd2 = [mergeCmd2 ' ' outputContrastPathPerm];
             end
@@ -498,6 +501,10 @@ if permIters>0
             ' -div ' outputContrastStdDevPath ' ' outputZStatPath]);
         
         fprintf('%s\n',[outputName ' ' contrastNames{c} ' - Computed permutation stats']);
+    end
+    
+    if deletePerms
+        fpp.util.system(['rm -rf ' permsDir]);
     end
 end
 
