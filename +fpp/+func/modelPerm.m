@@ -419,8 +419,16 @@ for iter=0:permIters
                 [outputSuffix condNames{r}],'beta',outputExt)];
             pscPath = fpp.bids.changeName(betaPath,[],[],'psc',outputExt);
             fpp.util.writeDataMatrix(betas(r,:)',hdr,betaPath,maskVol);
-            fpp.wb.command([imageType '-math'],[],'100*beta/(mean*mask)',pscPath,...
-                ['-var beta ' betaPath ' -var mean ' meanPath ' -var mask ' maskPath]);
+            if ~isempty(maskPath)
+                fpp.wb.command([imageType '-math'],[],'100*beta/(mean*mask)',pscPath,...
+                    ['-var beta ' betaPath ' -var mean ' meanPath ' -var mask ' maskPath]);
+            else
+                fpp.wb.command([imageType '-math'],[],'100*beta/mean',pscPath,...
+                    ['-var beta ' betaPath ' -var mean ' meanPath]);
+            end
+            if exist(fpp.bids.jsonPath(meanPath))   % Not yet dealing with json files for analysis outputs!
+                fpp.util.system(['rm -rf ' fpp.bids.jsonPath(meanPath)]);
+            end
         end
         
         % Contrast values
