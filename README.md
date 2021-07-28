@@ -3,7 +3,7 @@
 
 fMRIPermPipe (FPP, version 2.0.0) is a MATLAB-based pipeline for fMRI data analysis, optimized for individual subject analyses and multi-echo data, incorporating multiple neuroimaging tools: FSL, Freesurfer, AFNI, Connectome Workbench, tedana, MSM, and dcm2niix.
 
-Steps include dicom conversion, preprocessing of anatomical and fMRI data, and statistical modeling and analysis of fMRI data. Outputs conform to the [Brain Imaging Data Structure (1.4.1)](https://bids.neuroimaging.io/specification.html) specification. Anatomical preprocessing uses a [Human Connectome Project](https://www.humanconnectome.org/)-like pipeline, yielding an accurate cortical surface reconstruction and surface-based registration to the fsLR atlas. Functional preprocessing uses a simple but powerful approach, including motion parameter estimation, despiking, slice-timing correction, single-shot motion and distortion correction and linear registration to a subject-specific template, and multi-echo ICA denoising. Statistical modeling includes both nonparametric (permutation-based) and parametric (FSL's Improved Linear Model-based) methods.
+Steps include dicom conversion, preprocessing of anatomical and fMRI data, and statistical modeling and analysis of fMRI data. Outputs conform to the [Brain Imaging Data Structure (1.4.1)](https://bids.neuroimaging.io/specification.html) specification. Anatomical preprocessing uses a [Human Connectome Project](https://www.humanconnectome.org/)-like pipeline, yielding an accurate cortical surface reconstruction and surface-based registration to the fsLR atlas. Functional preprocessing uses a simple but powerful approach, including motion parameter estimation, despiking, slice-timing correction, single-shot motion and distortion correction and linear registration to a subject-specific template, and multi-echo ICA denoising. Statistical modeling includes a nonparametric, permutation-based option, as well as methods that estimate and correction for autocorrelation (FSL's FILM and AFNI's 3dREMLfit).
 
 **NOTE: These scripts are currently under active development, and will be changing frequently. A more stable version is expected by 2022. Currently in progress: wrapper scripts using BIDS naming conventions; json metadata for statistical modeling outputs; Docker container to facilitate installation**
 
@@ -27,7 +27,7 @@ Bash:
 * [Freesurfer](https://surfer.nmr.mgh.harvard.edu/) v7.1.1
 * [AFNI](https://afni.nimh.nih.gov/) v20+
 * [Connectome Workbench](https://www.humanconnectome.org/software/connectome-workbench) v1.5+
-* [tedana](https://github.com/ME-ICA/tedana) v0.0.9a1
+* [tedana](https://github.com/ME-ICA/tedana) v0.0.10
 * [MSM_HOCR](https://github.com/ecr05/MSM_HOCR)
 * [ASHS](https://www.nitrc.org/projects/ashs/) v2.0.0 (if using MTL segmentation)
 * dcm2niix, through [MRICroGL](https://www.nitrc.org/projects/mricrogl/) v1.2+
@@ -100,12 +100,14 @@ At step 2, Freesurfer's recon-all should be run via command line, using preproce
 This segment performs whole-brain and region-of-interest-based analysis of fMRI data.
 
 Permutation-based modeling:
-1. `fpp.func.modelPerm` - First-level (within-run) permutation-based analysis
-2. `fpp.func.model2ndPerm` - Second-level (cross-run, within subject) permutation-based analysis
+`fpp.func.modelPerm` - First-level (within-run) permutation-based analysis
 
-Parametric (FILM-based) modeling:
-1. `fpp.func.modelFeat` - First-level (within-run) FILM-based analysis
-2. `fpp.func.model2ndFeat` - Second-level (cross-run, within subject) FILM-based analysis
+Generalized least squares modeling:
+`fpp.func.modelFilm` - First-level (within-run) analysis using FSL's FILM
+`fpp.func.modelArma` - First-level (within-run) analysis using AFNI's 3dREMLfit
+
+Second-level (cross-run, within subject) analysis:
+`fpp.func.model2ndLevel` - Second-level analysis for any of the above first-level methods
 
 Region-of-interest analysis:
 `fpp.func.roiExtract` - Extract responses from functionally defined ROIs
@@ -227,13 +229,15 @@ Volumetric spatial smoothing is not used by default, and not recommended. If spa
 
 ### Functional analysis
 
-Two methods are provided for computing whole-brain General Linear Model-based statistics: nonparametric permutation-based analysis, and parametric analysis using FSL's Improved Linear Model.
+Several methods are provided for computing whole-brain General Linear Model-based statistics: a permutation-based analysis, as well as Generalized Least Squares-based methods, using FSL's FILM and AFNI's 3dREMLfit.
 
-In computing individual-subject fMRI time-series statistics, the issue of temporal autocorrelation must be addressed. Autocorrelation implies that individual fMRI time points are not independent measurements, violating assumptions of ordinary least squares. This can be addressed in one of two ways: 1) using nonparametric statistics that avoid any assumptions about the structure of temporal autocorrelation; 2) parametrically modeling temporal autocorrelation structure, and using this model to prewhiten linear model residuals before computing statistics. When using a parametric approach, the specific method used to model autocorrelation is also important to consider. While AR(1)-based approaches to modeling temporal autocorrelation have been found to underestimate parameter variance (Eklund et al. 2012), more robust estimation procedures used by FSL's improved linear model have been argued to yield largely unbiased variance estimates (Woolrich et al. 2001).
+In computing individual-subject fMRI time-series statistics, the issue of temporal autocorrelation must be addressed. Autocorrelation implies that individual fMRI time points are not independent measurements, violating assumptions of ordinary least squares, and introducing a difficult problem of properly estimating the variance of beta and contrast estimates. This can be addressed in one of two ways: 1) using permutation-based statistics that avoid modeling autocorrelation structure; 2) using Feasible Generalized Least Squares, in which temporal autocorrelation is estimated from the data, and then used to determine error and contrast variance. With strategy 2, the specific method used to estimate autocorrelation is a critical consideration, and the topic of some controversy in the literature (Eklund et al. 2012, 2016; Lenoski et al. 2008; Olszowy et al. 2019).
 
-FPP offers implementations of both types of statistical model: a nonparametric option (`fpp.func.modelPerm` and `fpp.func.model2ndPerm`), and a parametric option, using FSL's Improved Linear Model (`fpp.func.modelFeat` and `fpp.func.model2ndFeat`). When using the parametric option, we recommend validating the statistical modeling by checking null distributions of test statistics by evaluating models in resting-state data, with no task-driven responses.
+FPP offers three methods for statistical modeling: permutation-based (`fpp.func.modelPerm`); nonparametric GLS-based, using FSL's Improved Linear Model (FILM, `fpp.func.modelFilm`); and parametric GLS-based, using AFNI's 3dREMLfit (`fpp.func.modelArma`). FSL's method involves computing nonparametric voxelwise estimates of temporal autocorrelation, and smoothing these estimates across frequency and space (Woolrich et al. 2001). The initial paper on this method found that the resulting variance estimates were largely unbiased, but more recent work has found otherwise (Lenoski et al. 2008, Olszowy et al. 2019). AFNI's method uses a voxelwise parametric ARMA(1,1) model to estimate autocorrelation. This method has been found to outperform other commonly used GLS-based methods in accurately modeling autocorrelation (Olszowy et al. 2019).
 
-After running second-level modeling (within-subject, cross-run), correction for multiple comparisons should be implemented before evaluating whole-brain statistical maps. Multiple comparison correction is not currently built into 2nd-level modeling scripts. However, false discovery rate-based correction can be implemented using `fpp.func.analysis.fdrCorrect`.
+Whichever method is used to conduct inference, we recommend validating the results. There are two primary methods for this: assessing the whiteness of the residual frequency spectrum, for GLS-based methods (Lenoski et al. 2008, Olszowy et al. 2019), and assessing null distributions of test statistics by evaluating models in resting-state data collected with the same pulse sequence parameters (Woolrich et al. 2001, Eklund et al. 2012). Note that whether a given approach yields valid statistics may depend on data collection parameters, such as TR value.
+
+For all modeling approaches, second-level (within-subject, cross-run) analyses are performed using `fpp.func.model2ndLevel`. After this step, correction for multiple comparisons should be implemented before evaluating whole-brain statistical maps. Multiple comparison correction is not currently built into 2nd-level modeling scripts. However, false discovery rate-based correction can be implemented using `fpp.func.analysis.fdrCorrect`.
 
 **Details on permutation-based statistical inference.** `fpp.func.modelPerm` computes within-subject statistics using a permutation test. Specifically, on each iteration (of 5,000 total, by default) the order of blocks within an experiment is randomly permuted, and voxelwise contrast values are computed, in order to build a null distribution of contrast values at each voxel. As with any permutation test, this analysis relies on the assumption of exchangeability (in this case, of block orders): that under the null hypothesis of no condition differences, the distribution of the test statistic is identical regardless of block order. The best way to ensure that this criterion is satisfied is to build it into the design of the experiment by using a randomization scheme to determine block order. For more details of the logic of permutation-based fMRI analysis, see Nichols and Holmes (2001).
 
@@ -289,11 +293,16 @@ _Functional analysis: FILM modeling_
 _Brain imaging data structure_
 * Gorgolewski KJ, Auer T, Calhoun VD, Craddock RC, Das S, Duff EP, Flandin G, Ghosh SS, Glatard T, Halchenko YO, Handwerker DA (2016) The brain imaging data structure, a format for organizing and describing outputs of neuroimaging experiments. Scientific Data 3(1):1-9. doi: 10.1038/sdata.2016.44
 
+_AFNI Tools_
+* Cox RW (1996) AFNI: software for analysis and visualization of functional magnetic resonance neuroimages. Comput Biomed Res 29(3): 162-173. doi:10.1006/cbmr.1996.0014
+
 _Additional References_
 * Coalson TS, Van Essen DC, Glasser MF (2018) The impact of traditional neuroimaging methods on the spatial localization of cortical areas. PNAS 115(27): E6356-65. doi: 10.1073/pnas.1801582115
 * Eklund A, Andersson M, Josephson C, Johannesson M, Knutsson H (2012) Does parametric fMRI analysis with SPM yield valid results?—An empirical study of 1484 rest datasets. NeuroImage 61(3): 565-78. doi: 10.1016/j.neuroimage.2012.03.093
 * Eklund A, Nichols TE, Knutsson H (2016) Cluster failure: Why fMRI inferences for spatial extent have inflated false-positive rates. PNAS 13(28):7900-5. doi: 10.1073/pnas.1602413113
+* Lenoski B, Baxter LC, Karm LJ, Maisog J, Debbins J (2008) On the performance of autocorrelation estimation algorithms for fMRI analysis. IEEE J Selected Topics in Signal Proc 2(6): 828-838. doi: 10.1109/JSTSP.2008.2007819
 * Nichols TE, Holmes AP (2002) Nonparametric permutation tests for functional neuroimaging: a primer with examples. Human Brain Mapping 15(1): 1-25. doi: 10.1002/hbm.1058
+* Olszowy W, Aston J, Rua C, Willians GB (2019) Accurate autocorrelation modeling substantially improves fMRI reliability. Nature Communications 10: 1220. doi: 10.1038/s41467-019-09230-w
 * Parker DB, Razlighi QR (2019) The benefit of slice timing correction in common fMRI preprocessing pipelines. Frontiers in Neuroscience 13:821. doi: 10.3389/fnins.2019.00821
 * Power JD, Plitt M, Kundu P, Bandettini PA, Martin A (2017) Temporal interpolation alters motion in fMRI scans: Magnitudes and consequences for artifact detection. PLOS One 12(9): e0182939. doi: 10.1371/journal.pone.0182939
 * Power JD, Plitt M, Gotts SJ, Kundu P, Voon V, Bandettini PA, Martin A (2018) Ridding fMRI data of motion-related influences: Removal of signals with distinct spatial and physical bases in multiecho data. PNAS 115(9): E2105-14. doi: 10.1073/pnas.1720985115
@@ -305,6 +314,15 @@ _Additional References_
 Version 1 (2012-2016): early version of pipeline, with more basic preprocessing and analysis functionality.
 
 Version 2 (2019-current): updated version, incorporating optimized fMRI preprocessing, HCP-like anatomical pipeline, and BIDS compatibility.
+
+### Version 2 updates
+
+Version 2.0.1:
+* Bug fixes for fMRI preprocessing and analysis scripts
+* Added CIFTI functionality to fMRI analysis scripts
+* Added modelArma for first-level modeling based on AFNI's 3dREMLfit
+* Upgrade software versions: Connectome Workbench v1.5, tedana v0.0.10
+* Added automatic medial temporal lobe segmentation using ASHS
 
 
 
