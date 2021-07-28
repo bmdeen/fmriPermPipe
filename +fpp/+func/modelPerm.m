@@ -1,13 +1,11 @@
 
 % fpp.func.modelPerm(inputPath,eventsPath,contrastMatrixPath,varargin)
 %
-% Step 1 of a two-step process (modelPerm, model2ndPerm) to perform a
+% Step 1 of a two-step process (modelPerm, model2ndLevel) to perform a
 % General Linear Model based analysis of fMRI data, computing statistics
 % using a permutation test.  Step 1 performs voxelwise time series 
 % regressions within runs, for a large number of permuted block orderings.
-% Note that this step on its own does not output permutation-based 
-% statistics, which is done by fpp.func.model2ndPerm, combining results
-% across runs. Should be run after fpp.func.preproc.
+% Should be run after fpp.func.preproc.
 % 
 % Example usage: modelPerm('/pathToData/sub-01_task-faceloc_run-01_space-individual_desc-preproc_bold.nii.gz',...
 %   '/pathToData/sub-01_task-faceloc_run-01_events.tsv','/pathToData/task-faceloc_contrastmatrix.tsv')
@@ -64,10 +62,10 @@
 % Critical outputs:
 % - contrast: contrast ("contrast of parameter estimate") images
 % - beta: parameter estimate (beta) images
+% - zstat: z-statistic images
 % - desc-OLS_zstat: z-statistics computed based on ordinary least squares.
 %   These are not valid statistics, due to the presence of temporal
-%   autocorrelation, but can give a rough sense of where effects are
-%   located.
+%   autocorrelation.
 % - desc-Regressors_image.png: image showing regressor time series
 % - desc-RegressorCorrelations_image.png: image showing correlations
 %   between regressors
@@ -114,6 +112,8 @@ filtType = '';              % Type of filter (high, low, bandpass)
 % Data generation parameters
 plotResults = 0;            % Whether to display result plots
 writeResiduals = 0;         % Whether to write 4-D residual image
+
+charLimit = 100000;         % Character limit for bash commands
 
 
 
@@ -270,6 +270,7 @@ end
 mkdir(outputDir);
 outputDirOrig = outputDir;
 outputMat = [outputDirOrig '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'RegressionData','.mat')];
+permsDir = [outputDirOrig '/perms'];
 
 % Define and create condition TSV file
 condPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',outputSuffix,'conditions','.tsv')];
@@ -291,7 +292,7 @@ if ~isempty(maskPath)
     maskVol = mask.vol;
 end
 
-[funcMat,hdr] = fpp.util.readDataMatrix(inputPath,maskVol);     % Read NIFTI/CIFTI input to time by coordinate matrix
+[funcMat,hdr] = fpp.util.readDataMatrix(inputPath,maskVol);     % Read NIFTI/CIFTI input as time by coordinate matrix
 funcMat = funcMat';
 funcMat = funcMat(goodVolInd,:);                                % Remove artifact time points
 funcMat = bsxfun(@minus,funcMat,mean(funcMat));                 % Subtract time series mean
@@ -303,7 +304,7 @@ for iter=0:permIters
     
     iterSuffix = '';
     if iter>0
-        outputDir = [outputDirOrig '/perms/iter' int2str(iter)];
+        outputDir = [permsDir '/iter' int2str(iter)];
         mkdir(outputDir);
         iterSuffix = ['iter' int2str(iter)];
     end
@@ -450,6 +451,54 @@ for iter=0:permIters
     end
 end
 
-if permIters>0, save(outputMat,'-append','blockPerm','conVarBasePerm'); end
+if permIters>0
+    save(outputMat,'-append','blockPerm','conVarBasePerm');
+    
+    for c=1:nContrasts
+        % Define paths
+        outputContrastPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
+            [iterSuffix outputSuffix contrastNames{c}],'contrast',outputExt)];
+        concatContrastPath = [permsDir '/' fpp.bids.changeName(outputName,'desc',...
+            [outputSuffix contrastNames{c} 'Permutations'],'contrast','.nii.gz')];
+        outputContrastMeanPath = [permsDir '/' fpp.bids.changeName(outputName,'desc',...
+            [outputSuffix contrastNames{c} 'PermutationMean'],'contrast',outputExt)];
+        outputContrastStdDevPath = [permsDir '/' fpp.bids.changeName(outputName,'desc',...
+            [outputSuffix contrastNames{c} 'PermutationStdDev'],'contraststddev',outputExt)];
+        outputZStatPath = [outputDir '/' fpp.bids.changeName(outputName,'desc',...
+            [outputSuffix contrastNames{c}],'zstat',outputExt)];
+
+        % Merge permuted contrasts across iterations
+        % Split up merge command to avoid bash character limits
+        mergeCmd = ['fslmerge -t ' concatContrastPath ' '];
+        cLength = length([permsDir '/' fpp.bids.changeName(outputName,'desc',...
+                ['iter' permIters outputSuffix contrastNames{c}],'contrast','.nii.gz')]);
+        mLength = length(mergeCmd);
+        contrastsPerMerge = floor((charLimit-mLength)/cLength);
+        mergeIters = ceil(permIters/contrastsPerMerge);
+        for i=1:mergeIters
+            concatContrastPaths{i} = [permsDir '/' fpp.bids.changeName(outputName,'desc',...
+                [outputSuffix contrastNames{c} 'Permutations' int2str(i)],'contrast','.nii.gz')];
+            mergeCmd = [mergeCmd ' ' concatContrastPaths{i}];
+            mergeCmd2 = ['fslmerge -t ' concatContrastPaths{i} ' '];
+            for j=(1+(i-1)*contrastsPerMerge):min(permIters,i*contrastsPerMerge)
+                outputContrastPathPerm = [permsDir '/' fpp.bids.changeName(outputName,'desc',...
+                    ['iter' int2str(j) outputSuffix contrastNames{c}],'contrast','.nii.gz')];
+                mergeCmd2 = [mergeCmd2 ' ' outputContrastPathPerm];
+            end
+            fpp.util.system(mergeCmd2);
+        end
+        fpp.util.system(mergeCmd);
+        fpp.util.deleteImageAndJson(concatContrastPaths);
+        
+        % Compute permutation-based zstat by fitting a voxelwise Gaussian
+        % to permuted contrasts
+        fpp.util.system(['fslmaths ' concatContrastPath ' -Tmean ' outputContrastMeanPath]);
+        fpp.util.system(['fslmaths ' concatContrastPath ' -Tstd ' outputContrastStdDevPath]);
+        fpp.util.system(['fslmaths ' outputContrastPath ' -sub ' outputContrastMeanPath ...
+            ' -div ' outputContrastStdDevPath ' ' outputZStatPath]);
+        
+        fprintf('%s\n',[outputName ' ' contrastNames{c} ' - Computed permutation stats']);
+    end
+end
 
 end
