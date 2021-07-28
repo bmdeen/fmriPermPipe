@@ -459,15 +459,17 @@ if permIters>0
     
     for c=1:nContrasts
         % Define paths
-        outputContrastPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
+        outputContrastPath = [outputDirOrig '/' fpp.bids.changeName(inputName,'desc',...
             [iterSuffix outputSuffix contrastNames{c}],'contrast',outputExt)];
         concatContrastPath = [permsDir '/' fpp.bids.changeName(outputName,'desc',...
             [outputSuffix contrastNames{c} 'Permutations'],'contrast','.nii.gz')];
         outputContrastMeanPath = [permsDir '/' fpp.bids.changeName(outputName,'desc',...
             [outputSuffix contrastNames{c} 'PermutationMean'],'contrast',outputExt)];
-        outputContrastStdDevPath = [permsDir '/' fpp.bids.changeName(outputName,'desc',...
-            [outputSuffix contrastNames{c} 'PermutationStdDev'],'contraststddev',outputExt)];
-        outputZStatPath = [outputDir '/' fpp.bids.changeName(outputName,'desc',...
+        outputContrastStdDevPath = [outputDirOrig '/' fpp.bids.changeName(outputName,'desc',...
+            [outputSuffix contrastNames{c}],'contraststddev',outputExt)];
+        outputContrastVarPath = [outputDirOrig '/' fpp.bids.changeName(outputName,'desc',...
+            [outputSuffix contrastNames{c}],'contrastvariance',outputExt)];
+        outputZStatPath = [outputDirOrig '/' fpp.bids.changeName(outputName,'desc',...
             [outputSuffix contrastNames{c}],'zstat',outputExt)];
 
         % Merge permuted contrasts across iterations
@@ -497,12 +499,15 @@ if permIters>0
         % to permuted contrasts
         fpp.util.system(['fslmaths ' concatContrastPath ' -Tmean ' outputContrastMeanPath]);
         fpp.util.system(['fslmaths ' concatContrastPath ' -Tstd ' outputContrastStdDevPath]);
+        fpp.util.system(['fslmaths ' outputContrastStdDevPath ' -sqr ' outputContrastVarPath]);
         fpp.util.system(['fslmaths ' outputContrastPath ' -sub ' outputContrastMeanPath ...
             ' -div ' outputContrastStdDevPath ' ' outputZStatPath]);
+        fpp.util.system(['rm -rf ' outputContrastStdDevPath]);
         
         fprintf('%s\n',[outputName ' ' contrastNames{c} ' - Computed permutation stats']);
     end
     
+    fpp.util.system(['rm -rf ' permsDir '/iter*']);
     if deletePerms
         fpp.util.system(['rm -rf ' permsDir]);
     end
