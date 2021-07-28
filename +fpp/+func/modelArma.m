@@ -1,7 +1,7 @@
 
 % fpp.func.modelArma(inputPath,eventsPath,contrastMatrixPath,varargin)
 % 
-% Step 1 of a two-step process (modelArma, model2nd) to perform a
+% Step 1 of a two-step process (modelArma, model2ndLevel) to perform a
 % General Linear Model based analysis of fMRI data using AFNI's 3dREMLfit,
 % modeling autocorrelation with an ARMA(1,1) model. Should be run after
 % fpp.func.preproc.
