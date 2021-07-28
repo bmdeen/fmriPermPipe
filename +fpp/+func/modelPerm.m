@@ -412,6 +412,9 @@ for iter=0:permIters
         meanPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
             [outputSuffix 'Mean'],'bold',outputExt)];
         fpp.wb.command([imageType '-reduce'],inputPath,'MEAN',meanPath);
+        if exist(fpp.bids.jsonPath(meanPath),'file')   % Not yet dealing with json files for analysis outputs!
+            fpp.util.system(['rm -rf ' fpp.bids.jsonPath(meanPath)]);
+        end
         
         % Beta values and percent signal change
         for r=1:size(betas,1)
@@ -425,9 +428,6 @@ for iter=0:permIters
             else
                 fpp.wb.command([imageType '-math'],[],'100*beta/mean',pscPath,...
                     ['-var beta ' betaPath ' -var mean ' meanPath]);
-            end
-            if exist(fpp.bids.jsonPath(meanPath))   % Not yet dealing with json files for analysis outputs!
-                fpp.util.system(['rm -rf ' fpp.bids.jsonPath(meanPath)]);
             end
         end
         
