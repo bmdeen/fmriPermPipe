@@ -159,7 +159,7 @@ isCifti = 0;
 if strcmpi(inputExt,'.dtseries.nii')
     isCifti = 1;
 end
-if isCifti
+if isCifti  % NOTE: this functionality is not implemented yet
     outputExt = '.dscalar.nii';
     outputExtSeries = '.dtseries.nii';
     imageType = 'cifti';
@@ -504,6 +504,21 @@ end
 % Copy files
 for i=1:length(inputStatPaths)
     fpp.util.system(['cp ' inputStatPaths{i} ' ' outputStatPaths{i}]);
+end
+% Write mean functional
+meanPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
+    [outputSuffix 'Mean'],'bold','.nii.gz')];
+fpp.wb.command('volume-reduce',inputPath,'MEAN',meanPath);
+if exist(fpp.bids.jsonPath(meanPath))   % Not yet dealing with json files for analysis outputs!
+    fpp.util.system(['rm -rf ' fpp.bids.jsonPath(meanPath)]);
+end
+% Write PSC images
+for c=1:nConds
+    outputBetaPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
+        [outputSuffix condNames{c}],'beta','.nii.gz')];
+    outputPSCPath = fpp.bids.changeName(outputBetaPath,[],[],'psc');
+    fpp.wb.command([imageType '-math'],[],'100*beta/mean',outputPSCPath,...
+        ['-var beta ' outputBetaPath ' -var mean ' meanPath]);
 end
 % Delete FEAT directory
 if deleteFeat, fpp.util.system(['rm -rf ' outputFeatDir]); end

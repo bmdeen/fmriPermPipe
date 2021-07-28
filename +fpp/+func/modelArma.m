@@ -429,12 +429,28 @@ fpp.util.system(['mv ' remlVarPath ' ' remlVarNewPath]);
 remlVarPath = remlVarNewPath;
 outputMapPaths = {};
 
+% Write mean functional
+meanPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
+    [outputSuffix 'Mean'],'bold','.nii.gz')];
+fpp.wb.command('volume-reduce',inputPath,'MEAN',meanPath);
+if exist(fpp.bids.jsonPath(meanPath))   % Not yet dealing with json files for analysis outputs!
+    fpp.util.system(['rm -rf ' fpp.bids.jsonPath(meanPath)]);
+end
+
 for c=1:nConds
     % Beta values
     outputBetaPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
         [outputSuffix condNames{c}],'beta','.nii.gz')];
+    outputPSCPath = fpp.bids.changeName(outputBetaPath,[],[],'psc');
     fpp.util.system(['fslroi ' remlPath ' ' outputBetaPath ' ' int2str(1+(c-1)*2) ' 1']);
-    outputMapPaths = [outputMapPaths outputBetaPath];
+    if ~isempty(maskPath)
+        fpp.wb.command([imageType '-math'],[],'100*beta/(mean*mask)',outputPSCPath,...
+            ['-var beta ' outputBetaPath ' -var mean ' meanPath ' -var mask ' maskPath]);
+    else
+        fpp.wb.command([imageType '-math'],[],'100*beta/mean',outputPSCPath,...
+            ['-var beta ' outputBetaPath ' -var mean ' meanPath]);
+    end
+    outputMapPaths = [outputMapPaths outputBetaPath outputPSCPath];
 end
 for con=1:nContrasts
     % Contrast values
