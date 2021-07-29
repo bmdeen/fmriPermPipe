@@ -159,7 +159,7 @@ isCifti = 0;
 if strcmpi(inputExt,'.dtseries.nii')
     isCifti = 1;
 end
-if isCifti  % NOTE: this functionality is not implemented yet
+if isCifti  % NOTE: CIFTI functionality is not yet implemented
     outputExt = '.dscalar.nii';
     outputExtSeries = '.dtseries.nii';
     imageType = 'cifti';
@@ -507,17 +507,17 @@ for i=1:length(inputStatPaths)
 end
 % Write mean functional
 meanPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
-    [outputSuffix 'Mean'],'bold','.nii.gz')];
-fpp.wb.command('volume-reduce',inputPath,'MEAN',meanPath);
+    [outputSuffix 'Mean'],'bold',outputExt)];
+fpp.wb.command([imageType '-math'],inputPath,'MEAN',meanPath);
 if exist(fpp.bids.jsonPath(meanPath))   % Not yet dealing with json files for analysis outputs!
     fpp.util.system(['rm -rf ' fpp.bids.jsonPath(meanPath)]);
 end
 % Write PSC images
 for c=1:nConds
     outputBetaPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
-        [outputSuffix condNames{c}],'beta','.nii.gz')];
+        [outputSuffix condNames{c}],'beta',outputExt)];
     outputPSCPath = fpp.bids.changeName(outputBetaPath,[],[],'psc');
-    fpp.wb.command('volume-math',[],'100*beta/mean',outputPSCPath,...
+    fpp.wb.command([imageType '-math'],[],'100*beta/mean',outputPSCPath,...
         ['-var beta ' outputBetaPath ' -var mean ' meanPath]);
 end
 % Delete FEAT directory
