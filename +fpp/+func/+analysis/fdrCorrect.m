@@ -1,7 +1,7 @@
 
 % Function to FDR-correct z-statistic image, output thresholded image
 %
-% fpp.func.analysis.fdrCorrect(inputPath,outputPath[,maskPath,qThresh,tails])
+% [critZ,critP] = fpp.func.analysis.fdrCorrect(inputPath,outputPath[,maskPath,qThresh,tails])
 % 
 % Arguments:
 %   - inputPath (string): path to input z-statistic NIFTI/CIFTI file
