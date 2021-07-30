@@ -470,7 +470,7 @@ if permIters>0
         outputContrastPath = [outputDirOrig '/' fpp.bids.changeName(inputName,'desc',...
             [outputSuffix contrastNames{c}],'contrast',outputExt)];
         concatContrastPath = [permsDir '/' fpp.bids.changeName(outputName,'desc',...
-            [outputSuffix contrastNames{c} 'Permutations'],'contrast','.nii.gz')];
+            [outputSuffix contrastNames{c} 'Permutations'],'contrast',outputExt)];
         outputContrastMeanPath = [permsDir '/' fpp.bids.changeName(outputName,'desc',...
             [outputSuffix contrastNames{c} 'PermutationMean'],'contrast',outputExt)];
         outputContrastStdDevPath = [outputDirOrig '/' fpp.bids.changeName(outputName,'desc',...
@@ -482,21 +482,21 @@ if permIters>0
 
         % Merge permuted contrasts across iterations
         % Split up merge command to avoid bash character limits
-        mergeCmd = ['fslmerge -t ' concatContrastPath ' '];
+        mergeCmd = ['wb_command -' imageType '-merge ' concatContrastPath ' '];
         cLength = length([permsDir '/' fpp.bids.changeName(outputName,'desc',...
-                ['iter' permIters outputSuffix contrastNames{c}],'contrast','.nii.gz')]);
+                ['iter' permIters outputSuffix contrastNames{c}],'contrast',outputExt)]);
         mLength = length(mergeCmd);
         contrastsPerMerge = floor((charLimit-mLength)/cLength);
         mergeIters = ceil(permIters/contrastsPerMerge);
         for i=1:mergeIters
             concatContrastPaths{i} = [permsDir '/' fpp.bids.changeName(outputName,'desc',...
-                [outputSuffix contrastNames{c} 'Permutations' int2str(i)],'contrast','.nii.gz')];
-            mergeCmd = [mergeCmd ' ' concatContrastPaths{i}];
-            mergeCmd2 = ['fslmerge -t ' concatContrastPaths{i} ' '];
+                [outputSuffix contrastNames{c} 'Permutations' int2str(i)],'contrast',outputExt)];
+            mergeCmd = [mergeCmd ' -' imageType ' ' concatContrastPaths{i}];
+            mergeCmd2 = ['wb_command -' imageType '-merge ' concatContrastPaths{i} ' '];
             for j=(1+(i-1)*contrastsPerMerge):min(permIters,i*contrastsPerMerge)
                 outputContrastPathPerm = [permsDir '/iter' int2str(j) '/' fpp.bids.changeName(outputName,'desc',...
-                    ['iter' int2str(j) outputSuffix contrastNames{c}],'contrast','.nii.gz')];
-                mergeCmd2 = [mergeCmd2 ' ' outputContrastPathPerm];
+                    ['iter' int2str(j) outputSuffix contrastNames{c}],'contrast',outputExt)];
+                mergeCmd2 = [mergeCmd2 ' -' imageType ' ' outputContrastPathPerm];
             end
             fpp.util.system(mergeCmd2);
         end
