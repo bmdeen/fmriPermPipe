@@ -1,12 +1,12 @@
 
 % Function to FDR-correct z-statistic image, output thresholded image
-%
+% 
 % [critZ,critP] = fpp.func.analysis.fdrCorrect(inputPath,outputPath[,maskPath,qThresh,tails])
 % 
 % Arguments:
 %   - inputPath (string): path to input z-statistic NIFTI/CIFTI file
 %   - outputPath (string): path to output (corrected) NIFTI/CIFTI file
-%
+% 
 % Optional arguments:
 %   - maskPath (string optional): path to 3D mask volume (NIFTI only)
 %   - qThresh (scalar): FDR q-threshold
@@ -15,7 +15,7 @@
 % Outputs:
 %   - critZ: z-value cutoff
 %   - critP: p-value cutoff
-%
+% 
 % Note: script will treat Z=0 values as not tested.
 
 function [critZ,critP] = fdrCorrect(inputPath,outputPath,maskPath,qThresh,tails)
