@@ -181,6 +181,14 @@ elseif ismember(lower(argName),lower({'statCoefs'}))
     else
         errorMsg = ['Argument ' argName ' must be a vector of numbers < Inf.'];
     end
+
+% Vector of integers in {1,2}
+elseif ismember(lower(argName),lower({'fdrTails'}))
+    if isnumeric(argVal) && isvector(argVal) && sum(~ismember(argVal,[1 2]))==0
+        argGood = 1;
+    else
+        errorMsg = ['Argument ' argName ' must be a vector of 1s and 2s.'];
+    end
     
 % 1- or 2- element vector of values in (0,Inf)
 elseif ismember(lower(argName),lower({'filtCutoff'}))
@@ -217,6 +225,16 @@ elseif ismember(lower(argName),lower({'spinEchoPaths','spinEchoPhaseEncodeDirect
     else
         errorMsg = ['Argument ' argName ' must be a cell array of strings.'];
     end
+
+% Cell array or scalar in (0,1)
+elseif ismember(lower(argName),lower({'fdrThresh'}))
+    if iscell(argVal) || (isnumeric(argVal) && isscalar(argVal) && argVal>0 && argVal<1)
+        argGood = 1;
+    else
+        errorMsg = ['Argument ' argName ' must be a cell array or scalar between 0 and 1'];
+    end
+    
+% Couldn't be interpretted
 else
     errorMsg = ['Unknown argument name ' argName];
 end

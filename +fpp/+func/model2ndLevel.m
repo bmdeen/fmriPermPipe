@@ -20,7 +20,10 @@
 %       already been written by this function.
 % - outputSuffix (string): suffix for output directory
 % - analysisDir (string): analysis output dir will be written in this dir.
-%   Must match analysisDir used for first-level analyses.
+%       Must match analysisDir used for first-level analyses.
+% - fdrThresh (scalar or cell array): FDR q-threshold values
+% - fdrTails (vector of 1s and 2s): whether FDR thresholding should be
+%       one- or two-tailed, for each contrast (default = 2)
 %
 % Critical outputs:
 % - contrast.nii.gz: cross-run contrast image
@@ -37,9 +40,11 @@ fpp.util.checkConfig;
 overwrite = 0;              % Whether to overwrite output
 outputSuffix = '';          % New suffix for output dir
 analysisDir = '';           % Directory for analysis outputs
+fdrThresh = {.05,.01};      % FDR thresholds
+fdrTails = [];              % Whether FDR thresholding for each contrast should be 1- or 2- tailed
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
-varArgList = {'overwrite','outputSuffix','analysisDir'};
+varArgList = {'overwrite','outputSuffix','analysisDir','fdrThresh','fdrTails'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
@@ -86,6 +91,13 @@ nContrasts = length(contrastNames);
 condPath = [inputDirs{1} '/' fpp.bids.changeName(inputNames{1},'desc',inputSuffix,'conditions','.tsv')];
 condTSV = bids.util.tsvread(condPath);
 nConds = length(condTSV.cond_names);
+
+% Define whether FDR thresholding is 1- or 2-tailed
+if isempty(fdrTails)
+    fdrTails = 2*ones(1,nContrasts);
+elseif length(fdrTails)~=nContrasts
+    error('fdrTails must have same length = nContrasts');
+end
 
 % Define and create output directory
 outputName = fpp.bids.changeName(inputNames{1},{'run','desc'},{'',[inputSuffix outputSuffix]},['model2' modelType],'');
@@ -202,6 +214,23 @@ for c=1:nContrasts
         
         % Convert t- to z-statistic.
         fpp.util.convertTtoZ(outputTStatPath,outputZStatPath,sum(dof));
+        
+        fpp.wb.command('cifti-palette',outputTStatPath,'MODE_USER_SCALE',outputTStatPath,...
+            '-pos-user 2.5 6 -neg-user -2.5 -6 -palette-name FSL -disp-pos true');
+    end
+    fpp.wb.command('cifti-palette',outputZStatPath,'MODE_USER_SCALE',outputZStatPath,...
+        '-pos-user 2.5 6 -neg-user -2.5 -6 -palette-name FSL -disp-pos true');
+    
+    % FDR threshold
+    for f=1:length(fdrThresh)
+        outputZStatThreshPath = [outputDir '/' fpp.bids.changeName(outputName,'desc',...
+            [inputSuffix outputSuffix contrastNames{c} 'FDR' num2str(fdrThresh{f})],'zstat',outputExt)];
+        outputThreshTextPath = [outputDir '/' fpp.bids.changeName(outputName,'desc',...
+            [inputSuffix outputSuffix contrastNames{c} 'FDR' num2str(fdrThresh{f})],'fdrthresh','')];
+        [critZ,~] = fpp.func.analysis.fdrCorrect(outputZStatPath,outputZStatThreshPath,[],fdrThresh{f},fdrTails(c));
+        fid = fopen(outputThreshTextPath,'w+');
+        fprintf(fid,'%f',critZ);
+        fclose(fid);
     end
 end
 
