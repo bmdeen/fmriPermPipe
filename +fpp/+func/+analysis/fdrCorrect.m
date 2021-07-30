@@ -53,8 +53,8 @@ else
 end
 
 [h1,critP1,~,~] = fpp.func.analysis.fdrBH(pVec(zVec~=0),qThresh,method);
-h = zeros(length(zVec));
-critP = zeros(length(zVec));
+h = zeros(size(zVec));
+critP = zeros(size(zVec));
 h(zVec~=0) = h1;
 critP(zVec~=0) = critP1;
 critZ = abs(icdf('norm',critP,0,1));
