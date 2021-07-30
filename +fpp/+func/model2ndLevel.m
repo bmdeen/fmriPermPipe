@@ -215,11 +215,15 @@ for c=1:nContrasts
         % Convert t- to z-statistic.
         fpp.util.convertTtoZ(outputTStatPath,outputZStatPath,sum(dof));
         
-        fpp.wb.command('cifti-palette',outputTStatPath,'MODE_USER_SCALE',outputTStatPath,...
+        if isCifti
+            fpp.wb.command('cifti-palette',outputTStatPath,'MODE_USER_SCALE',outputTStatPath,...
+                '-pos-user 2.5 6 -neg-user -2.5 -6 -palette-name FSL -disp-pos true');
+        end
+    end
+    if isCifti
+        fpp.wb.command('cifti-palette',outputZStatPath,'MODE_USER_SCALE',outputZStatPath,...
             '-pos-user 2.5 6 -neg-user -2.5 -6 -palette-name FSL -disp-pos true');
     end
-    fpp.wb.command('cifti-palette',outputZStatPath,'MODE_USER_SCALE',outputZStatPath,...
-        '-pos-user 2.5 6 -neg-user -2.5 -6 -palette-name FSL -disp-pos true');
     
     % FDR threshold
     for f=1:length(fdrThresh)
