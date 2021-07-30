@@ -508,7 +508,7 @@ end
 % Write mean functional
 meanPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
     [outputSuffix 'Mean'],'bold',outputExt)];
-fpp.wb.command([imageType '-math'],inputPath,'MEAN',meanPath);
+fpp.wb.command([imageType '-reduce'],inputPath,'MEAN',meanPath);
 if exist(fpp.bids.jsonPath(meanPath))   % Not yet dealing with json files for analysis outputs!
     fpp.util.system(['rm -rf ' fpp.bids.jsonPath(meanPath)]);
 end
