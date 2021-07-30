@@ -52,11 +52,9 @@ else
     pVec(zVec<0) = 2*normcdf(zVec(zVec<0));
 end
 
-[h1,critP1,~,~] = fpp.func.analysis.fdrBH(pVec(zVec~=0),qThresh,method);
+[h1,critP,~,~] = fpp.func.analysis.fdrBH(pVec(zVec~=0),qThresh,method);
 h = zeros(size(zVec));
-critP = zeros(size(zVec));
 h(zVec~=0) = h1;
-critP(zVec~=0) = critP1;
 critZ = abs(icdf('norm',critP,0,1));
 % disp(['Critical P-value: ' num2str(critP)]);
 
