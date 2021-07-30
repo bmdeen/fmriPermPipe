@@ -36,9 +36,11 @@ end
 % Load volumetric mask
 if ~isempty(maskPath)
     mask = fpp.util.mriRead(maskPath);
+    [zVec,hdr] = fpp.util.readDataMatrix(inputPath,mask.vol);
+else
+    [zVec,hdr] = fpp.util.readDataMatrix(inputPath);
 end
 
-[zVec,hdr] = fpp.util.readDataMatrix(inputPath,mask.vol);
 
 pVec = zeros(size(zVec));
 if tails==1
@@ -48,13 +50,17 @@ else
     pVec(zVec<0) = 2*normcdf(zVec(zVec<0));
 end
 
-[h,critP,~,adjP] = fpp.func.analysis.fdrBH(pVec,qThresh,method);
+[h,critP,~,~] = fpp.func.analysis.fdrBH(pVec,qThresh,method);
 critZ = abs(icdf('norm',critP,0,1));
 % disp(['Critical P-value: ' num2str(critP)]);
 
 zVec(h==0) = 0;
 
-fpp.util.writeDataMatrix(zVec,hdr,outputPath,mask.vol);
+if ~isempty(maskPath)
+    fpp.util.writeDataMatrix(zVec,hdr,outputPath,mask.vol);
+else
+    fpp.util.writeDataMatrix(zVec,hdr,outputPath);
+end
 
 
 end
