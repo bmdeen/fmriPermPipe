@@ -1,6 +1,6 @@
 
 % fpp.func.modelPerm(inputPath,eventsPath,contrastMatrixPath,varargin)
-%
+% 
 % Step 1 of a two-step process (modelPerm, model2ndLevel) to perform a
 % General Linear Model based analysis of fMRI data, computing statistics
 % using a permutation test.  Step 1 performs voxelwise time series 
@@ -9,17 +9,17 @@
 % 
 % Example usage: modelPerm('/pathToData/sub-01_task-faceloc_run-01_space-individual_desc-preproc_bold.nii.gz',...
 %   '/pathToData/sub-01_task-faceloc_run-01_events.tsv','/pathToData/task-faceloc_contrastmatrix.tsv')
-%
+% 
 % Arguments:
 %   - inputPath (string): path to input preprocessed data (NIFTI/CIFTI)
 %   - eventsPath (string): path to events.tsv file
 %   - contrastMatrixPath (string): path to contrastmatrix.tsv file.
-%
+% 
 % Example contrastmatrix.tsv file:
 %   Name    Coef1   Coef2
 %   FacesVsObjects  1   -1
 %   ObjectsVsFaces  -1  1
-%
+% 
 % Variable arguments:
 %   - overwrite (boolean; default=0): whether to overwrite files that have
 %       already been written by this function.
@@ -59,8 +59,8 @@
 %   - writeResiduals (boolean; default=0): whether to output GLM residuals
 %   - deletePerms (boolean; default=0): whether to delete permuted contrast
 %       images when script finishes.
-%
-%
+% 
+% 
 % Critical outputs:
 % - contrast: contrast ("contrast of parameter estimate") images
 % - beta: parameter estimate (beta) images
@@ -505,11 +505,13 @@ if permIters>0
         
         % Compute permutation-based zstat by fitting a voxelwise Gaussian
         % to permuted contrasts
-        fpp.util.system(['fslmaths ' concatContrastPath ' -Tmean ' outputContrastMeanPath]);
-        fpp.util.system(['fslmaths ' concatContrastPath ' -Tstd ' outputContrastStdDevPath]);
-        fpp.util.system(['fslmaths ' outputContrastStdDevPath ' -sqr ' outputContrastVarPath]);
-        fpp.util.system(['fslmaths ' outputContrastPath ' -sub ' outputContrastMeanPath ...
-            ' -div ' outputContrastStdDevPath ' ' outputZStatPath]);
+        fpp.wb.command([imageType '-reduce'],concatContrastPath,'MEAN',outputContrastMeanPath);
+        fpp.wb.command([imageType '-reduce'],concatContrastPath,'STDEV',outputContrastStdDevPath);
+        fpp.wb.command([imageType '-math'],[],'constd^2',outputContrastVarPath,...
+            ['-var constd ' outputContrastStdDevPath]);
+        fpp.wb.command([imageType '-math'],[],'(con-conmean)/constd',outputContrastVarPath,...
+            ['-var con ' outputContrastPath ' -var conmean ' outputContrastMeanPath...
+            ' -var constd ' outputContrastStdDevPath]);
         fpp.util.system(['rm -rf ' outputContrastStdDevPath]);
         
         fprintf('%s\n',[outputName ' ' contrastNames{c} ' - Computed permutation stats']);
