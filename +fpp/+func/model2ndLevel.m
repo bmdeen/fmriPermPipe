@@ -83,7 +83,9 @@ for r=1:nRuns
 end
 contrastNames = regrData{1}.contrastNames;
 nContrasts = length(contrastNames);
-nConds = length(regrData{1}.condNames);
+condPath = [inputDirs{1} '/' fpp.bids.changeName(inputNames{1},'desc',inputSuffix,'conditions','.tsv')];
+condTSV = bids.util.tsvread(condPath);
+nConds = length(condTSV.cond_names);
 
 % Define and create output directory
 outputName = fpp.bids.changeName(inputNames{1},{'run','desc'},{'',[inputSuffix outputSuffix]},['model2' modelType],'');
