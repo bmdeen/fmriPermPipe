@@ -156,8 +156,12 @@ else
 end
 
 % Check if ROI is empty, delete and send warning if so
-[~,roiOutputSize] = fpp.util.system(['fslstats ' outputPath ' -V']);
-roiOutputSize = str2num(roiOutputSize); roiOutputSize = roiOutputSize(1);
+if isCifti
+    roiOutputSize = str2num(strtrim(fpp.wb.command('cifti-stats',outputPath,[],[],'-reduce COUNT_NONZERO')));
+else
+    [~,roiOutputSize] = fpp.util.system(['fslstats ' outputPath ' -V']);
+    roiOutputSize = str2num(roiOutputSize); roiOutputSize = roiOutputSize(1);
+end
 if roiOutputSize==0
     fpp.util.system(['rm -rf ' outputPath]);
     warning(['Output ROI had zero ' coord 's: ' outputPath]);
