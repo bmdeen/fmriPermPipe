@@ -18,6 +18,7 @@
 % - statThresh (scalar): threshold for statistical map, applied after size
 % - invertStats (boolean, default = 0): whether to invert statistical map
 % - maskPath (string): path to brain mask, to intersect with search space
+%       (NIFTI inputs only)
 % - parcPath (string): path to parcellation. If parcPath and parcInds are
 %       specified, the search space is defined by the parcellation, using
 %       fpp.util.label2ROI.
