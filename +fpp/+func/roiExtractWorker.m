@@ -23,12 +23,12 @@ if strcmpi(roiExt,'.dscalar.nii')
     imageType = 'cifti';
 end
 
-% Determine condition names and model suffix
+% Determine model suffix and condition names
 [~,modelName,~] = fpp.util.fileParts(modelDir);
-matPath = [modelDir '/' fpp.bids.changeName(modelName,[],[],'RegressionData','.mat')];
-regrData = load(matPath);
-condNames = regrData.regrNames;
 suffix = fpp.bids.checkNameValue(modelName,'desc');
+condPath = [outputDir '/' fpp.bids.changeName(inputName,[],[],'conditions','.tsv')];
+condTSV = bids.util.tsvread(condPath);
+condNames = condTSV.cond_names;
 
 % Extract PSC values within ROI
 for c=1:length(condNames)
