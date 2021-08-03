@@ -3,20 +3,20 @@
 %
 % Function to extract region-of-interest responses from a given task and
 % participant, using ROIs defined by maximally responsive coordinates from
-% a specific contrast in the same or other tasks, within a search space. If
-% the task to extract responses from is one of the tasks used to define
-% ROIs, a leave-one-run-out analysis is performed, to ensure that separate
-% data are used to define ROIs and extract responses.
+% a specific contrast in the same or another task, within a search space. 
+% If the same tasks are used to define ROIs and extract responses, a
+% leave-one-run-out analysis is performed.
 %
 % Arguments:
-% - extractResponseDir (string): modelperm directory for any run of the
-%       task used to extract responses.
-% - defineROIDir (string or cell array of strings): modelperm directories
-%       for any one run of the task(s) used to define ROIs. If multiple
-%       tasks are used, statCoefs can be used to specify how they should be
-%       averaged, and the tasks must have the same number of runs. The
-%       function assumes that extractResponseDir and defineROIDir share a
-%       parent directory.
+% - extractResponseDir (string): model directory for any run of the task
+%       used to extract responses (modelarma, modelfilm, or modelperm)
+% - defineROIDir (string or cell array of strings): model directory for
+%       any one run of the task used to define ROIs. The function assumes
+%       that extractResponseDir and defineROIDir share a parent directory.
+%       Multiple tasks can be used in combination for defining ROIs, with
+%       statistics averaged across tasks. In this case, statCoefs specifies
+%       how they should be averaged, and the tasks must have the same
+%       number of runs. 
 % - contrastName (string or cell array of strings): name of the contrast(s)
 %       to use for ROI definition.
 % - searchPath (string): path to the search space
@@ -28,6 +28,7 @@
 % - invertStats (boolean, default = 0): whether to invert statistical map
 % - maskPath (string): path to brain mask, to intersect with search space
 % - statCoefs (numeric vector): coefficients for statistical map averaging
+%       across tasks
 % - roiDesc (string): ROI description. If specified, this replaces
 %       [defineROITask defineROIDesc contrastName] in the output ROI desc
 %
