@@ -25,6 +25,12 @@
 % - parcInds (numeric vector): indices of parcels to include in the search
 %       space.
 % - statCoefs (numeric vector): coefficients for statistical map averaging
+%
+% Note: output will be written in same CIFTI format at the searchPath. The
+% statPath and searchPath must have matched surface coordinates. They can
+% mismatch on subcortical coordinates, as long as the search path doesn't
+% contain nonzero values in subcortex. E.g., the stat path can have
+% subcortical data, even if the search path doesn't.
 
 function defineROI(statPath,searchPath,outputPath,varargin)
 
