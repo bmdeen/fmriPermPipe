@@ -102,6 +102,7 @@ for t=1:nTasks
     defineROIDesc{t} = fpp.bids.checkNameValue(defineROIName{t},'desc');
     defineROITask{t} = fpp.bids.checkNameValue(defineROIName{t},'task');
 end
+subjID = fpp.bids.checkNameValue(extractResponseName,'sub');
 
 % If the same task is used to define ROIs and extract data, use a
 % leave-one-run-out analysis to avoid non-independence errors.
@@ -183,8 +184,8 @@ if loro
     for r=1:nRuns
         % Define ROI, using average statistical map from all but one run
         loroSuffix = ['LORO' defineROIRuns{1}{r}];
-        roiPath = [roiDir '/' fpp.bids.changeName(searchName,'desc',...
-            [searchDesc roiDesc invertSuffix numSuffix loroSuffix]) inputExt];
+        roiPath = [roiDir '/' fpp.bids.changeName(searchName,{'sub','desc'},{subjID,...
+            [searchDesc roiDesc invertSuffix numSuffix loroSuffix]}) inputExt];
         if ~exist(roiPath,'file') || overwrite
             zStatPathsInput = {};
             statCoefsInput = [];
@@ -202,8 +203,8 @@ if loro
     end
 else
     % Define ROI, using average statistical map
-    roiPath = [roiDir '/' fpp.bids.changeName(searchName,'desc',...
-        [searchDesc roiDesc invertSuffix numSuffix]) inputExt];
+    roiPath = [roiDir '/' fpp.bids.changeName(searchName,{'sub','desc'},{subjID,...
+        [searchDesc roiDesc invertSuffix numSuffix]}) inputExt];
     if ~exist(roiPath,'file') || overwrite
         
         % Define inputs for each run
