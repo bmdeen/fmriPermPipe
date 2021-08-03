@@ -32,7 +32,7 @@ condNames = condTSV.cond_names;
 
 % Extract PSC values within ROI
 for c=1:length(condNames)
-    pscPath = [modelDir '/' fpp.bids.changeName(modelName,'desc',[suffix condNames{c}],'psc','.nii.gz')];
+    pscPath = [modelDir '/' fpp.bids.changeName(modelName,'desc',[suffix condNames{c}],'psc',roiExt)];
     pscVal = fpp.wb.command([imageType '-stats'],pscPath,[],[],['-reduce MEAN -roi ' roiPath]);
     psc(c) = str2num(strtrim(pscVal));
 end
