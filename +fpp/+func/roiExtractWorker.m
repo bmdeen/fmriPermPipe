@@ -26,7 +26,7 @@ end
 % Determine model suffix and condition names
 [~,modelName,~] = fpp.util.fileParts(modelDir);
 suffix = fpp.bids.checkNameValue(modelName,'desc');
-condPath = [modelDir '/' fpp.bids.changeName(inputName,[],[],'conditions','.tsv')];
+condPath = [modelDir '/' fpp.bids.changeName(modelName,[],[],'conditions','.tsv')];
 condTSV = bids.util.tsvread(condPath);
 condNames = condTSV.cond_names;
 
