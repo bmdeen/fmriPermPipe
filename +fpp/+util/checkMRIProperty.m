@@ -3,16 +3,16 @@
 %
 % Function to check property of input MR image or CIFTI dtseries file,
 % using JSON metadata if it exists, or alternative method if available.
-% Returns null if it can't find a way to check the property. Only TR and
-% Vols can be checked for dtseries files.
+% Returns null if it can't find a way to check the property. Only TR, Vols,
+% Dims, and HasVol can be checked for CIFTI files.
 %
 % Arguments:
 % - propertyName (string): property to check
 %   Options:
-%   + TR - Repetition time (s)
+%   + TR - Repetition time (s) for 4D NIFTI or CIFTI dtseries file
 %   + TE - Echo time (ms), in vector form for multi-echo data
-%   + Vols - # of volumes in 4D dataset or CIFTI dtseries
-%   + Dims - 3D or 4D image dimensions
+%   + Vols - # of volumes in 4D dataset or # of maps for CIFTI file
+%   + Dims - 3D or 4D volume, or 2D CIFTI dimensions
 %   + VoxelSize - voxel sizes in each dimension (mm)
 %   + PEDir - Phase-encode direction, BIDS format (e.g. "j-")
 %   + PEDirStr - Phase-encode direction, orientation string format (e.g.
@@ -23,6 +23,7 @@
 %   + Topup - Spin-echo EPI properties for FSL's topup (phase dir/timing)
 %   + ST/SliceTiming - vector of slice acquisition times relative to start
 %       of volume acquisition
+%   + HasVol - Whether a CIFTI file contains volumetric components
 % - inputPath (string): path to input image
 %
 % Dependencies: bids-matlab
@@ -42,9 +43,10 @@ switch lower(propertyName)
         elseif strcmp(inputExt,'.dtseries.nii')
             [~,fileInfo] = fpp.util.system(['wb_command -file-information ' inputPath]);
             lbInd = regexp(fileInfo,'\n');
-            trInd = regexp(fileInfo,'Map Interval Step:              ');
+            trStr = 'Map Interval Step:              ';
+            trInd = regexp(fileInfo,trStr);
             trInLbInd = find(sort([lbInd trInd])==trInd);   % Index of first line break after TR line
-            tr = fileInfo(trInd+32:lbInd(trInLbInd)-1);
+            tr = fileInfo(trInd+length(trStr):lbInd(trInLbInd)-1);
 %             tuInd = regexp(fileInfo,'Map Interval Units:             ');
 %             tuInLbInd = find(sort([lbInd tuInd])==tuInd);
 %             tu = fileInfo(tuInd+32:lbInd(tuInLbInd)-1);   % To check time unit. currently assuming seconds.
@@ -131,7 +133,7 @@ switch lower(propertyName)
             propertyValue = jsonData.SliceTiming;
         end
     case 'vols'
-        if strcmp(inputExt,'.dtseries.nii')
+        if sum(strcmp(inputExt,{'.dtseries.nii','.dscalar.nii','.dlabel.nii'}))>0
             [~,fileInfo] = fpp.util.system(['wb_command -file-information ' inputPath]);
             lbInd = regexp(fileInfo,'\n');
             volsInd = regexp(fileInfo,'Number of Maps:                 ');
@@ -143,15 +145,30 @@ switch lower(propertyName)
             propertyValue = str2num(strtrim(vols));
         end
     case 'dims'
-        [~,dim1] = fpp.util.system(['fslval ' inputPath ' dim1']);
-        propertyValue(1) = str2num(strtrim(dim1));
-        [~,dim2] = fpp.util.system(['fslval ' inputPath ' dim2']);
-        propertyValue(2) = str2num(strtrim(dim2));
-        [~,dim3] = fpp.util.system(['fslval ' inputPath ' dim3']);
-        propertyValue(3) = str2num(strtrim(dim3));
-        [~,vols] = fpp.util.system(['fslval ' inputPath ' dim4']);
-        vols = str2num(strtrim(vols));
-        if ~isempty(vols) && vols>1, propertyValue(4) = vols; end
+        if sum(strcmp(inputExt,{'.dtseries.nii','.dscalar.nii','.dlabel.nii','.dconn.nii',...
+                '.dpconn.nii','.pconn.nii','.pdconn.nii','.ptseries.nii','.plabel.nii','.sdseries.nii'}))>0
+            [~,fileInfo] = fpp.util.system(['wb_command -file-information ' inputPath]);
+            lbInd = regexp(fileInfo,'\n');
+            rowStr = 'Number of Rows:          ';
+            rowInd = regexp(fileInfo,rowStr);
+            rowInLbInd = find(sort([lbInd rowInd])==rowInd);   % Index of first line break after TR line
+            rows = fileInfo(rowInd+length(rowStr):lbInd(rowInLbInd)-1);
+            colStr = 'Number of Columns:       ';
+            colInd = regexp(fileInfo,colStr);
+            colInLbInd = find(sort([lbInd colInd])==colInd);   % Index of first line break after TR line
+            cols = fileInfo(colInd+length(colStr):lbInd(colInLbInd)-1);
+            propertyValue = [str2num(rows) str2num(cols)];
+        else
+            [~,dim1] = fpp.util.system(['fslval ' inputPath ' dim1']);
+            propertyValue(1) = str2num(strtrim(dim1));
+            [~,dim2] = fpp.util.system(['fslval ' inputPath ' dim2']);
+            propertyValue(2) = str2num(strtrim(dim2));
+            [~,dim3] = fpp.util.system(['fslval ' inputPath ' dim3']);
+            propertyValue(3) = str2num(strtrim(dim3));
+            [~,vols] = fpp.util.system(['fslval ' inputPath ' dim4']);
+            vols = str2num(strtrim(vols));
+            if ~isempty(vols) && vols>1, propertyValue(4) = vols; end
+        end
     case {'voxelsize','voxsize'}
         [~,pixdim1] = fpp.util.system(['fslval ' inputPath ' pixdim1']);
         propertyValue(1) = str2num(strtrim(pixdim1));
@@ -167,5 +184,16 @@ switch lower(propertyName)
             propertyValue = propertyValue/1000;
         elseif strcmp(vu,'Unknown')
             propertyValue = [];
+        end
+    case 'hasvol'
+        if sum(strcmp(inputExt,{'.dtseries.nii','.dscalar.nii','.dlabel.nii','.dconn.nii',...
+                '.dpconn.nii','.pconn.nii','.pdconn.nii','.ptseries.nii','.plabel.nii'}))>0
+            [~,fileInfo] = fpp.util.system(['wb_command -file-information ' inputPath]);
+            lbInd = regexp(fileInfo,'\n');
+            hasVolStr = 'Has Volume Data:     ';
+            hasVolInd = regexp(fileInfo,hasVolStr);
+            hasVolInLbInd = find(sort([lbInd hasVolInd])==hasVolInd);   % Index of first line break after TR line
+            hasVol = fileInfo(hasVolInd+length(hasVolStr):lbInd(hasVolInLbInd)-1);
+            propertyValue = str2num(hasVol);
         end
 end
