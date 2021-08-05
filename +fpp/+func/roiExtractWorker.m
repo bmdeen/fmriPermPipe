@@ -19,8 +19,10 @@ if ~ismember(lower(roiExt),{'.nii.gz','.nii','.dscalar.nii'})
     error('roiPath must be a NIFTI or CIFTI dscalar file.');
 end
 imageType = 'volume';
+isCifti = 0;
 if strcmpi(roiExt,'.dscalar.nii')
     imageType = 'cifti';
+    isCifti = 1;
 end
 
 % Determine model suffix and condition names
