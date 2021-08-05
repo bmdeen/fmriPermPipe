@@ -47,7 +47,7 @@ if isCifti
             {'',[roiDesc 'tmpRoiExtract230951835']})];
         % Extract volume from pscPath, multiply by zero
         fpp.wb.command('cifti-separate',pscPath,'COLUMN',[],['-volume-all ' tmpVolPath]);
-        fpp.wb.command('cifti-maths','vol*0',tmpVolPath,[],['-var vol ' tmpVolPath]);
+        fpp.wb.command('cifti-math','vol*0',tmpVolPath,[],['-var vol ' tmpVolPath]);
         % Construct ROI with zero volume
         fpp.wb.command('cifti-create-dense-from-template',pscPath,[],tmpROIPath,...
             ['-cifti ' roiPath ' -volume-all ' tmpVolPath]);
