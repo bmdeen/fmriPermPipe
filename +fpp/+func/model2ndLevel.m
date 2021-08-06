@@ -145,8 +145,9 @@ end
 % Compute contrast variance for weighting runs
 for r=1:nRuns
     V = inv(regrData{r}.X'*regrData{r}.X);
+    nCondsRun = size(regrData{r}.contrastMat,2);
     % Estimated contrast variance, up to error variance term
-    regrData{r}.conVarBase = diag(regrData{r}.contrastMat*V(1:nConds,1:nConds)*regrData{r}.contrastMat');
+    regrData{r}.conVarBase = diag(regrData{r}.contrastMat*V(1:nCondsRun,1:nCondsRun)*regrData{r}.contrastMat');
     % Permute conVarBase indices based on contrastNames varargin
     if customContrast
         for con=1:nContrasts
