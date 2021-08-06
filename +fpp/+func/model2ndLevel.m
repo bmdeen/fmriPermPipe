@@ -21,7 +21,7 @@
 % - outputSuffix (string): suffix for output directory
 % - analysisDir (string): analysis output dir will be written in this dir.
 %       Must match analysisDir used for first-level analyses.
-% - fdrThresh (scalar or cell array): FDR q-threshold values
+% - fdrThresh (vector of values in (0,1)): FDR q-threshold values
 % - fdrTails (vector of 1s and 2s): whether FDR thresholding should be
 %       one- or two-tailed, for each contrast (default = 2)
 %
@@ -40,7 +40,7 @@ fpp.util.checkConfig;
 overwrite = 0;              % Whether to overwrite output
 outputSuffix = '';          % New suffix for output dir
 analysisDir = '';           % Directory for analysis outputs
-fdrThresh = {.05,.01};      % FDR thresholds
+fdrThresh = [.05 .01];      % FDR thresholds
 fdrTails = [];              % Whether FDR thresholding for each contrast should be 1- or 2- tailed
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
@@ -228,10 +228,10 @@ for c=1:nContrasts
     % FDR threshold
     for f=1:length(fdrThresh)
         outputZStatThreshPath = [outputDir '/' fpp.bids.changeName(outputName,'desc',...
-            [inputSuffix outputSuffix contrastNames{c} 'FDR' num2str(fdrThresh{f})],'zstat',outputExt)];
+            [inputSuffix outputSuffix contrastNames{c} 'FDR' num2str(fdrThresh(f))],'zstat',outputExt)];
         outputThreshTextPath = [outputDir '/' fpp.bids.changeName(outputName,'desc',...
-            [inputSuffix outputSuffix contrastNames{c} 'FDR' num2str(fdrThresh{f})],'fdrthresh','')];
-        [critZ,~] = fpp.func.analysis.fdrCorrect(outputZStatPath,outputZStatThreshPath,[],fdrThresh{f},fdrTails(c));
+            [inputSuffix outputSuffix contrastNames{c} 'FDR' num2str(fdrThresh(f))],'fdrthresh','')];
+        [critZ,~] = fpp.func.analysis.fdrCorrect(outputZStatPath,outputZStatThreshPath,[],fdrThresh(f),fdrTails(c));
         fid = fopen(outputThreshTextPath,'w+');
         fprintf(fid,'%f',critZ);
         fclose(fid);

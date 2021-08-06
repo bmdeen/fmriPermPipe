@@ -199,6 +199,14 @@ elseif ismember(lower(argName),lower({'filtCutoff'}))
         errorMsg = ['Argument ' argName ' must be a 1- or 2- element vector of numbers > 0.'];
     end
     
+% Vector of values in (0,1)
+elseif ismember(lower(argName),lower({'fdrThresh'}))
+    if isnumeric(argVal) && isvector(argVal) && sum(argVal>0)==length(argVal) && sum(argVal<1)==length(argVal)
+        argGood = 1;
+    else
+        errorMsg = ['Argument ' argName ' must be a vector of numbers in (0,1).'];
+    end
+    
 % 2-element vector of values in [0,180]
 elseif ismember(lower(argName),lower({'searchrx','searchry','searchrz'}))
     if isnumeric(argVal) && isvector(argVal) && length(argVal)==2 && ...
@@ -224,14 +232,6 @@ elseif ismember(lower(argName),lower({'spinEchoPaths','spinEchoPhaseEncodeDirect
         argGood = 1;
     else
         errorMsg = ['Argument ' argName ' must be a cell array of strings.'];
-    end
-
-% Cell array or scalar in (0,1)
-elseif ismember(lower(argName),lower({'fdrThresh'}))
-    if iscell(argVal) || (isnumeric(argVal) && isscalar(argVal) && argVal>0 && argVal<1)
-        argGood = 1;
-    else
-        errorMsg = ['Argument ' argName ' must be a cell array or scalar between 0 and 1'];
     end
     
 % Couldn't be interpretted
