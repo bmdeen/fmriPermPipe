@@ -18,7 +18,7 @@
 % Variable arguments:
 % - overwrite (boolean; default=0): whether to overwrite files that have
 %       already been written by this function.
-% - outputSuffix (string): suffix for output directory/files
+% - outputSuffix (string): suffix for output directory/file desc field
 % - outputTask (string): task for output directory/files. Should only be
 %       specified if results from different experiments are being combined.
 % - contrastNames (cell array of strings): array of contrast names to use

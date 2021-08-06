@@ -23,8 +23,8 @@
 % Variable arguments:
 %   - overwrite (boolean; default=0): whether to overwrite files that have
 %       already been written by this function.
-%   - outputSuffix (string): suffix for output directory. Can be used to
-%       run the script multiple times with different options.
+%   - outputSuffix (string): suffix for output directory/file desc field.
+%       Can be used to run analyses multiple times with different options.
 %   - analysisDir (string): analysis output dir will be written in this dir
 %   - condNames (cell array of strings): array of condition names. Needed
 %       to determine cond order if events.tsv lacks trial_type_id field
