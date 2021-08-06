@@ -38,6 +38,9 @@
 %       exclude
 %   - useTedana (boolean): whether to include TEDANA removed components as
 %       confound regressors (unless data has "NoTedana" in desc)
+%   - tedanaPath (string): sample tedana directory/file name, to determine
+%       space and res (if any) to use for tedana input dir. Default: for
+%       NIFTI, taken from inputPath; for CIFTI, space-session is assumed.
 %   - hrfType (1 or 2; default=1): which hemodynamic response function to
 %       use for regressor convolution. 1 = double-gamma (FSL/SPM default 
 %       parameters); 2 = gamma (FS-FAST default parameters).
@@ -86,6 +89,7 @@ confoundNames = {};         % Confound file fields to use
 confoundFilt = [];          % Which confound variables to temporally filter (indexed by confoundNames)
 outlierPath = fpp.bids.changeName(inputPath,{'space','desc'},{[],[]},'outliers','.tsv');    % Path to outliers.tsv file
 useTedana = 1;              % Whether to include TEDANA removed components as confound regressors (unless data has "NoTedana" in desc)
+tedanaPath = '';            % Sample TEDANA path
 
 % Modeling parameters
 hrfType = 1;                % 1 = double-gamma (FSL/SPM default parameters)
@@ -116,7 +120,7 @@ writeResiduals = 0;         % Whether to write 4-D residual image
 varArgList = {'overwrite','outputSuffix','permuteRest','tempFilt','filtCutoff',...
     'filtOrder','hrfType','upsampledTR','writeResiduals','permIters','plotResults',...
     'randSeed','condNames','confoundPath','confoundNames','confoundFilt','outlierPath',...
-    'contrastNames','filtType','analysisDir','useTedana','deleteFeat'};
+    'contrastNames','filtType','analysisDir','useTedana','deleteFeat','tedanaPath'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
@@ -259,8 +263,21 @@ regrNames = [regrNames,outlierNames];
 % NOTE: Not designed to handle tedana dirs with desc field
 inputDesc = fpp.bids.checkNameValue(inputName,'desc');
 if useTedana && sum(regexpi(inputDesc,'NoTedana'))==0
-    tedanaTSVPath = [inputDir '/' fpp.bids.changeName(inputName,'desc','','tedana','')...
-        '/' fpp.bids.changeName(inputName,'desc','tedanaICARejected','mixing','.tsv')];
+    if ~isempty(tedanaPath)
+        tedanaSpace = fpp.bids.checkNameValue(tedanaPath,'space');
+        tedanaRes = fpp.bids.checkNameValue(tedanaPath,'res');
+    else
+        if isCifti  % Can't use CIFTI space info, b/c TEDANA is volumetric
+            tedanaSpace = 'session';
+            tedanaRes = [];
+        else
+            tedanaSpace = fpp.bids.checkNameValue(inputPath,'space');
+            tedanaRes = fpp.bids.checkNameValue(inputPath,'res');
+        end
+    end
+    tedanaTSVPath = [inputDir '/' fpp.bids.changeName(inputName,{'desc','space','res','den'},...
+        {'',tedanaSpace,tedanaRes,[]},'tedana','') '/' fpp.bids.changeName(inputName,...
+        {'desc','space','res','den'},{'tedanaICARejected', tedanaSpace,tedanaRes,[]},'mixing','.tsv')];
     tedana = bids.util.tsvread(tedanaTSVPath);
     tedanaNames = fieldnames(tedana)';
     for i=1:length(tedanaNames)
