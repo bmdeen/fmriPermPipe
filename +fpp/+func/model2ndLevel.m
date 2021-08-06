@@ -6,11 +6,11 @@
 % modelFilm) computes results within individual runs. Step 2 combines
 % results across runs within an experiment and subject (a "fixed effects"
 % analysis). Should be run after fpp.func.modelPerm, Arma, or Film.
-%
+% 
 % Example usage: fpp.func.model2ndLevel({'/pathToAnalyses/sub-01_task-faceloc_run-01_space-individual_modelarma',...
 %   '/pathToAnalyses/sub-01_task-faceloc_run-02_space-individual_modelarma',...
 %   '/pathToAnalyses/sub-01_task-faceloc_run-03_space-individual_modelarma'})
-%
+% 
 % Arguments:
 % - inputDirs (cell array of strings): paths to input model directories for
 %     	each run to be included in cross-run stats.
@@ -18,14 +18,16 @@
 % Variable arguments:
 % - overwrite (boolean; default=0): whether to overwrite files that have
 %       already been written by this function.
-% - outputSuffix (string): suffix for output directory
+% - outputSuffix (string): suffix for output directory/files
+% - outputTask (string): task for output directory/files. Should only be
+%       specified if results from different experiments are being combined.
 % - contrastNames (cell array of strings): array of contrast names to use
 % - analysisDir (string): analysis output dir will be written in this dir.
 %       Must match analysisDir used for first-level analyses.
 % - fdrThresh (vector of values in (0,1)): FDR q-threshold values
 % - fdrTails (vector of 1s and 2s): whether FDR thresholding should be
 %       one- or two-tailed, for each contrast (default = 2)
-%
+% 
 % Critical outputs:
 % - contrast.nii.gz: cross-run contrast image
 % - contrastvariance.nii.gz: cross-run contrast variance image
@@ -40,13 +42,14 @@ fpp.util.checkConfig;
 
 overwrite = 0;              % Whether to overwrite output
 outputSuffix = '';          % New suffix for output dir
+outputTask = '';            % New task name for output dir
 contrastNames = {};         % Contrast names
 analysisDir = '';           % Directory for analysis outputs
 fdrThresh = [.05 .01];      % FDR thresholds
 fdrTails = [];              % Whether FDR thresholding for each contrast should be 1- or 2- tailed
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
-varArgList = {'overwrite','outputSuffix','analysisDir','fdrThresh','fdrTails','contrastNames'};
+varArgList = {'overwrite','outputSuffix','analysisDir','fdrThresh','fdrTails','contrastNames','outputTask'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
@@ -106,7 +109,11 @@ elseif length(fdrTails)~=nContrasts
 end
 
 % Define and create output directory
-outputName = fpp.bids.changeName(inputNames{1},{'run','desc'},{'',[inputSuffix outputSuffix]},['model2' modelType],'');
+if isempty(outputTask)
+    outputTask = fpp.bids.checkNameValue(inputNames{1},'task');
+end
+outputName = fpp.bids.changeName(inputNames{1},{'run','desc','task'},{'',...
+    [inputSuffix outputSuffix],outputTask},['model2' modelType],'');
 outputDir = [analysisDir '/' outputName];
 if exist(outputDir,'dir')
     if overwrite
