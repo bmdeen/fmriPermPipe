@@ -4,8 +4,8 @@
 % Step 2 of a two-step process to perform a General Linear Model based
 % analysis of fMRI data for one subject. Step 1 (modelPerm, modelArma, or
 % modelFilm) computes results within individual runs. Step 2 combines
-% results across runs within a subject (fixed effects analysis). Should be 
-% run after fpp.func.modelPerm, Arma, or Film.
+% results across runs within an experiment and subject (a "fixed effects"
+% analysis). Should be run after fpp.func.modelPerm, Arma, or Film.
 %
 % Example usage: fpp.func.model2ndLevel({'/pathToAnalyses/sub-01_task-faceloc_run-01_space-individual_modelarma',...
 %   '/pathToAnalyses/sub-01_task-faceloc_run-02_space-individual_modelarma',...
@@ -19,6 +19,7 @@
 % - overwrite (boolean; default=0): whether to overwrite files that have
 %       already been written by this function.
 % - outputSuffix (string): suffix for output directory
+% - contrastNames (cell array of strings): array of contrast names to use
 % - analysisDir (string): analysis output dir will be written in this dir.
 %       Must match analysisDir used for first-level analyses.
 % - fdrThresh (vector of values in (0,1)): FDR q-threshold values
@@ -39,12 +40,13 @@ fpp.util.checkConfig;
 
 overwrite = 0;              % Whether to overwrite output
 outputSuffix = '';          % New suffix for output dir
+contrastNames = {};         % Contrast names
 analysisDir = '';           % Directory for analysis outputs
 fdrThresh = [.05 .01];      % FDR thresholds
 fdrTails = [];              % Whether FDR thresholding for each contrast should be 1- or 2- tailed
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
-varArgList = {'overwrite','outputSuffix','analysisDir','fdrThresh','fdrTails'};
+varArgList = {'overwrite','outputSuffix','analysisDir','fdrThresh','fdrTails','contrastNames'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
@@ -86,7 +88,11 @@ for r=1:nRuns
     inputMat = [inputDirs{r} '/' fpp.bids.changeName(inputNames{r},'desc',inputSuffix,'RegressionData','.mat')];
     regrData{r} = load(inputMat);
 end
-contrastNames = regrData{1}.contrastNames;
+customContrast = 0;
+if isempty(contrastNames)
+    contrastNames = regrData{1}.contrastNames;
+    customContrasts = 1;
+end
 nContrasts = length(contrastNames);
 condPath = [inputDirs{1} '/' fpp.bids.changeName(inputNames{1},'desc',inputSuffix,'conditions','.tsv')];
 condTSV = bids.util.tsvread(condPath);
@@ -134,6 +140,17 @@ for r=1:nRuns
     V = inv(regrData{r}.X'*regrData{r}.X);
     % Estimated contrast variance, up to error variance term
     regrData{r}.conVarBase = diag(regrData{r}.contrastMat*V(1:nConds,1:nConds)*regrData{r}.contrastMat');
+    % Permute conVarBase indices based on contrastNames varargin
+    if customContrast
+        for con=1:nContrasts
+            if ~ismember(contrastNames{con},regrData{r}.contrastNames)
+                error(['Contrast ' contrastNames{con} ' was not found in run '...
+                    int2str(r) ' - ' outputName]);
+            end
+            permInd(con) = find(strcmp(contrastNames{con},regrData{r}.contrastNames));
+        end
+        regrData{r}.conVarBase = regrData{r}.conVarBase(permInd);
+    end
 end
 
 
