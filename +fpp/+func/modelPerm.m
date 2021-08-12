@@ -29,7 +29,7 @@
 %   - condNames (cell array of strings): array of condition names. Needed
 %       to determine cond order if events.tsv lacks trial_type_id field
 %   - contrastNames (cell array of strings): array of contrast names to use
-%   - maskPath (string): path to volumetric mask image (NIFTI)
+%   - maskPath (string): path to volumetric mask image
 %   - confoundPath (string): path to confound.tsv file with nuisance
 %       regressors
 %   - confoundNames (cell array of strings): fields in confound file to use
@@ -289,13 +289,17 @@ bids.util.tsvwrite(condPath,condTSV);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Load mask data
-maskVol = [];
+maskData = [];
 if ~isempty(maskPath)
-    mask = fpp.util.mriRead(maskPath);
-    maskVol = mask.vol;
+    if isCifti
+        maskData = fpp.util.readDataMatrix(maskPath);
+    else
+        mask = fpp.util.mriRead(maskPath);
+        maskData = mask.vol;
+    end
 end
 
-[funcMat,hdr] = fpp.util.readDataMatrix(inputPath,maskVol);     % Read NIFTI/CIFTI input as time by coordinate matrix
+[funcMat,hdr] = fpp.util.readDataMatrix(inputPath,maskData);    % Read NIFTI/CIFTI input as time by coordinate matrix
 funcMat = funcMat';
 funcMat = funcMat(goodVolInd,:);                                % Remove artifact time points
 funcMat = bsxfun(@minus,funcMat,mean(funcMat));                 % Subtract time series mean
@@ -403,7 +407,7 @@ for iter=0:permIters
     for c=1:nContrasts
         outputPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
             [iterSuffix outputSuffix contrastNames{c}],'contrast',outputExt)];
-        fpp.util.writeDataMatrix(contrasts(c,:)',hdr,outputPath,maskVol);
+        fpp.util.writeDataMatrix(contrasts(c,:)',hdr,outputPath,maskData);
     end
     
     % For unpermuted analysis, write beta/variance/zstat/etc images
@@ -421,39 +425,34 @@ for iter=0:permIters
             betaPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
                 [outputSuffix condNames{r}],'beta',outputExt)];
             pscPath = fpp.bids.changeName(betaPath,[],[],'psc',outputExt);
-            fpp.util.writeDataMatrix(betas(r,:)',hdr,betaPath,maskVol);
-            if ~isempty(maskPath)
-                fpp.wb.command([imageType '-math'],[],'100*beta/(mean*mask)',pscPath,...
-                    ['-var beta ' betaPath ' -var mean ' meanPath ' -var mask ' maskPath]);
-            else
-                fpp.wb.command([imageType '-math'],[],'100*beta/mean',pscPath,...
-                    ['-var beta ' betaPath ' -var mean ' meanPath]);
-            end
+            fpp.util.writeDataMatrix(betas(r,:)',hdr,betaPath,maskData);
+            fpp.wb.command([imageType '-math'],[],'100*beta/mean',pscPath,...
+                ['-var beta ' betaPath ' -var mean ' meanPath]);
         end
         
         % Contrast values
         for c=1:nContrasts
             outputPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
                 [outputSuffix 'OLS' contrastNames{c}],'zstat',outputExt)];
-            fpp.util.writeDataMatrix(zStats(c,:)',hdr,outputPath,maskVol);
+            fpp.util.writeDataMatrix(zStats(c,:)',hdr,outputPath,maskData);
             outputPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
                 [outputSuffix 'OLS' contrastNames{c}],'contrastvariance',outputExt)];
-            fpp.util.writeDataMatrix(conVars(c,:)',hdr,outputPath,maskVol);
+            fpp.util.writeDataMatrix(conVars(c,:)',hdr,outputPath,maskData);
         end
         
         % OLS error variance and R^2
         outputPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
             [outputSuffix 'OLS'],'errorvariance',outputExt)];
-        fpp.util.writeDataMatrix(errorVar',hdr,outputPath,maskVol);
+        fpp.util.writeDataMatrix(errorVar',hdr,outputPath,maskData);
         outputPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
             [outputSuffix 'OLS'],'rsquared',outputExt)];
-        fpp.util.writeDataMatrix(rSquareds',hdr,outputPath,maskVol);
+        fpp.util.writeDataMatrix(rSquareds',hdr,outputPath,maskData);
         
         % Residual data
         if writeResiduals
             outputPath = [outputDir '/' fpp.bids.changeName(inputName,'desc',...
                 [outputSuffix 'Residuals'],'bold',outputExtSeries)];
-            fpp.util.writeDataMatrix(resids',hdr,outputPath,maskVol);
+            fpp.util.writeDataMatrix(resids',hdr,outputPath,maskData);
         end
     end
     

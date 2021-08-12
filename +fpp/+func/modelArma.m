@@ -23,7 +23,6 @@
 %   - overwrite (boolean; default=0): whether to overwrite files that have
 %       already been written by this function.
 %   - maskPath (string): path to brain mask image to use for analysis
-%       (NIFTI only)
 %   - outputSuffix (string): suffix for output directory/file desc field.
 %       Can be used to run analyses multiple times with different options.
 %   - analysisDir (string): analysis output dir will be written in this dir
@@ -160,7 +159,6 @@ end
 isCifti = 0;
 if strcmpi(inputExt,'.dtseries.nii')
     isCifti = 1;
-    maskPath = '';
 end
 
 % Define event timing and condition names
@@ -297,6 +295,10 @@ if isCifti
     inputPathOrig = inputPath;
     inputPath = [outputDir '/' inputName '.nii.gz'];
     fpp.wb.command('cifti-convert',[],[],[],['-to-nifti ' inputPathOrig ' ' inputPath]);
+    maskPathOrig = maskPath;
+    [~,maskName,~] = fpp.util.fileParts(maskPath);
+    maskPath = [outputDir '/' maskName '.nii.gz'];
+    fpp.wb.command('cifti-convert',[],[],[],['-to-nifti ' maskPathOrig ' ' maskPath]);
 end
 
 % Write full confound TSV file
@@ -463,13 +465,8 @@ for c=1:nConds
         [outputSuffix condNames{c}],'beta','.nii.gz')];
     outputPSCPath = fpp.bids.changeName(outputBetaPath,[],[],'psc');
     fpp.util.system(['fslroi ' remlPath ' ' outputBetaPath ' ' int2str(1+(c-1)*2) ' 1']);
-    if ~isempty(maskPath)
-        fpp.wb.command('volume-math',[],'100*beta/(mean*mask)',outputPSCPath,...
-            ['-var beta ' outputBetaPath ' -var mean ' meanPath ' -var mask ' maskPath]);
-    else
-        fpp.wb.command('volume-math',[],'100*beta/mean',outputPSCPath,...
-            ['-var beta ' outputBetaPath ' -var mean ' meanPath]);
-    end
+    fpp.wb.command('volume-math',[],'100*beta/mean',outputPSCPath,...
+        ['-var beta ' outputBetaPath ' -var mean ' meanPath]);
     outputMapPaths = [outputMapPaths outputBetaPath outputPSCPath];
 end
 for con=1:nContrasts
