@@ -18,7 +18,6 @@
 % - statThresh (scalar): threshold for statistical map, applied after size
 % - invertStats (boolean, default = 0): whether to invert statistical map
 % - maskPath (string): path to brain mask, to intersect with search space
-%       (NIFTI inputs only)
 % - parcPath (string): path to parcellation. If parcPath and parcInds are
 %       specified, the search space is defined by the parcellation, using
 %       fpp.util.label2ROI.
@@ -122,13 +121,17 @@ end
 
 % Load statistical map and search space
 if ~isempty(maskPath)
-    maskData = fpp.util.mriRead(maskPath);
-    [statVec,~] = fpp.util.readDataMatrix(statPath,maskData.vol);
-    [searchVec,hdr] = fpp.util.readDataMatrix(searchPath,maskData.vol);
+    if isCifti
+        maskData = fpp.util.readDataMatrix(maskPath);
+    else
+        maskImage = fpp.util.mriRead(maskPath);
+        maskData = maskImage.vol;
+    end
 else
-    [statVec,~] = fpp.util.readDataMatrix(statPath);
-    [searchVec,hdr] = fpp.util.readDataMatrix(searchPath);
+    maskData = [];
 end
+[statVec,~] = fpp.util.readDataMatrix(statPath,maskData);
+[searchVec,hdr] = fpp.util.readDataMatrix(searchPath,maskData);
 
 searchInd = find(searchVec==1);
 searchSize = size(searchInd);
@@ -151,11 +154,7 @@ roiInSearchVec(statVec<statThresh) = 0;
 % Define and write final ROI
 roiVec = zeros(size(searchVec));
 roiVec(searchInd) = roiInSearchVec;
-if ~isempty(maskPath)
-    fpp.util.writeDataMatrix(roiVec,hdr,outputPath,maskData.vol);
-else
-    fpp.util.writeDataMatrix(roiVec,hdr,outputPath);
-end
+fpp.util.writeDataMatrix(roiVec,hdr,outputPath,maskData);
 
 % Check if ROI is empty, delete and send warning if so
 if isCifti
