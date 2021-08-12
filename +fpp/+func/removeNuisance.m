@@ -5,7 +5,7 @@
 % fpp.func.removeNuisance(inputPath,outputPath,varargin)
 %
 % Arguments:
-% - inputPath (string): path to input data
+% - inputPath (string): path to input data (NIFTI)
 % - outputPath (string): path to outputData
 %
 % Variable arguments:
@@ -95,11 +95,11 @@ goodVols = setdiff(1:numVols,union(disdaqVols,badVols));
 
 % Load data/mask
 if ~isempty(maskPath)
-    maskData = fpp.util.mriRead(maskPath);
-    [funcMat,hdr] = fpp.util.readDataMatrix(inputPath,maskData.vol);
+    maskImage = fpp.util.mriRead(maskPath);
+    [funcMat,hdr] = fpp.util.readDataMatrix(inputPath,maskImage.vol);
 else
     [funcMat,hdr] = fpp.util.readDataMatrix(inputPath);
-    maskData.vol = ones(size(inputPath,1:3));
+    maskImage.vol = ones(size(inputPath,1:3));
 end
 
 % Define nuisance regressors
@@ -121,7 +121,7 @@ funcMat = funcMat - nuisRegrMat*betas(2:end,:);
 funcMat = funcMat';
 
 % Write output
-fpp.util.writeDataMatrix(funcMat,hdr,outputPath,maskData.vol);
+fpp.util.writeDataMatrix(funcMat,hdr,outputPath,maskImage.vol);
 
 % Reconstruct json metadata
 if ~isempty(fpp.bids.getMetadata(inputPath))

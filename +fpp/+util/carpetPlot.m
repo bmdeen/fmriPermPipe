@@ -6,7 +6,7 @@
 %   nuisanceNames[,segmentColors,nuisanceColors])
 %
 % Arguments:
-% - inputPath (string): path to input functional data
+% - inputPath (string): path to input functional data (NIFTI)
 % - maskPath (string): path to input brain mask. Should exclude any voxels
 %   with zero signal in functional data
 % - segmentMaskPaths (cell array of strings): paths to segment masks.
@@ -62,8 +62,8 @@ nSubPlotHeatMap = 5;    % How many subplots the heat map should occupy
 nSubPlot = nNuis + nSubPlotHeatMap;   % One subplot for each nuisance signal, nSubPlotHeatMap for heat map
 
 % Load brain mask and functional data
-maskData = fpp.util.mriRead(maskPath);
-dataMat = fpp.util.readDataMatrix(inputPath,maskData.vol);
+maskImage = fpp.util.mriRead(maskPath);
+dataMat = fpp.util.readDataMatrix(inputPath,maskImage.vol);
 vols = size(dataMat,2); xLims = [1 vols];
 if vols~=size(nuisanceSeries,2)
     error('Size of functional data and nuisance time series do not match.');
@@ -72,7 +72,7 @@ end
 % Load image segment masks, within brain mask
 segLengths = [];
 for s=1:nSegs
-    segMat{s} = fpp.util.readDataMatrix(segmentMaskPaths{s},maskData.vol);
+    segMat{s} = fpp.util.readDataMatrix(segmentMaskPaths{s},maskImage.vol);
     segLengths(s) = sum(segMat{s}==1);
 end
 segLengthsCumulative = [0 cumsum(segLengths)];
