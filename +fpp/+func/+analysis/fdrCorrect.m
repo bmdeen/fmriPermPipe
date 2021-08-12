@@ -21,10 +21,15 @@
 function [critZ,critP] = fdrCorrect(inputPath,outputPath,maskPath,qThresh,tails)
 
 method = 'pdep';    % pdep = Benjamini & Hochberg, dep = Benjamini & Yekutieli
+[~,~,inputExt] = fpp.util.fileParts(inputPath);
+isCifti = 0;
+if strcmpi(inputExt,'.dscalar.nii')
+    isCifti = 1;
+end
 
 if ~exist('maskPath','var') || isempty(maskPath)
     maskPath = '';
-    mask.vol = [];
+    maskData = [];
 end
 if ~exist('qThresh','var') || ~(isnumeric(qThresh) && isscalar(qThresh) && ...
         qThresh<1 && qThresh>0)
@@ -35,15 +40,20 @@ if ~exist('tails','var') || ~(isnumeric(tails) && isscalar(tails) && ismember(ta
     tails = 2;
 end
 
-% Load volumetric mask
+% Load mask
 if ~isempty(maskPath)
-    mask = fpp.util.mriRead(maskPath);
-    [zVec,hdr] = fpp.util.readDataMatrix(inputPath,mask.vol);
-else
-    [zVec,hdr] = fpp.util.readDataMatrix(inputPath);
+    if isCifti
+        maskData = fpp.util.readDataMatrix(maskPath);
+    else
+        maskImage = fpp.util.mriRead(maskPath);
+        maskData = maskImage.vol;
+    end
 end
 
+% Load data
+[zVec,hdr] = fpp.util.readDataMatrix(inputPath,maskData);
 
+% Convert z-values to p-values
 pVec = zeros(size(zVec));
 if tails==1
     pVec = normcdf(-zVec);
@@ -52,19 +62,14 @@ else
     pVec(zVec<0) = 2*normcdf(zVec(zVec<0));
 end
 
+% Compute FDR threshold
 [h1,critP,~,~] = fpp.func.analysis.fdrBH(pVec(zVec~=0),qThresh,method);
 h = zeros(size(zVec));
 h(zVec~=0) = h1;
 critZ = abs(icdf('norm',critP,0,1));
-% disp(['Critical P-value: ' num2str(critP)]);
-
 zVec(h==0) = 0;
 
-if ~isempty(maskPath)
-    fpp.util.writeDataMatrix(zVec,hdr,outputPath,mask.vol);
-else
-    fpp.util.writeDataMatrix(zVec,hdr,outputPath);
-end
-
+% Write output thresholded image
+fpp.util.writeDataMatrix(zVec,hdr,outputPath,maskData);
 
 end
