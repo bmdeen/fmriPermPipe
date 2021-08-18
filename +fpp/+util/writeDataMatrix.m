@@ -64,8 +64,7 @@ if isCifti
         if ~isfield(hdr.diminfo{2},'maps')    % Add map names, if not specified
             for i=1:hdr.diminfo{2}.length
                 hdr.diminfo{2}.maps(i).name = int2str(i);
-                hdr.diminfo{2}.maps(i).metadata.key = '';
-                hdr.diminfo{2}.maps(i).metadata.value = '';
+                hdr.diminfo{2}.maps(i).metadata = struct('key',{},'value',{});
             end
         end
     elseif strcmpi(outputExt,'.dtseries.nii')
@@ -85,8 +84,7 @@ if isCifti
         if ~isfield(hdr.diminfo{2},'maps')    % Add map names, if not specified
             for i=1:hdr.diminfo{2}.length
                 hdr.diminfo{2}.maps(i).name = int2str(i);
-                hdr.diminfo{2}.maps(i).metadata.key = '';
-                hdr.diminfo{2}.maps(i).metadata.value = '';
+                hdr.diminfo{2}.maps(i).metadata = struct('key',{},'value',{});
             end
         end
     end
