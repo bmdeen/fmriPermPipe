@@ -253,9 +253,9 @@ for c=1:nContrasts
     % FDR threshold
     for f=1:length(fdrThresh)
         outputZStatThreshPath = [outputDir '/' fpp.bids.changeName(outputName,'desc',...
-            [inputSuffix outputSuffix contrastNames{c} 'FDR' strrep(num2str(fdrThresh(f)),'.','p')],'zstat',outputExt)];
+            [inputSuffix outputSuffix contrastNames{c} 'FDR' strrep(num2str(fdrThresh(f)),'.','q')],'zstat',outputExt)];
         outputThreshTextPath = [outputDir '/' fpp.bids.changeName(outputName,'desc',...
-            [inputSuffix outputSuffix contrastNames{c} 'FDR' strrep(num2str(fdrThresh(f)),'.','p')],'fdrthresh','')];
+            [inputSuffix outputSuffix contrastNames{c} 'FDR' strrep(num2str(fdrThresh(f)),'.','q')],'fdrthresh','')];
         [critZ,~] = fpp.func.analysis.fdrCorrect(outputZStatPath,outputZStatThreshPath,[],fdrThresh(f),fdrTails(c));
         fid = fopen(outputThreshTextPath,'w+');
         fprintf(fid,'%f',critZ);
