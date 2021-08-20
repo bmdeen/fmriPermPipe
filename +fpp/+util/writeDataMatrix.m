@@ -47,7 +47,7 @@ dscalarFields = {'maps'};
 if isCifti
     if useMask
         tmpMat = zeros(hdr.diminfo{1}.length,size(dataMat,2));
-        tmpMat(maskData==1,:) = dataMat;
+        tmpMat(maskData(1:hdr.diminfo{1}.length)==1,:) = dataMat;
         hdr.cdata = tmpMat;
     else
         hdr.cdata = dataMat;

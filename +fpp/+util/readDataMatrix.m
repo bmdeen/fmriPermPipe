@@ -42,7 +42,7 @@ if isCifti
     dataMat = hdr.cdata;
     hdr.cdata = [];
     if useMask
-        dataMat = dataMat(maskData==1,:);
+        dataMat = dataMat(maskData(1:size(dataMat,1))==1,:);
     end
 else
     hdr = fpp.util.mriRead(inputPath);
