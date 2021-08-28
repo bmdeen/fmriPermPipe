@@ -5,7 +5,8 @@
 % circles for individual data points.
 %
 % Arguments: 
-% - X (numeric 2D matrix): samples by condition array of values to plot
+% - X (numeric 2D matrix): samples by condition array of values to plot.
+%       May contain NaN values, which are ignored.
 % 
 % Optional arguments:
 % - colorArray (cell array): array of colors by condition
@@ -14,6 +15,7 @@
 %       specified values.
 % - gapInd (vector): gaps in the graph will be placed after these bars
 % - dataPoints (boolean): whether to plot individual data points
+% - dotArea (scalar): area of data points (size input to scatter)
 %
 % Outputs:
 % - b (Bar object): bar graph handle
@@ -21,7 +23,7 @@
 % - e (ErrorBar object): error bar graph handle, if errors were used
 % - barInd (vector): y-position of bars in graph
 
-function [b,s,e,barInd] = barColor(X,colorArray,errorVec,gapInd,dataPoints)
+function [b,s,e,barInd] = barColor(X,colorArray,errorVec,gapInd,dataPoints,dotArea)
 
 e = [];
 s = [];
@@ -49,6 +51,9 @@ end
 if ~exist('dataPoints','var') || isempty(dataPoints)
     dataPoints = 1;
 end
+if ~exist('dotArea','var') || isempty(dotArea)
+    dotArea = 50;
+end
 
 % Add gaps between bars
 nGaps = length(gapInd);
@@ -66,6 +71,11 @@ colorArrayNew = repmat({'k'},[1 nSlots]);
 colorArrayNew(barInd) = colorArray;
 colorArray = colorArrayNew;
 
+% Compute mean values, ignoring NaN vals
+for i=1:size(X,2)
+    meanVals(i) = mean(X(~isnan(X(:,i)),i));
+end
+
 % Determine error bar values
 errors = [];
 if ~isscalar(errorVec)
@@ -73,11 +83,13 @@ if ~isscalar(errorVec)
     errors(barInd) = errorVec;
     errorVec = 1;
 elseif errorVec==1
-    errors = std(X,1)/sqrt(nSamples);
+    for i=1:size(X,2)
+        errors(i) = std(X(~isnan(X(:,i)),i),1)/sqrt(sum(~isnan(X(:,1))));
+    end
 end
 
 % Plot bar graph
-b = bar(mean(X,1));
+b = bar(meanVals);
 b.FaceColor = 'flat';
 
 % Change bar colors
@@ -98,8 +110,8 @@ if dataPoints
     scatterX = []; scatterY = [];
     for i=barInd
         prevLength = length(scatterX);
-        scatterX = [scatterX; i*ones(nSamples,1)];
-        scatterY = [scatterY; X(:,i)];
+        scatterX = [scatterX; i*ones(sum(~isnan(X(:,i))),1)];
+        scatterY = [scatterY; X(~isnan(X(:,i)),i)];
         
         % Deal with multiple dots positioned at the same y-value. Stagger
         % x-position of dots to display multiple dots.
@@ -118,13 +130,13 @@ if dataPoints
         end
     end
     hold on;
-    s = scatter(scatterX,scatterY,50,'k','filled');
+    s = scatter(scatterX,scatterY,dotArea,'k','filled');
 end
 
 % Plot errors
 if errorVec
     hold on;
-    e = errorbar(mean(X,1),errors,'.k');
+    e = errorbar(meanVals,errors,'.k');
     set(e,'LineWidth',2);
 end
 
