@@ -291,7 +291,7 @@ _Functional analysis: FILM modeling_
 * Woolrich MW, Ripley BD, Brady M, Smith SM (2001) Temporal autocorrelation in univariate linear modeling of fMRI data. NeuroImage 14(6): 1370–1386. doi: 10.1006/nimg.2001.0931
 
 _Functional analysis: FDR correction_
-Benjamini Y, Hochberg Y (1995) Controlling the false discovery rate: a practical and powerful approach to multiple testing. J Royal Statistical Society B 57(1): 289-300. doi: 10.1111/j.2517-6161.1995.tb02031.x
+* Benjamini Y, Hochberg Y (1995) Controlling the false discovery rate: a practical and powerful approach to multiple testing. J Royal Statistical Society B 57(1): 289-300. doi: 10.1111/j.2517-6161.1995.tb02031.x
 
 _Brain imaging data structure_
 * Gorgolewski KJ, Auer T, Calhoun VD, Craddock RC, Das S, Duff EP, Flandin G, Ghosh SS, Glatard T, Halchenko YO, Handwerker DA (2016) The brain imaging data structure, a format for organizing and describing outputs of neuroimaging experiments. Scientific Data 3(1):1-9. doi: 10.1038/sdata.2016.44
