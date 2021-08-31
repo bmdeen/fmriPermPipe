@@ -271,7 +271,7 @@ _Functional preprocessing: distortion correction_
 * Andersson JLR, Skare S, Ashburner J (2003) How to correct susceptibility distortions in spin-echo echo-planar images: application to diffusion tensor imaging. NeuroImage 20(2): 870-888. doi: 10.1016/S1053-8119(03)00336-7
 
 _Functional preprocessing: multi-echo ICA_
-* DuPre E, Salo T, Markello R, Kundu P, Whitaker K, & Handwerker D (2020) ME-ICA/tedana: 0.0.9a (Version 0.0.9a). Zenodo. doi: 10.5281/zenodo.3786890
+* The tedana Community (2021) ME-ICA/tedana: 0.0.10. Zenodo. doi: 10.5281/zenodo.4725985
 * Kundu P, Inati SJ, Evans JW, Luh WM, Bandettini PA (2011) Differentiating BOLD and non-BOLD signals in fMRI time series using multi-echo EPI. NeuroImage, 60: 1759-1770. doi: 10.1016/j.neuroimage.2011.12.028
 
 _Functional preprocessing: aCompCor nuisance signals_
