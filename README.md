@@ -100,17 +100,17 @@ At step 2, Freesurfer's recon-all should be run via command line, using preproce
 This segment performs whole-brain and region-of-interest-based analysis of fMRI data.
 
 Permutation-based modeling:
-`fpp.func.modelPerm` - First-level (within-run) permutation-based analysis
+* `fpp.func.modelPerm` - First-level (within-run) permutation-based analysis
 
 Generalized least squares modeling:
-`fpp.func.modelFilm` - First-level (within-run) analysis using FSL's FILM
-`fpp.func.modelArma` - First-level (within-run) analysis using AFNI's 3dREMLfit
+* `fpp.func.modelFilm` - First-level (within-run) analysis using FSL's FILM
+* `fpp.func.modelArma` - First-level (within-run) analysis using AFNI's 3dREMLfit
 
 Second-level (cross-run, within subject) analysis:
-`fpp.func.model2ndLevel` - Second-level analysis for any of the above first-level methods
+* `fpp.func.model2ndLevel` - Second-level analysis for any of the above first-level methods
 
 Region-of-interest analysis:
-`fpp.func.roiExtract` - Extract responses from functionally defined ROIs
+* `fpp.func.roiExtract` - Extract responses from functionally defined ROIs
 
 
 ### Wrappers
@@ -222,7 +222,7 @@ Temporal filtering is not used by default, because it is largely redundant with 
 
 At step 8, several nuisance signals are computed from the data, but not removed. These include mean signal from white matter, CSF, and the whole brain; anatomical CompCorr regressors, defined as the top 5 principal components of time series from eroded white matter and CSF segments (Behzadi et al. 2007); and motion-related measures including framewise displacement, DVARS, and standardized DVARS (Power et al. 2012, Nichols 2017). If desired, these signals may be removed from the data via linear regression using `fpp.func.removeNuisance`, or included as nuisance covariates at the statistical modeling step in `fpp.func.modelPerm` or `fpp.func.modelFeat`. Nuisance signals are written to a BIDS-style confounds.tsv file. (Note: we only recommend using aCompCorr signals as nuisance covariates if ME-ICA was not used. In this case, these regressors may also supercede the need for temporal filtering.)
 
-Additionally, pairs of time points with a large head movement between them are flagged as outliers, specified in an outliers.tsv file. Motion cutoffs can be based on framewise displacement (FD), or total translation or rotation. The default behavior is to remove pairs of time points with >.5mm FD between them. We recommend using a more stringent criteria (e.g. >.25mm) with data used for functional connectivity analyses. By default, time points defined in an outliers.tsv file will be removed at the analysis stage in fpp.func.modelPerm or fpp.func.modelFeat.
+Additionally, pairs of time points with a large head movement between them are flagged as outliers, specified in an outliers.tsv file. Motion cutoffs can be based on framewise displacement (FD), or total translation or rotation. The default behavior is to remove pairs of time points with >.5mm FD between them. We recommend using a more stringent criteria (e.g. >.25mm) with data used for functional connectivity analyses. By default, time points defined in an outliers.tsv file will be removed at the analysis stage.
 
 Volumetric spatial smoothing is not used by default, and not recommended. If spatial smoothing is desired, we recommend using surface-based smoothing functionality in `fpp.func.surfaceResample`, to ensure that smoothing respects the geometry of the cortical surface.
 
