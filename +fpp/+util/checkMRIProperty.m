@@ -4,7 +4,7 @@
 % Function to check property of input MR image or CIFTI dtseries file,
 % using JSON metadata if it exists, or alternative method if available.
 % Returns null if it can't find a way to check the property. Only TR, Vols,
-% Dims, and HasVol can be checked for CIFTI files.
+% Dims, HasVol, and IsLabel can be checked for CIFTI files.
 %
 % Arguments:
 % - propertyName (string): property to check
@@ -24,6 +24,7 @@
 %   + ST/SliceTiming - vector of slice acquisition times relative to start
 %       of volume acquisition
 %   + HasVol - Whether a CIFTI file contains volumetric components
+%   + IsLabel - Whether a NIFTI/CIFTI file has a label table
 % - inputPath (string): path to input image
 %
 % Dependencies: bids-matlab
@@ -151,11 +152,11 @@ switch lower(propertyName)
             lbInd = regexp(fileInfo,'\n');
             rowStr = 'Number of Rows:          ';
             rowInd = regexp(fileInfo,rowStr);
-            rowInLbInd = find(sort([lbInd rowInd])==rowInd);   % Index of first line break after TR line
+            rowInLbInd = find(sort([lbInd rowInd])==rowInd);   % Index of first line break after rows line
             rows = fileInfo(rowInd+length(rowStr):lbInd(rowInLbInd)-1);
             colStr = 'Number of Columns:       ';
             colInd = regexp(fileInfo,colStr);
-            colInLbInd = find(sort([lbInd colInd])==colInd);   % Index of first line break after TR line
+            colInLbInd = find(sort([lbInd colInd])==colInd);   % Index of first line break after cols line
             cols = fileInfo(colInd+length(colStr):lbInd(colInLbInd)-1);
             propertyValue = [str2num(rows) str2num(cols)];
         else
@@ -192,8 +193,18 @@ switch lower(propertyName)
             lbInd = regexp(fileInfo,'\n');
             hasVolStr = 'Has Volume Data:     ';
             hasVolInd = regexp(fileInfo,hasVolStr);
-            hasVolInLbInd = find(sort([lbInd hasVolInd])==hasVolInd);   % Index of first line break after TR line
+            hasVolInLbInd = find(sort([lbInd hasVolInd])==hasVolInd);   % Index of first line break after hasVol line
             hasVol = fileInfo(hasVolInd+length(hasVolStr):lbInd(hasVolInLbInd)-1);
             propertyValue = str2num(hasVol);
         end
+    case 'islabel'
+        [~,fileInfo] = fpp.util.system(['wb_command -file-information ' inputPath]);
+        lbInd = regexp(fileInfo,'\n');
+        isLabelStr = 'Maps with LabelTable:    ';
+        isLabelInd = regexp(fileInfo,isLabelStr);
+        isLabelInLbInd = find(sort([lbInd isLabelInd])==isLabelInd);   % Index of first line break after isLabel line
+        isLabel = fileInfo(isLabelInd+length(isLabelStr):lbInd(isLabelInLbInd)-1);
+        propertyValue = str2num(isLabel);
 end
+
+
