@@ -73,7 +73,7 @@ colorArray = colorArrayNew;
 
 % Compute mean values, ignoring NaN vals
 for i=1:size(X,2)
-    meanVals(i) = mean(X(~isnan(X(:,i)),i));
+    meanVals(i) = mean(X(~isnan(X(:,i)),i),1);
 end
 
 % Determine error bar values

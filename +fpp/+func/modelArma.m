@@ -295,10 +295,12 @@ if isCifti
     inputPathOrig = inputPath;
     inputPath = [outputDir '/' inputName '.nii.gz'];
     fpp.wb.command('cifti-convert',[],[],[],['-to-nifti ' inputPathOrig ' ' inputPath]);
-    maskPathOrig = maskPath;
-    [~,maskName,~] = fpp.util.fileParts(maskPath);
-    maskPath = [outputDir '/' maskName '.nii.gz'];
-    fpp.wb.command('cifti-convert',[],[],[],['-to-nifti ' maskPathOrig ' ' maskPath]);
+    if ~isempty(maskPath)
+        maskPathOrig = maskPath;
+        [~,maskName,~] = fpp.util.fileParts(maskPath);
+        maskPath = [outputDir '/' maskName '.nii.gz'];
+        fpp.wb.command('cifti-convert',[],[],[],['-to-nifti ' maskPathOrig ' ' maskPath]);
+    end
 end
 
 % Write full confound TSV file
