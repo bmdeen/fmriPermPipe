@@ -1,7 +1,7 @@
 
 % Wrapper for FSL's fslmaths tool, generates JSON metadata for output
 %
-% fpp.fsl.maths(inputPath,cmd,outputPath,newDesc,outputDescription,appendDescription)
+% fpp.fsl.maths(inputPath,cmd,outputPath,outputDescription,appendDescription)
 %
 % Arguments:
 % - inputPath: path to input image
