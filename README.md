@@ -1,7 +1,7 @@
 
 # fMRIPermPipe
 
-fMRIPermPipe (FPP, version 2.0.1) is a MATLAB-based pipeline for fMRI data analysis, optimized for individual subject analyses and multi-echo data, incorporating multiple neuroimaging tools: FSL, Freesurfer, AFNI, Connectome Workbench, tedana, MSM, and dcm2niix.
+fMRIPermPipe (FPP, version 2.0.2) is a MATLAB-based pipeline for fMRI data analysis, optimized for individual subject analyses and multi-echo data, incorporating multiple neuroimaging tools: FSL, Freesurfer, AFNI, Connectome Workbench, tedana, MSM, and dcm2niix.
 
 Steps include dicom conversion, preprocessing of anatomical and fMRI data, and statistical modeling and analysis of fMRI data. Outputs conform to the [Brain Imaging Data Structure (1.4.1)](https://bids.neuroimaging.io/specification.html) specification. Anatomical preprocessing uses a [Human Connectome Project](https://www.humanconnectome.org/)-like pipeline, yielding an accurate cortical surface reconstruction and surface-based registration to the fsLR atlas. Functional preprocessing uses a simple but powerful approach, including motion parameter estimation, despiking, slice-timing correction, single-shot motion and distortion correction and linear registration to a subject-specific template, and multi-echo ICA denoising. Statistical modeling includes a nonparametric, permutation-based option, as well as methods that estimate and correction for autocorrelation (FSL's FILM and AFNI's 3dREMLfit).
 
@@ -320,12 +320,15 @@ Version 2 (2019-current): updated version, incorporating optimized fMRI preproce
 
 ### Version 2 updates
 
-Version 2.0.1:
+Version 2.0.1 (September 2021):
 * Bug fixes for fMRI preprocessing and analysis scripts
 * Added CIFTI functionality to fMRI analysis scripts
 * Added modelArma for first-level modeling based on AFNI's 3dREMLfit
 * Upgrade software versions: Connectome Workbench v1.5, tedana v0.0.10
 * Added automatic medial temporal lobe segmentation using ASHS
+
+Version 2.0.2 (April 2022):
+* Minor bug fixes in modeling scripts
 
 
 
