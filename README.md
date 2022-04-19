@@ -329,6 +329,7 @@ Version 2.0.1 (September 2021):
 
 Version 2.0.2 (April 2022):
 * Minor bug fixes in modeling scripts
+* Renamed master branch to main
 
 
 
