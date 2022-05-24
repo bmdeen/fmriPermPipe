@@ -8,12 +8,12 @@ Steps include dicom conversion, preprocessing of anatomical and fMRI data, and s
 **NOTE: These scripts are currently under active development, and will be changing frequently. A more stable version is expected by 2022. Currently in progress: wrapper scripts using BIDS naming conventions; json metadata for statistical modeling outputs; Docker container to facilitate installation**
 
 Contents:
-1. [Installation](https://github.com/bmdeen/fmriPermPipe/tree/fppipe-v2#installation)
-2. [Data requirements](https://github.com/bmdeen/fmriPermPipe/tree/fppipe-v2#data-requirements)
-3. [Usage](https://github.com/bmdeen/fmriPermPipe/tree/fppipe-v2#usage)
-4. [Processing details](https://github.com/bmdeen/fmriPermPipe/tree/fppipe-v2#processing-details)
-5. [References](https://github.com/bmdeen/fmriPermPipe/tree/fppipe-v2#installation)
-6. [Licenses](https://github.com/bmdeen/fmriPermPipe/tree/fppipe-v2#licenses)
+1. [Installation](#installation)
+2. [Data requirements](#data-requirements)
+3. [Usage](#usage)
+4. [Processing details](#processing-details)
+5. [References](#installation)
+6. [Licenses](#licenses)
 <br />
 
 
