@@ -10,7 +10,6 @@ Contents:
 2. [Data requirements](#data-requirements)
 3. [Usage](#usage)
 4. [Processing details](#processing-details)
-5. [References](#installation)
 5. [References](#references)
 6. [Licenses](#licenses)
 <br />
