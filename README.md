@@ -6,12 +6,12 @@ fMRIPermPipe (FPP, version 2.0.2) is a MATLAB-based pipeline for fMRI data analy
 Steps include dicom conversion, preprocessing of anatomical and fMRI data, and statistical modeling and analysis of fMRI data. Outputs conform to the [Brain Imaging Data Structure (1.4.1)](https://bids.neuroimaging.io/specification.html) specification. Anatomical preprocessing uses a [Human Connectome Project](https://www.humanconnectome.org/)-like pipeline, yielding an accurate cortical surface reconstruction and surface-based registration to the fsLR atlas. Functional preprocessing uses a simple but powerful approach, including motion parameter estimation, despiking, slice-timing correction, single-shot motion and distortion correction and linear registration to a subject-specific template, and multi-echo ICA denoising. Statistical modeling includes a nonparametric, permutation-based option, as well as methods that estimate and correction for autocorrelation (FSL's FILM and AFNI's 3dREMLfit).
 
 Contents:
-1. [Installation](https://github.com/bmdeen/fmriPermPipe/tree/fppipe-v2#installation)
-2. [Data requirements](https://github.com/bmdeen/fmriPermPipe/tree/fppipe-v2#data-requirements)
-3. [Usage](https://github.com/bmdeen/fmriPermPipe/tree/fppipe-v2#usage)
-4. [Processing details](https://github.com/bmdeen/fmriPermPipe/tree/fppipe-v2#processing-details)
-5. [References](https://github.com/bmdeen/fmriPermPipe/tree/fppipe-v2#installation)
-6. [Licenses](https://github.com/bmdeen/fmriPermPipe/tree/fppipe-v2#licenses)
+1. [Installation](#installation)
+2. [Data requirements](#data-requirements)
+3. [Usage](#usage)
+4. [Processing details](#processing-details)
+5. [References](#installation)
+6. [Licenses](#licenses)
 <br />
 
 
