@@ -606,19 +606,19 @@ if exist(hcpAtlasDir,'dir')
         end
         fpp.wb.command('cifti-separate',outputPath,'COLUMN',[],['-label CORTEX_LEFT '...
             parcSurfPaths{1} ' -label CORTEX_RIGHT ' parcSurfPaths{2}]);
-       for h=1:2
-           fpp.wb.command('label-to-volume-mapping',parcSurfPaths{h},[fpp.bids.changeName(midthickPaths{h},{'space','den'},...
-               {'individual','32k'}) ' ' inputT1Path],parcVolPaths{h},['-ribbon-constrained '...
-               fpp.bids.changeName(midthickPaths{h},{'space','den'},{'individual','32k'},'white') ' '...
-               fpp.bids.changeName(midthickPaths{h},{'space','den'},{'individual','32k'},'pial')]);
-       end
-       fpp.fsl.maths(parcVolPaths{1},['-add ' parcVolPaths{2}],parcVolPath);
-       fpp.wb.command('cifti-label-export-table',outputPath,'1',parcLUTPath);
-       fpp.wb.command('volume-label-import',parcVolPath,parcLUTPath,parcVolPath,'-drop-unused-labels');
-       jsonDataVolParc = jsonDataVol;
-       jsonDataVolParc.Description = parcDescriptions{p};
-       bids.util.jsonencode(fpp.bids.jsonPath(parcVolPath),jsonDataParc,jsonOpts);
-       fpp.util.deleteImageAndJson([parcSurfPaths parcVolPaths]);
+        for h=1:2
+            fpp.wb.command('label-to-volume-mapping',parcSurfPaths{h},[fpp.bids.changeName(midthickPaths{h},{'space','den'},...
+                {'individual','32k'}) ' ' inputT1Path],parcVolPaths{h},['-ribbon-constrained '...
+                fpp.bids.changeName(midthickPaths{h},{'space','den'},{'individual','32k'},'white') ' '...
+                fpp.bids.changeName(midthickPaths{h},{'space','den'},{'individual','32k'},'pial')]);
+        end
+        fpp.fsl.maths(parcVolPaths{1},['-add ' parcVolPaths{2}],parcVolPath);
+        fpp.wb.command('cifti-label-export-table',outputPath,'1',parcLUTPath);
+        fpp.wb.command('volume-label-import',parcVolPath,parcLUTPath,parcVolPath,'-drop-unused-labels');
+        jsonDataVolParc = jsonDataVol;
+        jsonDataVolParc.Description = parcDescriptions{p};
+        bids.util.jsonencode(fpp.bids.jsonPath(parcVolPath),jsonDataParc,jsonOpts);
+        fpp.util.deleteImageAndJson([parcSurfPaths parcVolPaths]);
     end
     for h=1:2                   % Border files
         outputPath = fpp.bids.changeName(sulcPaths{h},{'sub','space','den','desc'},...
