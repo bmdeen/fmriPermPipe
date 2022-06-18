@@ -227,7 +227,7 @@ elseif ismember(lower(argName),lower({'customNuisRegr'}))
 % Cell array of strings
 elseif ismember(lower(argName),lower({'spinEchoPaths','spinEchoPhaseEncodeDirections',...
         'condNames','confoundNames','contrastNames','phaseEncodeDirections',...
-        'sphereRegFsLRPaths','midthickFsLRPaths'}))
+        'sphereRegFsLRPaths','midthickFsLRPaths','outputGiftiPaths'}))
     if iscellstr(argVal)
         argGood = 1;
     else

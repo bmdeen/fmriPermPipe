@@ -45,6 +45,8 @@
 % - maskPath (string): path to brain or gray matter mask in input space.
 %       This mask will be used as a volumetric ROI for surface resampling.
 % - outputNiftiPath (string): path to volumetric output image.
+% - outputGiftiPaths (cell array of strings): path to output GIFTI surface
+%       files. NOTE: These files will not be dilated or smoothed.
 % - referencePath (string): path to reference image in individual space,
 %       target of premat registration. Required if premat is specified.
 % - referenceFuncResPath (string): Low resolution individual space image.
@@ -97,6 +99,7 @@ fwhm = 0;
 surfDilation = 0;
 volDilation = 0;
 outputNiftiPath = '';
+outputGiftiPaths = {};
 referenceFuncResPath = [];
 warp = '';
 referenceNonlinPath = [];
@@ -108,7 +111,7 @@ mapNames = {};
 varArgList = {'subcortSegPath','premat','referencePath','fwhm','isLabel',...
     'surfDilation','volDilation','outputNiftiPath','sphereRegFsLRPaths',...
     'midthickFsLRPaths','referenceFuncResPath','warp','referenceNonlinPath',...
-    'mapNames','isShape','maskPath'};
+    'mapNames','isShape','maskPath','outputGiftiPaths'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
@@ -290,7 +293,7 @@ if surfDilation>0 || volDilation>0
 end
 
 % CIFTI smoothing
-if fwhm>0
+if fwhm>0 && ~isLabel
     sigmaSm = fwhm/2.355; % Standard deviation of Gaussian kernel
     outputDesc = fpp.bids.checkNameValue(outputCiftiPath,'desc');
     fwhmStr = ['Sm' strrep(num2str(fwhm),'.','p')];
@@ -298,6 +301,29 @@ if fwhm>0
     fpp.wb.command('cifti-smoothing',outputCiftiPath,[num2str(sigmaSm) ' '...
         num2str(sigmaSm) ' COLUMN'],outputCiftiSmPath,['-left-surface '...
         outputMidthickPaths{1} ' -right-surface ' outputMidthickPaths{2}]);
+end
+
+% Copy surface output to outputGiftiPaths, apply dilation and smoothing
+if ~isempty(outputGiftiPaths)
+    for h=1:2
+        fpp.util.copyImageAndJson(tmpGiftiPaths{h},outputGiftiPaths{h});
+        if surfDilation>0
+            if isLabel
+                fpp.wb.command('label-dilate',outputGiftiPaths{h},...
+                    [outputMidthickPaths{h} ' ' num2str(surfDilation)],outputGiftiPaths{h});
+            else
+                fpp.wb.command('metric-dilate',outputGiftiPaths{h},...
+                    [outputMidthickPaths{h} ' ' num2str(surfDilation)],outputGiftiPaths{h});
+            end
+        end
+        if fwhm>0 && ~isLabel
+            outputDesc = fpp.bids.checkNameValue(outputGiftiPaths{h},'desc');
+            fwhmStr = ['Sm' strrep(num2str(fwhm),'.','p')];
+            outputGiftiSmPaths{h} = fpp.bids.changeName(outputGiftiPaths{h},'desc',[outputDesc fwhmStr]);
+            fpp.wb.command('metric-smoothing',outputGiftiPaths{h},...
+                [outputMidthickPaths{h} ' ' num2str(fwhm)],outputGiftiSmPaths{h});
+        end
+    end
 end
 
 % Modify json metadata
