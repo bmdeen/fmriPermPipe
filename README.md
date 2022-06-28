@@ -18,7 +18,7 @@ Contents:
 
 ## Installation
 
-FPP runs on Mac or Linux (not Windows), on MATLAB 2016b+. MATLAB should be opened through a Bash terminal, to ensure that Bash environment variables are defined. FPP incorporates a number of neuroimaging software packages as dependencies, which must be installed and sourced in the local Bash or MATLAB environment:
+FPP runs on Mac or Linux (not Windows), on MATLAB 2017b+. MATLAB should be opened through a Bash terminal, to ensure that Bash environment variables are defined. FPP incorporates a number of neuroimaging software packages as dependencies, which must be installed and sourced in the local Bash or MATLAB environment:
 
 Bash:
 * [FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/) v6.0
