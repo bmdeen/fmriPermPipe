@@ -209,10 +209,22 @@ if multiEcho
     if isempty(echoForMoCorr)
         echoForMoCorr = 2;
     end
+    echoForMoCorrName = int2str(echoForMoCorr);
 else
     nEchoes = 1;
     useTedana = 0;
     echoForMoCorr = 1;
+    
+    % If there is only a single echo image but it is one echo from a
+    % multi-echo sequence (other than zero), echoForMoCorr indexes the echo
+    % among inputPaths, while echoForMoCorrName specifies the echo being
+    % used
+    echoName = fpp.bids.checkNameValue(inputPaths{1},'echo');
+    if isempty(echoName)
+        echoForMoCorrName = '1';
+    else
+        echoForMoCorrName = echoName;
+    end
 end
 
 % Check if inputs exist
@@ -464,8 +476,8 @@ if undistort
 else
     mocoTargetToRegisterPath = mocoTargetPath;
 end
-if multiEcho && exist(fpp.bids.changeName(funcTemplatePath,'echo',echoForMoCorr),'file')
-    funcTemplatePathRegTarget = fpp.bids.changeName(funcTemplatePath,'echo',echoForMoCorr);
+if multiEcho && exist(fpp.bids.changeName(funcTemplatePath,'echo',echoForMoCorrName),'file')
+    funcTemplatePathRegTarget = fpp.bids.changeName(funcTemplatePath,'echo',echoForMoCorrName);
 else
     funcTemplatePathRegTarget = funcTemplatePath;
 end
@@ -507,7 +519,7 @@ end
 if ~exist(outputPaths{end},'file')      % TEMPORARY DEBUGGING HACK
 fpp.func.preproc.oneShotMotionDistortionCorrect(inputPaths,outputPaths,templatePath,...
     templateSpace,mcDir,topupWarpPath,topupJacobianPath,xfmMocoTarget2Template,...
-    xfmSpinEcho2MocoTarget,xfmMocoTarget2SpinEcho,echoForMoCorr);
+    xfmSpinEcho2MocoTarget,xfmMocoTarget2SpinEcho,str2num(echoForMoCorrName));
 end
 for e=1:nEchoes
     fpp.bids.jsonChangeValue(outputPaths{e},'Description',fpp.func.preproc.description(midprepIntro,steps));
