@@ -232,15 +232,25 @@ anatPreprocDir = [outputDir '/anat'];
 % If funcTemplatePath isn't specified by user, define it. If it is, check if file exists.
 if isempty(funcTemplatePath)
     if useTaskTemplate
-        funcTemplatePath = [funcPreprocDir '/' fpp.bids.changeName(inputName,...
-            {'desc','run','echo','space'},{'template','','1','task'},'sbref','.nii.gz')];
+        if multiEcho
+            funcTemplatePath = [funcPreprocDir '/' fpp.bids.changeName(inputName,...
+                {'desc','run','echo','space'},{'template','','1','task'},'sbref','.nii.gz')];
+        else
+            funcTemplatePath = [funcPreprocDir '/' fpp.bids.changeName(inputName,...
+                {'desc','run','space'},{'template','','task'},'sbref','.nii.gz')];
+        end
         if ~exist(funcTemplatePath,'file')
             funcTemplatePath = fpp.bids.changeName(funcTemplatePath,[],[],'bold');
         end
         funcTemplateSpace = 'task';
     else
-        funcTemplatePath = [funcPreprocDir '/' fpp.bids.changeName(inputName,...
-            {'desc','task','acq','run','echo','space'},{'template','','','','1','session'},'sbref','.nii.gz')];
+        if multiEcho
+            funcTemplatePath = [funcPreprocDir '/' fpp.bids.changeName(inputName,...
+                {'desc','task','acq','run','echo','space'},{'template','','','','1','session'},'sbref','.nii.gz')];
+        else
+            funcTemplatePath = [funcPreprocDir '/' fpp.bids.changeName(inputName,...
+                {'desc','task','acq','run','space'},{'template','','','','session'},'sbref','.nii.gz')];
+        end
         if ~exist(funcTemplatePath,'file')
             funcTemplatePath = fpp.bids.changeName(funcTemplatePath,[],[],'bold');
         end
