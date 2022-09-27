@@ -6,14 +6,16 @@
 
 function [status,cmdOut] = system(cmd,verbose)
 
+cmdPrefix = 'export LD_LIBRARY_PATH=``; ';  % Prevent matlab from sourcing its own libraries
+
 if ~exist('verbose','var') || isempty(verbose)
     verbose = 0;
 end
 
 if verbose
-    [status,cmdOut] = system(cmd,'-echo');
+    [status,cmdOut] = system([cmdPrefix cmd],'-echo');
 else
-    [status,cmdOut] = system(cmd);
+    [status,cmdOut] = system([cmdPrefix cmd]);
 end
 
 if status~=0 || contains(cmdOut,'Image Exception : #')

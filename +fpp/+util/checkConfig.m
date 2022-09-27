@@ -2,6 +2,7 @@
 function checkConfig
 
 configError = '';
+cmdPrefix = 'export LD_LIBRARY_PATH=``; ';  % Prevent matlab from sourcing its own libraries
 
 fslDir = getenv('FSL_DIR');
 if isempty(fslDir)
@@ -13,7 +14,7 @@ fslCommands = {'fslmaths','fslmerge','fslsplit','fslroi','flirt','fnirt','applyw
     'bet2','susan','cluster'};
 cmdError = 0;
 for c=1:length(fslCommands)
-    [status,~] = system([fslCommands{c}]);
+    [status,~] = system([cmdPrefix fslCommands{c}]);
     if status==127
         cmdError=1;
         break;
@@ -28,7 +29,7 @@ end
 fsCommands = {'mri_convert','mris_convert','bbregister','tkregister2'};
 cmdError = 0;
 for c=1:length(fsCommands)
-    [status,~] = system([fsCommands{c}]);
+    [status,~] = system([cmdPrefix fsCommands{c}]);
     if status==127
         cmdError=1;
         break;
@@ -42,7 +43,7 @@ end
 wbCommands = {'wb_command'};
 cmdError = 0;
 for c=1:length(wbCommands)
-    [status,~] = system([wbCommands{c}]);
+    [status,~] = system([cmdPrefix wbCommands{c}]);
     if status==127
         cmdError=1;
         break;
