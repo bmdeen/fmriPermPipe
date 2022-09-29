@@ -23,7 +23,7 @@ end
 % Don't check metadata for BIDS-invalid filenames
 if ~fpp.bids.validFilename(filename), return; end
 
-meta = bids.internal.get_metadata(fpp.bids.jsonPath(filename));
+meta = bids.internal.get_metadata(bids.internal.get_meta_list(filename));
 
 if isempty(fieldnames(meta))
     meta = [];
