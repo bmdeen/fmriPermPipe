@@ -25,7 +25,7 @@ Bash:
 * [Freesurfer](https://surfer.nmr.mgh.harvard.edu/) v7.1.1
 * [AFNI](https://afni.nimh.nih.gov/) v20+
 * [Connectome Workbench](https://www.humanconnectome.org/software/connectome-workbench) v1.5+
-* [tedana](https://github.com/ME-ICA/tedana) v0.0.10
+* [tedana](https://github.com/ME-ICA/tedana) v0.0.12
 * [MSM_HOCR](https://github.com/ecr05/MSM_HOCR)
 * [ASHS](https://www.nitrc.org/projects/ashs/) v2.0.0 (if using MTL segmentation)
 * dcm2niix, through [MRICroGL](https://www.nitrc.org/projects/mricrogl/) v1.2+

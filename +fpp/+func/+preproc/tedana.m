@@ -92,10 +92,10 @@ if useTedana
     end
     
     % Rename main outputs
-    fpp.util.system(['mv ' outputDir '/t2svG.nii.gz ' strrep(outputPathTedana,'_bold.nii.gz','_T2star.nii.gz')]);
-    fpp.util.system(['mv ' outputDir '/s0vG.nii.gz ' strrep(outputPathTedana,'_bold.nii.gz','_S0map.nii.gz')]);
-    fpp.util.system(['mv ' outputDir '/dn_ts_OC.nii.gz ' outputPath]);
-    fpp.util.system(['mv ' outputDir '/ts_OC.nii.gz ' fpp.bids.changeName(outputPath,'desc','midprep4optcomb')]);
+    fpp.util.system(['mv ' outputDir '/T2starmap.nii.gz ' strrep(outputPathTedana,'_bold.nii.gz','_T2star.nii.gz')]);
+    fpp.util.system(['mv ' outputDir '/S0map.nii.gz ' strrep(outputPathTedana,'_bold.nii.gz','_S0map.nii.gz')]);
+    fpp.util.system(['mv ' outputDir '/desc-optcomDenoised_bold.nii.gz ' outputPath]);
+    fpp.util.system(['mv ' outputDir '/desc-optcom_bold.nii.gz ' fpp.bids.changeName(outputPath,'desc','midprep4optcomb')]);
     fpp.util.system(['mv ' outputDir '/figures ' outputDirTedana '/figures']);
     fpp.util.system(['mv ' outputDir '/tedana_report.html ' fpp.bids.changeName(outputPathTedana,'desc','tedanaICA','report','.html')]);
     
@@ -115,15 +115,12 @@ if useTedana
     for f=1:min(length(logFiles),2)
         fpp.util.system(['mv ' outputDir '/' logFiles(f).name ' ' fpp.bids.changeName(outputPathTedana,'desc',logNames{f},'log','.tsv')]);
     end
-    fpp.util.system(['mv ' outputDir '/betas_OC.nii.gz ' fpp.bids.changeName(outputPathTedana,'desc','tedanaICA','betas')]);
-    if exist([outputDir '/feats_OC2.nii.gz'],'file')
-        fpp.util.system(['mv ' outputDir '/feats_OC2.nii.gz ' fpp.bids.changeName(outputPathTedana,'desc','tedanaICAzscore','components')]);
-    end
-    methods = {'PCA','ICA'}; suffices = {'components','decomposition','mixing'};
+    fpp.util.system(['mv ' outputDir '/desc-ICA_components.nii.gz ' fpp.bids.changeName(outputPathTedana,'desc','tedanaICA')]);
+    methods = {'PCA','ICA'}; suffices = {'stat-z_components','decomposition','mixing'};
     componentExts = {'.nii.gz','.json','.tsv'};
     for m=1:2
         for s=1:3
-            fpp.util.system(['mv ' outputDir '/' lower(methods{m}) '_' suffices{s} componentExts{s} ' ' ...
+            fpp.util.system(['mv ' outputDir '/desc-' lower(methods{m}) '_' suffices{s} componentExts{s} ' ' ...
                 fpp.bids.changeName(outputPathTedana,'desc',['tedana' methods{m}],suffices{s},componentExts{s})]);
         end
     end
