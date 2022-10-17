@@ -141,10 +141,8 @@ if exist(ashsDir,'dir')
     % Note: ASHS requires native-space T1 image, not MNI-aligned
     nativeT1Path = fpp.bids.changeName(preprocT1Path,{'desc','res','space'},{'','','nativeT1w'});
     % Perform ASHS segmentation
-    if ~exist(outputSegDir,'dir')       %%% TEMPORARY FOR DEBUGGING
-        fpp.util.system(['$ASHS_ROOT/bin/ashs_main.sh -I sub-' subjID ' -a ' ashsDir...
-            ' -g ' nativeT1Path ' -f ' outputCoronalPath ' -w ' outputSegDir]);
-    end
+    fpp.util.system(['$ASHS_ROOT/bin/ashs_main.sh -I sub-' subjID ' -a ' ashsDir...
+        ' -g ' nativeT1Path ' -f ' outputCoronalPath ' -w ' outputSegDir]);
     % Copy and rename output segmentation
     tmpPath = fpp.bids.changeName(outputSegPath,'desc','ashsTmpPreprocCoronal20920398542');
     fpp.fsl.maths([outputSegDir '/final/sub-' subjID '_right_lfseg_corr_nogray.nii.gz'],...
