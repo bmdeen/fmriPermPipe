@@ -116,11 +116,15 @@ if useTedana
         fpp.util.system(['mv ' outputDir '/' logFiles(f).name ' ' fpp.bids.changeName(outputPathTedana,'desc',logNames{f},'log','.tsv')]);
     end
     fpp.util.system(['mv ' outputDir '/desc-ICA_components.nii.gz ' fpp.bids.changeName(outputPathTedana,'desc','tedanaICA')]);
-    methods = {'PCA','ICA'}; suffices = {'stat-z_components','decomposition','mixing'};
-    componentExts = {'.nii.gz','.json','.tsv'};
-    for m=1:2
-        for s=1:3
-            fpp.util.system(['mv ' outputDir '/desc-' methods{m} '_' suffices{s} componentExts{s} ' ' ...
+    methods = {'PCA','ICA'}; suffices = {'stat-z_components','decomposition','mixing','metrics','metrics'};
+    componentExts = {'.nii.gz','.json','.tsv','.json','.tsv'};
+    for m=1:length(methods)
+        for s=1:length(suffices)
+            inputMethod = methods{m};
+            if strcmp(suffices{s},'metrics') && strcmp(methods{m},'ICA')
+                inputMethod = 'tedana';
+            end
+            fpp.util.system(['mv ' outputDir '/desc-' inputMethod '_' suffices{s} componentExts{s} ' ' ...
                 fpp.bids.changeName(outputPathTedana,'desc',['tedana' methods{m}],suffices{s},componentExts{s})]);
         end
     end
