@@ -120,7 +120,7 @@ if useTedana
     componentExts = {'.nii.gz','.json','.tsv'};
     for m=1:2
         for s=1:3
-            fpp.util.system(['mv ' outputDir '/desc-' lower(methods{m}) '_' suffices{s} componentExts{s} ' ' ...
+            fpp.util.system(['mv ' outputDir '/desc-' methods{m} '_' suffices{s} componentExts{s} ' ' ...
                 fpp.bids.changeName(outputPathTedana,'desc',['tedana' methods{m}],suffices{s},componentExts{s})]);
         end
     end
