@@ -245,7 +245,7 @@ function x = dsv_read(filename, delim, header)
   % TEMP bug fix: add 'N/A' after 'accepted' to fill rationale field
   acceptInd = [];
   for i=1:length(d{1})
-    if strcmpi(d{1}{i},'accepted') && (strcmpi(d{1}{i+1}(1:3),'ICA') || i==length(d{1}))
+    if strcmpi(d{1}{i},'accepted') && (i==length(d{1}) || strcmpi(d{1}{i+1}(1:3),'ICA'))
       acceptInd = [acceptInd i];
     end
   end
