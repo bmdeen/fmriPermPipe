@@ -25,7 +25,7 @@ fpp.util.deleteImageAndJson(tmpPath1);
 fpp.util.deleteImageAndJson(tmpPath2);
 fpp.util.deleteImageAndJson(tmpPath3);
 if ~isempty(fpp.bids.getMetadata(inputPath)) && ~strcmp(inputPath,outputPath)
-    fpp.bids.jsonReconstruct(inputPath,outoutPath);
+    fpp.bids.jsonReconstruct(inputPath,outputPath);
 end
 
 end
