@@ -172,7 +172,10 @@ end
 if isempty(inputPath) && ~ismember(cmdType,{'surface-create-sphere',...
         'cifti-create-scalar-series','volume-create'})
     return;
-elseif ~isempty(inputPath) && isempty(fpp.bids.getMetadata(inputPath{1}))
+elseif ~isempty(inputPath)
+    return
+elseif isempty(fpp.bids.getMetadata(inputPath{1})) || (isstruct(fpp.bids.getMetadata(inputPath{1})) &&...
+        isempty(fieldnames(fpp.bids.getMetadata(inputPath{1}))))
     return;
 end
 
@@ -387,7 +390,7 @@ if cmdInfo.NonstandardJsonDef(cmdInd)
                 ind = allInd(i);
                 switch flagTypes(i)
                     case 1  % -volume-all
-                        volFiles = [volFiles allArgs(ind+2)];
+                        volFiles = [volFiles allArgs(ind+1)];
                         if ind+4 <= allInd(i+1)
                             ind2 = find('-roi',allArgs(ind+3:allInd(i+1)-1))+ind+2;
                             if ~isempty(ind2), volFiles = [volFiles allArgs(ind2+1)]; end
@@ -409,7 +412,7 @@ if cmdInfo.NonstandardJsonDef(cmdInd)
                             end
                         end
                     case 4  % -volume
-                        volFiles = [volFiles allArgs(ind+2)];
+                        volFiles = [volFiles allArgs(ind+1)];
                         if ind+4 <= allInd(i+1)
                             ind2 = find('-roi',allArgs(ind+3:allInd(i+1)-1))+ind+2;
                             if ~isempty(ind2), volFiles = [volFiles allArgs(ind2+1)]; end
