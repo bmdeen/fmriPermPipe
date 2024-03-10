@@ -27,6 +27,9 @@
 % - fdrThresh (vector of values in (0,1)): FDR q-threshold values
 % - fdrTails (vector of 1s and 2s): whether FDR thresholding should be
 %       one- or two-tailed, for each contrast (default = 2)
+% - useOLS (boolean; default=0): whether to use OLS contrast variance from
+%       modelPerm first-level directories. This analysis is not corrected
+%       for autocorrelation and should only be used for testing purposes.
 % 
 % Critical outputs:
 % - contrast.nii.gz: cross-run contrast image
@@ -47,9 +50,10 @@ contrastNames = {};         % Contrast names
 analysisDir = '';           % Directory for analysis outputs
 fdrThresh = [.05 .01];      % FDR thresholds
 fdrTails = [];              % Whether FDR thresholding for each contrast should be 1- or 2- tailed
+useOLS = 0;
 
 % Edit variable arguments.  Note: optInputs checks for proper input.
-varArgList = {'overwrite','outputSuffix','analysisDir','fdrThresh','fdrTails','contrastNames','outputTask'};
+varArgList = {'overwrite','outputSuffix','analysisDir','fdrThresh','fdrTails','contrastNames','outputTask','useOLS'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
@@ -100,6 +104,11 @@ nContrasts = length(contrastNames);
 condPath = [inputDirs{1} '/' fpp.bids.changeName(inputNames{1},'desc',inputSuffix,'conditions','.tsv')];
 condTSV = bids.util.tsvread(condPath);
 nConds = length(condTSV.cond_names);
+if useOLS && strcmp(modelType,'perm')
+    olsSuffix = 'OLS';
+else
+    olsSuffix = '';
+end
 
 % Define whether FDR thresholding is 1- or 2-tailed
 if isempty(fdrTails)
@@ -113,7 +122,7 @@ if isempty(outputTask)
     outputTask = fpp.bids.checkNameValue(inputNames{1},'task');
 end
 outputName = fpp.bids.changeName(inputNames{1},{'run','desc','task'},{'',...
-    [inputSuffix outputSuffix],outputTask},['model2' modelType],'');
+    [inputSuffix outputSuffix],outputTask},['model2' modelType olsSuffix],'');
 outputDir = [analysisDir '/' outputName];
 if exist(outputDir,'dir')
     if overwrite
@@ -202,7 +211,7 @@ for c=1:nContrasts
     weightSum = 0;
     for r=1:nRuns
         inputContrastVarPaths{r} = [inputDirs{r} '/' fpp.bids.changeName(inputNames{r},'desc',...
-            [inputSuffix contrastNames{c}],'contrastvariance',outputExt)];
+            [inputSuffix olsSuffix contrastNames{c}],'contrastvariance',outputExt)];
         cStr = ['c' int2str(r)];
         flagText = [flagText ' -var ' cStr ' ' inputContrastVarPaths{r}];
         if r==1
@@ -216,7 +225,7 @@ for c=1:nContrasts
     weightEquation = [weightEquation ')/' num2str(weightSum)];
     fpp.wb.command([imageType '-math'],[],weightEquation,outputContrastVarPath,flagText);
     
-    if strcmp(modelType,'perm')
+    if strcmp(modelType,'perm') && ~useOLS
         % Compute z-statistic
         equation = 'con/sqrt(convar)';
         flagText = ['-var con ' outputContrastPath ' -var convar ' outputContrastVarPath];
@@ -229,9 +238,13 @@ for c=1:nContrasts
         
         % Compute total dof
         for r=1:nRuns
-            inputDOFPaths{r} = [inputDirs{r} '/' fpp.bids.changeName(inputNames{r},'desc',...
-                inputSuffix,'dof','')];
-            dof(r) = load(inputDOFPaths{r});
+            if useOLS
+                dof(r) = regrData{r}.errorDOF;
+            else
+                inputDOFPaths{r} = [inputDirs{r} '/' fpp.bids.changeName(inputNames{r},'desc',...
+                    inputSuffix,'dof','')];
+                dof(r) = load(inputDOFPaths{r});
+            end
         end
         fid = fopen(outputDOFPath,'w');
         fprintf(fid,'%d',sum(dof));
