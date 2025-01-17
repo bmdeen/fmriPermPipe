@@ -121,7 +121,7 @@ end
 if isempty(outputTask)
     outputTask = fpp.bids.checkNameValue(inputNames{1},'task');
 end
-outputName = fpp.bids.changeName(inputNames{1},{'run','desc','task'},{'',...
+outputName = fpp.bids.changeName(inputNames{1},{'run','subrun','desc','task'},{'','',...
     [inputSuffix outputSuffix],outputTask},['model2' modelType olsSuffix],'');
 outputDir = [analysisDir '/' outputName];
 if exist(outputDir,'dir')
