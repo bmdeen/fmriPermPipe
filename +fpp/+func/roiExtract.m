@@ -154,6 +154,10 @@ end
 % Determine input z-stat map extension (can be NIFTI or CIFTI)
 paths = dir([defineROIDir{1} '/' fpp.bids.changeName(defineROIName{1},'desc',...
     [defineROIDesc{1} contrastName{1}],'zstat','') '.*nii*']);
+if isempty(paths)   % Hack for modelPerm OLS stats
+    paths = dir([defineROIDir{1} '/' fpp.bids.changeName(defineROIName{1},'desc',...
+        [defineROIDesc{1} 'OLS' contrastName{1}],'zstat','') '.*nii*']);
+end
 if isempty(paths), error('Could not find z-stat map in defineROIDir.'); end
 [~,~,inputExt] = fpp.util.fileParts(paths(1).name);
 
@@ -162,6 +166,10 @@ for t=1:nTasks
     for r=1:length(defineROIDirs{t})
         zStatPaths{t}{r} = [defineROIDirs{t}{r} '/' fpp.bids.changeName(defineROIName{t},{'run','desc'},...
             {defineROIRuns{t}{r},[defineROIDesc{t} contrastName{t}]},'zstat',inputExt)];
+        if ~exist(zStatPaths{t}{r},'file')  % Hack for modelPerm OLS stats
+            zStatPaths{t}{r} = [defineROIDirs{t}{r} '/' fpp.bids.changeName(defineROIName{t},{'run','desc'},...
+                {defineROIRuns{t}{r},[defineROIDesc{t} 'OLS' contrastName{t}]},'zstat',inputExt)];
+        end
         if ~exist(zStatPaths{t}{r},'file')
             error(['Expected input z-statistic path ' zStatPaths{t}{r} ' does not exist.']);
         end
