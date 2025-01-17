@@ -269,7 +269,7 @@ if isempty(funcTemplatePath)
         funcTemplateSpace = 'session';
     end
 else
-    funcTemplateSpace = fpp.bids.checkNameValue(funcTemplatePath);
+    funcTemplateSpace = fpp.bids.checkNameValue(funcTemplatePath,'space');
     if isempty(funcTemplateSpace)
         error('funcTemplateSpace must be specified when funcTemplatePath lacks a BIDS space entity.')
     end
