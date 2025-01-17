@@ -37,6 +37,12 @@ fpp.util.system(['cp ' topupWarpPath ' ' topupWarpPathCopy]);
 vols = fpp.util.checkMRIProperty('vols',inputPaths{1});
 tr = fpp.util.checkMRIProperty('tr',inputPaths{1});
 
+% Only include echo # in xfm paths if data contains more than one echo
+echoStr = [];
+if length(outputPaths)>1
+    echoStr = int2str(echoForMoCorr);
+end
+
 for e=1:length(outputPaths)
     mergeCmd = ['fslmerge -tr ' outputPaths{e}];
     inputSplitStem = [strrep(inputPaths{e},'.nii.gz','') '_SplitForMoco'];
@@ -46,9 +52,9 @@ for e=1:length(outputPaths)
         inputVolPath = [inputSplitStem fpp.util.numPad(t,4) '.nii.gz'];
         outputVolPath = [outputSplitStem fpp.util.numPad(t,4) '.nii.gz'];
         xfmInputVol2NativeFunc = [mcDir '/' fpp.bids.changeName(mcName,{'echo','desc','from','to','mode'},...
-            {int2str(echoForMoCorr),'',['native' fpp.util.numPad(t,4)],'native','image'},'xfm','.mat')];
+            {echoStr,'',['native' fpp.util.numPad(t,4)],'native','image'},'xfm','.mat')];
         xfmInputVol2SpinEcho = [mcDir '/' fpp.bids.changeName(mcName,{'echo','desc','from','to','mode'},...
-            {int2str(echoForMoCorr),'',['native' fpp.util.numPad(t,4)],'SpinEcho','image'},'xfm','.mat')];
+            {echoStr,'',['native' fpp.util.numPad(t,4)],'SpinEcho','image'},'xfm','.mat')];
         fpp.fsl.concatXfm(xfmNativeFunc2SpinEcho,xfmInputVol2NativeFunc,xfmInputVol2SpinEcho);
         fpp.fsl.moveImage(inputVolPath,templatePath,outputVolPath,xfmInputVol2SpinEcho,...
             'warp',topupWarpPathCopy,'postmat',xfmSpinEcho2TemplateCopy);
