@@ -173,7 +173,7 @@ if usingT2 && length(inputT2Paths)>1
     fpp.bids.jsonChangeValue(outputT2Path,{'Description','Sources','RawSources'},...
         {'Raw data, averaged across runs.',cellfun(removeBidsDir,outputT2Paths,'UniformOutput',false),...
         cellfun(removeBidsDir,inputT2PathsRaw,'UniformOutput',false)});
-else
+elseif usingT2
     fpp.util.copyImageAndJson(inputT2Paths{1},outputT2Path,'mri');
 end
 
