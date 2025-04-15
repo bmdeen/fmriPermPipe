@@ -746,18 +746,18 @@ for p=1:length(parcs)
     parcVolPath = fpp.bids.changeName(wmPath,'desc',parcs{p});
     if exist(parcVolPath,'file')
         volumePaths{end+1} = parcVolPath;
+        nn = [nn 1];
+        isLabel = [isLabel 1];
     end
-    nn = [nn 1];
-    isLabel = [isLabel 1];
 end
 maskNames = {'brainFS','brainFSdil1','gm','csf','wm','gmcortical','gmsubcortical'};
 for m=1:length(maskNames)
     maskVolPath = fpp.bids.changeName(maskPath,'desc',maskNames{m});
     if exist(maskVolPath,'file')
         volumePaths{end+1} = maskVolPath;
+        nn = [nn 1];
+        isLabel = [isLabel 0];
     end
-    nn = [nn 1];
-    isLabel = [isLabel 0];
 end
 for v=1:length(volumePaths)
     inputPath = volumePaths{v};
