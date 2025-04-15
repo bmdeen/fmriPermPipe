@@ -11,7 +11,7 @@ end
 
 fslCommands = {'fslmaths','fslmerge','fslsplit','fslroi','flirt','fnirt','applywarp',...
     'invwarp','convert_xfm','mcflirt','fslstats','fslval','fsl_tsplot','fslmeants',...
-    'bet2','susan','cluster'};
+    'bet2','susan'};
 cmdError = 0;
 for c=1:length(fslCommands)
     [status,~] = system([cmdPrefix fslCommands{c}]);
