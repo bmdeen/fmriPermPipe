@@ -108,6 +108,7 @@ subjID = fpp.bids.checkNameValue(extractResponseName,'sub');
 % leave-one-run-out analysis to avoid non-independence errors.
 if ismember(extractResponseTask,defineROITask)
     loro = 1;
+    [~,extractInDefineInd] = ismember(extractResponseTask,defineROITask);
 else
     loro = 0;
 end
@@ -140,14 +141,14 @@ for t=1:nTasks
     defineROIRuns{t} = defineROIRuns{t}(sortInd);
     nRunsEachTask(end+1) = length(defineROIRuns{t});
 end
-if length(unique(nRunsEachTask))~=1
-    error('Different # of runs were found for defineROI model directories.');
-end
+% if length(unique(nRunsEachTask))~=1
+%     error('Different # of runs were found for defineROI model directories.');
+% end
 
 % For leave-one-run-out analysis, make sure the same runs were identified
 % for defineROI and extractResponse directories
-if loro && (~isempty(setdiff(extractResponseRuns,defineROIRuns{1})) || ...
-        ~isempty(setdiff(defineROIRuns{1},extractResponseRuns)))
+if loro && (~isempty(setdiff(extractResponseRuns,defineROIRuns{extractInDefineInd})) || ...
+        ~isempty(setdiff(defineROIRuns{extractInDefineInd},extractResponseRuns)))
     error('Different # of runs were found for defineROI and extractResponse model directories.');
 end
 
@@ -198,8 +199,13 @@ if loro
             zStatPathsInput = {};
             statCoefsInput = [];
             for t=1:nTasks
-                zStatPathsInput = [zStatPathsInput zStatPaths{t}(setdiff(1:nRuns,r))];
-                statCoefsInput = [statCoefsInput repmat(statCoefs(t),[1 nRuns-1])/(nRuns-1)];
+                if t==extractInDefineInd
+                    zStatPathsInput = [zStatPathsInput zStatPaths{t}(setdiff(1:nRuns,r))];
+                    statCoefsInput = [statCoefsInput repmat(statCoefs(t),[1 nRuns-1])/(nRuns-1)];
+                else
+                    zStatPathsInput = [zStatPathsInput zStatPaths{t}];
+                    statCoefsInput = [statCoefsInput repmat(statCoefs(t),[1 nRunsEachTask(t)])/nRunsEachTask(t)];
+                end
             end
             
             fpp.util.defineROI(zStatPathsInput,searchPath,roiPath,'roiSize',roiSize,...
