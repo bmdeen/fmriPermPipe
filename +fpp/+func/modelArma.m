@@ -222,7 +222,7 @@ if exist(confoundPath,'file') && ~isempty(confoundNames)
     % Filter nuisance regressors
     if tempFilt
         nuisRegrMat(:,confoundFilt==1) = fpp.util.firFilter(...
-            nuisRegrMatnuisRegrMat(:,confoundFilt==1),1/tr,filtCutoff,filtType,filtOrder);
+            nuisRegrMat(:,confoundFilt==1),1/tr,filtCutoff,filtType,filtOrder);
     end
     
     % Redefine confound TSV after temporal filtering.
