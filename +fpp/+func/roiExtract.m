@@ -192,7 +192,7 @@ end
 if loro
     for r=1:nRuns
         % Define ROI, using average statistical map from all but one run
-        loroSuffix = ['LORO' defineROIRuns{1}{r}];
+        loroSuffix = ['LORO' defineROIRuns{extractInDefineInd}{r}];
         roiPath = [roiDir '/' fpp.bids.changeName(searchName,{'sub','desc'},{subjID,...
             [searchDesc roiDesc invertSuffix numSuffix loroSuffix]}) inputExt];
         if ~exist(roiPath,'file') || overwrite
