@@ -243,7 +243,7 @@ for c=1:nContrasts
             else
                 inputDOFPaths{r} = [inputDirs{r} '/' fpp.bids.changeName(inputNames{r},'desc',...
                     inputSuffix,'dof','')];
-                dof(r) = load(inputDOFPaths{r});
+                dof(r) = load(inputDOFPaths{r},'-ascii');
             end
         end
         fid = fopen(outputDOFPath,'w');
