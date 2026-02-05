@@ -47,6 +47,17 @@ elseif ~strcmp(inputPath,outputPath)
     fpp.fs.mrisConvert(inputPath,outputPath);
 end
 
+% Fix bug: sometimes mris_convert as lh. or rh. to beginning of filename
+outDir = fileparts(outputPath);
+giftiList = dir(fullfile(outDir, '*.gii'));
+[~, newestInd] = max([giftiList.datenum]);
+outputPathActual = fullfile(outDir, giftiList(newestInd).name);
+% Remove lh. or rh. prefix if present
+if startsWith(outputName, 'lh.') || startsWith(outputName, 'rh.')
+    % Rename the file
+    movefile(outputPathActual, outputPath);
+end
+
 % Add structure metadata
 if iscell(structure)
     flagStr = '';
