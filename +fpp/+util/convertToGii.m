@@ -52,6 +52,7 @@ outDir = fileparts(outputPath);
 giftiList = dir(fullfile(outDir, '*.gii'));
 [~, newestInd] = max([giftiList.datenum]);
 outputPathActual = fullfile(outDir, giftiList(newestInd).name);
+outputName = giftiList(newestInd).name;
 % Remove lh. or rh. prefix if present
 if startsWith(outputName, 'lh.') || startsWith(outputName, 'rh.')
     % Rename the file
