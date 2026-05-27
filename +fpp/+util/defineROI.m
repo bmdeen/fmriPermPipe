@@ -112,7 +112,7 @@ if iscell(statPath)
             weightEquation = [weightEquation '+' statStr '*' num2str(statCoefs(s))];
         end
     end
-    denom = sum(statCoefs); if denom<0, denom = 1; end
+    denom = sum(statCoefs); if denom<=0, denom = 1; end
     weightEquation = [weightEquation ')/' num2str(denom)];
     fpp.wb.command([imageType '-math'],[],weightEquation,statPath,flagText);
 else
