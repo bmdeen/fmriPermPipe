@@ -37,10 +37,14 @@ fpp.util.system(['cp ' topupWarpPath ' ' topupWarpPathCopy]);
 vols = fpp.util.checkMRIProperty('vols',inputPaths{1});
 tr = fpp.util.checkMRIProperty('tr',inputPaths{1});
 
-% Only include echo # in xfm paths if data contains more than one echo
+% Only include echo # in xfm paths if data contains more than one echo, or
+% if input data consists of single file with echo specified (i.e.,
+% single echo from a multi-echo dataset)
 echoStr = [];
 if length(outputPaths)>1
     echoStr = int2str(echoForMoCorr);
+elseif length(inputPaths)==1 && ~isempty(fpp.bids.checkNameValue(inputPaths{1},'echo'))
+    echoStr = fpp.bids.checkNameValue(inputPaths{1},'echo');
 end
 
 for e=1:length(outputPaths)
