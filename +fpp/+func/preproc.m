@@ -167,6 +167,10 @@ filtCutoff = .01;               % Highpass filter cutoff (Hz)
 filtOrder = 60;                 % Hanning-window FIR filter order
 filtType = [];                  % Filter type (high, low, bandpass, or bandstop)
 
+% Intensity normalization parameter
+intensityNorm = 1;              % Whether to intensity normalize (grand mean scaling)
+                                % Note: this should virtually always be on
+
 % Data generation parameters
 genTSNR = 1;                    % Whether to generate TSNR maps
 
@@ -183,7 +187,7 @@ varArgList = {'overwrite','funcTemplatePath','funcTemplateSpace','fwhm',...
     'useSTC','useTedana','echoForMoCorr','undistort','fdCutoff'...
     'useDespike','topupWarpPath','topupJacobianPath','spinEchoPath',...
     'deleteMidprep','templateType','templateRes','anatTemplatePath',...
-    'tedPCA','manAcc'};
+    'tedPCA','manAcc','intensityNorm'};
 for i=1:length(varArgList)
     argVal = fpp.util.optInputs(varargin,varArgList{i});
     if ~isempty(argVal)
@@ -623,18 +627,20 @@ end
 %%% STEP 8: Intensity normalize
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Normalize image median (also called "grand mean scaling" in SPM)
-fprintf('%s\n',['Step 8, Intensity normalize                    - ' outputNameGeneric]);
-for i=1:length(outputPaths)
-    steps{i}{end+1} = 'intensity normalization';
-    inputPaths{i} = outputPaths{i};
-    outputPaths{i} = fpp.bids.changeName(inputPaths{i},'desc',['midprep6intnorm' descSuffices{i}]);
-    [~,funcMedian] = fpp.util.system(['fslstats ' inputPaths{i} ' -k ' maskNonZeroPath ' -p 50']);
-    funcMedian = str2num(strtrim(funcMedian));
-    fpp.fsl.maths(inputPaths{i},['-mul ' num2str(newMedian/funcMedian)],outputPaths{i});
-    fpp.bids.jsonReconstruct(inputPaths{i},outputPaths{i},'midprepfmri');
-    fpp.bids.jsonChangeValue(outputPaths{i},{'Description','Sources'},...
-        {fpp.func.preproc.description(midprepIntro,steps{i}),fpp.bids.removeBidsDir(inputPaths{i})});
-    pathsToDelete = [pathsToDelete outputPaths{i}];
+if intensityNorm
+    fprintf('%s\n',['Step 8, Intensity normalize                    - ' outputNameGeneric]);
+    for i=1:length(outputPaths)
+        steps{i}{end+1} = 'intensity normalization';
+        inputPaths{i} = outputPaths{i};
+        outputPaths{i} = fpp.bids.changeName(inputPaths{i},'desc',['midprep6intnorm' descSuffices{i}]);
+        [~,funcMedian] = fpp.util.system(['fslstats ' inputPaths{i} ' -k ' maskNonZeroPath ' -p 50']);
+        funcMedian = str2num(strtrim(funcMedian));
+        fpp.fsl.maths(inputPaths{i},['-mul ' num2str(newMedian/funcMedian)],outputPaths{i});
+        fpp.bids.jsonReconstruct(inputPaths{i},outputPaths{i},'midprepfmri');
+        fpp.bids.jsonChangeValue(outputPaths{i},{'Description','Sources'},...
+            {fpp.func.preproc.description(midprepIntro,steps{i}),fpp.bids.removeBidsDir(inputPaths{i})});
+        pathsToDelete = [pathsToDelete outputPaths{i}];
+    end
 end
 
 
