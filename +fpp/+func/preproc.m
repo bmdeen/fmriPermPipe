@@ -57,6 +57,8 @@
 % - useSTC (boolean; default=1): whether to correct for slice timing
 % - useTedana (boolean; default=1): whether to use TEDANA denoising, for
 %       multi-echo data
+% - intensityNorm (boolean; default=0): Whether to intensity normalize
+%       (grand mean scaling, sets median to 10,000)
 % - templateType (string, 'anat' or 'func'): whether to use functional or
 %       low-res anatomical template
 % - templateRes (string, default='2'): anatomical template resolution
@@ -168,7 +170,7 @@ filtOrder = 60;                 % Hanning-window FIR filter order
 filtType = [];                  % Filter type (high, low, bandpass, or bandstop)
 
 % Intensity normalization parameter
-intensityNorm = 1;              % Whether to intensity normalize (grand mean scaling)
+intensityNorm = 1;              % Whether to intensity normalize (grand mean scaling, sets median to 10,000)
                                 % Note: this should virtually always be on
 
 % Data generation parameters
